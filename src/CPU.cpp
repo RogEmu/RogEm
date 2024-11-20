@@ -171,6 +171,15 @@ void CPU::addWord(const Instruction &instruction)
     setReg(instruction.r.rd, tmp);
 }
 
+void CPU::addWordUnsigned(const Instruction &instruction)
+{
+    uint32_t left = getReg(instruction.r.rs);
+    uint32_t right = getReg(instruction.r.rt);
+    uint32_t tmp = left + right;
+
+    setReg(instruction.r.rd, tmp);
+}
+
 void CPU::illegalInstruction(const Instruction &instruction)
 {
     fprintf(stderr, "Illegal instruction: ");

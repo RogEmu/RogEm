@@ -59,7 +59,6 @@ class CPU
         void loadUpperImmediate(const Instruction &instruction);
         void orImmediate(const Instruction &instruction);
         void shiftLeftLogical(const Instruction &instruction);
-        void addImmediateUnsigned(const Instruction &instruction);
 
         // Store instructions
         void storeWord(const Instruction &instruction);
@@ -68,6 +67,8 @@ class CPU
 
         // Arithmetic Instructions
         void addWord(const Instruction &instruction);
+        void addWordUnsigned(const Instruction &instruction);
+        void addImmediateUnsigned(const Instruction &instruction);
 
         void illegalInstruction(const Instruction &instruction);
 
