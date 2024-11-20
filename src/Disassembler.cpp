@@ -9,7 +9,7 @@
 
 #include <unordered_map>
 #include <regex>
-#include <format>
+#include <fmt/core.h>
 
 using namespace Disassembler;
 
@@ -55,7 +55,7 @@ static const std::unordered_map<SecondaryOpCode, InstructionData> secondaryData 
 };
 
 static std::string formatAsHexBytes(uint32_t value) {
-    return std::format("{:02x} {:02x} {:02x} {:02x}",
+    return fmt::format("{:02x} {:02x} {:02x} {:02x}",
                         (value >> 24) & 0xFF,  // Most significant byte
                         (value >> 16) & 0xFF,
                         (value >> 8) & 0xFF,
@@ -69,10 +69,10 @@ static std::string formatAssembly(uint32_t pc, Instruction i, const InstructionD
     result = std::regex_replace(result, std::regex("%rt"), std::to_string(i.r.rt));
     result = std::regex_replace(result, std::regex("%rd"), std::to_string(i.r.rd));
     result = std::regex_replace(result, std::regex("%shamt"), std::to_string(i.r.shamt));
-    result = std::regex_replace(result, std::regex("%imm"), std::format("0x{:x}", (uint16_t)i.i.immediate));
-    result = std::regex_replace(result, std::regex("%address"), std::format("0x{:x}", (uint32_t)i.j.address));
+    result = std::regex_replace(result, std::regex("%imm"), fmt::format("0x{:x}", (uint16_t)i.i.immediate));
+    result = std::regex_replace(result, std::regex("%address"), fmt::format("0x{:x}", (uint32_t)i.j.address));
 
-    result = std::format("0x{:08x}:  ", pc) + formatAsHexBytes(i.raw) + "  " + result;
+    result = fmt::format("0x{:08x}:  ", pc) + formatAsHexBytes(i.raw) + "  " + result;
     return result;
 }
 
