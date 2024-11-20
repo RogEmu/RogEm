@@ -31,7 +31,6 @@ class CPU
 
         // Instructions
         void loadUpperImmediate(const Instruction &instruction);
-        void shiftLeftLogical(const Instruction &instruction);
 
         // Load instructions
         void loadWord(const Instruction &instruction);
@@ -76,6 +75,14 @@ class CPU
         void andImmediateWord(const Instruction &instruction);
         void orImmediateWord(const Instruction &instruction);
         void xorImmediateWord(const Instruction &instruction);
+
+        // Shift Instructions
+        void shiftLeftLogical(const Instruction &instruction);
+        void shiftLeftLogicalVariable(const Instruction &instruction);
+        void shiftRightLogical(const Instruction &instruction);
+        void shiftRightArithmetic(const Instruction &instruction);
+        void shiftRightArithmeticVariable(const Instruction &instruction);
+        void shiftRightLogicalVariable(const Instruction &instruction);
 
         // Jump Instructions
         void jump(const Instruction &instruction);

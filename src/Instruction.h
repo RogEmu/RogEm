@@ -41,6 +41,11 @@ enum class SecondaryOpCode
 {
     ILLEGAL = -1,
     SLL = 0x00,
+    SRL = 0x02,
+    SRA = 0x03,
+    SLLV = 0x04,
+    SRLV = 0x06,
+    SRAV = 0x07,
     ADD = 0x20,
     ADDU = 0x21,
     SUB = 0x22,
