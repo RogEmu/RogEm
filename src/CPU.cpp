@@ -25,6 +25,11 @@ static void printInstruction(Instruction inst)
     }
 }
 
+static bool addOverflow(int32_t a, int32_t b)
+{
+    return ((uint32_t)(a + b) < a);
+}
+
 CPU::CPU(const Bus &bus) :
     m_pc(RESET_VECTOR),
     m_bus(bus)
@@ -150,6 +155,20 @@ void CPU::addImmediateUnsigned(const Instruction &instruction)
     uint32_t res = getReg(instruction.i.rs) + imm;
 
     setReg(instruction.i.rt, res);
+}
+
+void CPU::addWord(const Instruction &instruction)
+{
+    uint32_t left = getReg(instruction.r.rs);
+    uint32_t right = getReg(instruction.r.rt);
+    uint32_t tmp = left + right;
+
+    if (addOverflow(left, right))
+    {
+        // Overflow: need to raise exception on the system
+        return;
+    }
+    setReg(instruction.r.rd, tmp);
 }
 
 void CPU::illegalInstruction(const Instruction &instruction)

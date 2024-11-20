@@ -66,6 +66,9 @@ class CPU
         void storeHalfWord(const Instruction &instruction);
         void storeByte(const Instruction &instruction);
 
+        // Arithmetic Instructions
+        void addWord(const Instruction &instruction);
+
         void illegalInstruction(const Instruction &instruction);
 
     private:
