@@ -157,17 +157,21 @@ void CPU::addImmediateUnsigned(const Instruction &instruction)
     setReg(instruction.i.rt, res);
 }
 
-void CPU::addWord(const Instruction &instruction)
+void CPU::substractWordUnsigned(const Instruction &instruction)
 {
     uint32_t left = getReg(instruction.r.rs);
     uint32_t right = getReg(instruction.r.rt);
-    uint32_t tmp = left + right;
+    uint32_t tmp = left - right;
 
-    if (addOverflow(left, right))
-    {
-        // Overflow: need to raise exception on the system
-        return;
-    }
+    setReg(instruction.r.rd, tmp);
+}
+
+void CPU::addWord(const Instruction &instruction)
+{
+    uint32_t left = getReg(instruction.r.rt);
+    uint32_t right = getReg(instruction.r.rs);
+    uint32_t tmp = left - right;
+
     setReg(instruction.r.rd, tmp);
 }
 
