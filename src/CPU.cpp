@@ -10,6 +10,13 @@
 
 #include "Disassembler.h"
 
+static const std::string m_registerNames[32] = {
+    "zero", "at", "v0", "v1", "a0", "a1", "a2", "a3",
+    "t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7",
+    "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7",
+    "t8", "t9", "k0", "k1", "gp", "sp", "fp", "ra"
+};
+
 static void printInstruction(const Instruction &inst)
 {
     switch (inst.r.opcode)
@@ -64,7 +71,7 @@ void CPU::step()
 {
     Instruction instruction = fetchInstruction();
 
-    std::cout << Disassembler::disassemble(m_pc, instruction) << std::endl;
+    // std::cout << Disassembler::disassemble(m_pc, instruction) << std::endl;
     executeInstruction(instruction);
     // printInstruction(instruction);
     // debugState();
@@ -72,14 +79,9 @@ void CPU::step()
 
 Instruction CPU::fetchInstruction()
 {
-    uint32_t instruction = loadWord(m_pc);
+    uint32_t instruction = m_bus.loadWord(m_pc);
     m_pc += 4;
     return (Instruction){.raw=instruction};
-}
-
-uint32_t CPU::loadWord(uint32_t addr)
-{
-    return m_bus.loadWord(addr);
 }
 
 void CPU::executeInstruction(const Instruction &instruction)
@@ -281,8 +283,9 @@ void CPU::shiftLeftLogical(const Instruction &instruction)
 
 void CPU::addImmediateUnsigned(const Instruction &instruction)
 {
-    int32_t imm = (int16_t)instruction.i.immediate;
-    uint32_t res = getReg(instruction.i.rs) + imm;
+    uint32_t imm = static_cast<int16_t>(instruction.i.immediate);
+    uint32_t val = getReg(instruction.i.rs);
+    uint32_t res = val + imm;
 
     setReg(instruction.i.rt, res);
 }
@@ -305,7 +308,7 @@ void CPU::substractWord(const Instruction &instruction)
     if (subOverflow(left, right))
     {
         // Overflow: need to raise exception on the system
-        std::cout << "Substraction overflow!" << std::endl;
+        std::cout << "Substraction overflow! : TODO Raise Exception" << std::endl;
         return;
     }
     setReg(instruction.r.rd, tmp);
@@ -320,7 +323,7 @@ void CPU::addWord(const Instruction &instruction)
     if (addOverflow(left, right))
     {
         // Overflow: need to raise exception on the system
-        std::cout << "Addition overflow!" << std::endl;
+        std::cout << "Addition overflow! : TODO Raise Exception : TODO Raise Exception" << std::endl;
         return;
     }
     setReg(instruction.r.rd, tmp);
@@ -338,13 +341,14 @@ void CPU::addWordUnsigned(const Instruction &instruction)
 void CPU::addImmediate(const Instruction &instruction)
 {
     uint32_t left = getReg(instruction.i.rs);
-    uint32_t imm = static_cast<int32_t>(getReg(instruction.i.immediate));
+    uint32_t imm = static_cast<int16_t>(instruction.i.immediate);
     uint32_t tmp = left + imm;
 
     if (addOverflow(left, imm))
     {
         // Overflow: need to raise exception on the system
-        std::cout << "Addition overflow!" << std::endl;
+        // Do not modify register on overflow
+        std::cout << "Addition overflow! : TODO Raise Exception" << std::endl;
         return;
     }
     setReg(instruction.i.rt, tmp);
@@ -381,7 +385,7 @@ void CPU::norWord(const Instruction &instruction)
 {
     uint32_t left = getReg(instruction.r.rs);
     uint32_t right = getReg(instruction.r.rt);
-    uint32_t res = !(left | right);
+    uint32_t res = ~(left | right);
 
     setReg(instruction.r.rd, res);
 }
