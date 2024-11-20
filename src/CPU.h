@@ -55,7 +55,12 @@ enum class PrimaryOpCode
     LUI = 0x0F,
     SW = 0x2B,
     SH = 0x29,
-    SB = 0x28
+    SB = 0x28,
+    LW = 0x23,
+    LH = 0x21,
+    LHU = 0x25,
+    LB = 0x20,
+    LBU = 0x24
 };
 
 enum class SecondaryOpCode
@@ -69,7 +74,7 @@ enum class SecondaryOpCode
     AND = 0x24,
     OR = 0x25,
     XOR = 0x26,
-    NOR = 0x27,
+    NOR = 0x27
 };
 
 class CPU
@@ -88,6 +93,13 @@ class CPU
         // Instructions
         void loadUpperImmediate(const Instruction &instruction);
         void shiftLeftLogical(const Instruction &instruction);
+
+        // Load instructions
+        void loadWord(const Instruction &instruction);
+        void loadHalfWord(const Instruction &instruction);
+        void loadByte(const Instruction &instruction);
+        void loadByteUnsigned(const Instruction &instruction);
+        void loadHalfWordUnsigned(const Instruction &instruction);
 
         // Store instructions
         void storeWord(const Instruction &instruction);
