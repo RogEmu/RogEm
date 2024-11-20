@@ -21,6 +21,8 @@ class BIOS
         ~BIOS();
 
         uint32_t loadWord(uint32_t off) const;
+        uint16_t loadHalfWord(uint32_t off) const;
+        uint8_t loadByte(uint32_t off) const;
         bool loadFromFile(const std::string &path);
         void dump(void) const;
 

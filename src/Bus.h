@@ -34,6 +34,10 @@ class Bus
 
         uint32_t loadWord(uint32_t addr) const;
         void storeWord(uint32_t addr, uint32_t value);
+        uint16_t loadHalfWord(uint32_t addr) const;
+        void storeHalfWord(uint32_t addr, uint16_t value);
+        uint8_t loadByte(uint32_t addr) const;
+        void storeByte(uint32_t addr, uint8_t value);
 
     private:
         BIOS m_bios;

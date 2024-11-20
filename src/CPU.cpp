@@ -65,6 +65,9 @@ void CPU::executeInstruction(const Instruction &instruction)
     case 0x2B:
         storeWord(instruction);
         break;
+    case 0x09:
+        addImmediateUnsigned(instruction);
+        break;
     case 0x00:
         switch (instruction.r.funct)
         {
@@ -114,6 +117,24 @@ void CPU::storeWord(const Instruction &instruction)
     uint32_t value = getReg(instruction.i.rt);
 
     m_bus.storeWord(address, value);
+}
+
+void CPU::storeHalfWord(const Instruction &instruction)
+{
+    int32_t imm = (int16_t)instruction.i.immediate;
+    uint32_t address = getReg(instruction.i.rs) + imm;
+    uint16_t value = getReg(instruction.i.rt);
+
+    m_bus.storeHalfWord(address, value);
+}
+
+void CPU::storeByte(const Instruction &instruction)
+{
+    int32_t imm = (int16_t)instruction.i.immediate;
+    uint32_t address = getReg(instruction.i.rs) + imm;
+    uint8_t value = getReg(instruction.i.rt);
+
+    m_bus.storeByte(address, value);
 }
 
 void CPU::shiftLeftLogical(const Instruction &instruction)

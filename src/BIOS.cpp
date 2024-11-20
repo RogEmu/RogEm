@@ -28,6 +28,18 @@ uint32_t BIOS::loadWord(uint32_t off) const
     return b4 | b3 | b2 | b1;
 }
 
+uint16_t BIOS::loadHalfWord(uint32_t off) const
+{
+    uint16_t b1 = m_data[off];
+    uint16_t b2 = m_data[off + 1] << 8;
+    return b2 | b1;
+}
+
+uint8_t BIOS::loadByte(uint32_t off) const
+{
+    return m_data[off];
+}
+
 bool BIOS::loadFromFile(const std::string &path)
 {
     std::ifstream file(path, std::ios_base::in | std::ios_base::binary);
