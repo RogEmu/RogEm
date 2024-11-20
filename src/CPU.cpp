@@ -57,13 +57,24 @@ void CPU::executeInstruction(const Instruction &instruction)
     switch (instruction.r.opcode)
     {
     case 0x0F:
-        loadImmediateUpper(instruction);
+        loadUpperImmediate(instruction);
         break;
     case 0x0D:
         orImmediate(instruction);
         break;
     case 0x2B:
         storeWord(instruction);
+        break;
+    case 0x00:
+        switch (instruction.r.funct)
+        {
+        case 0x00:
+            shiftLeftLogical(instruction);
+            break;
+        default:
+            illegalInstruction(instruction);
+            break;
+        }
         break;
     default:
         illegalInstruction(instruction);
@@ -82,7 +93,7 @@ void CPU::setReg(uint8_t reg, uint32_t val)
     m_registers[0] = 0;
 }
 
-void CPU::loadImmediateUpper(const Instruction &instruction)
+void CPU::loadUpperImmediate(const Instruction &instruction)
 {
     uint32_t res = instruction.i.immediate;
     res = res << 16;
@@ -103,6 +114,21 @@ void CPU::storeWord(const Instruction &instruction)
     uint32_t value = getReg(instruction.i.rt);
 
     m_bus.storeWord(address, value);
+}
+
+void CPU::shiftLeftLogical(const Instruction &instruction)
+{
+    uint32_t res = getReg(instruction.r.rt) << instruction.r.shamt;
+
+    setReg(instruction.r.rd, res);
+}
+
+void CPU::addImmediateUnsigned(const Instruction &instruction)
+{
+    int32_t imm = (int16_t)instruction.i.immediate;
+    uint32_t res = getReg(instruction.i.rs) + imm;
+
+    setReg(instruction.i.rt, res);
 }
 
 void CPU::illegalInstruction(const Instruction &instruction)
