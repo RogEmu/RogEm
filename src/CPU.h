@@ -73,6 +73,9 @@ class CPU
         void substractWordUnsigned(const Instruction &instruction);
         void substractWord(const Instruction &instruction);
 
+        // Logic Instructions
+        void andWord(const Instruction &instruction);
+
         void illegalInstruction(const Instruction &instruction);
 
     private:
