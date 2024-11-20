@@ -56,9 +56,11 @@ class CPU
         void setReg(uint8_t reg, uint32_t val);
 
         // Instructions
-        void loadImmediateUpper(const Instruction &instruction);
+        void loadUpperImmediate(const Instruction &instruction);
         void orImmediate(const Instruction &instruction);
         void storeWord(const Instruction &instruction);
+        void shiftLeftLogical(const Instruction &instruction);
+        void addImmediateUnsigned(const Instruction &instruction);
 
         void illegalInstruction(const Instruction &instruction);
 
