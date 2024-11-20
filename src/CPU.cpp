@@ -234,6 +234,33 @@ void CPU::andWord(const Instruction &instruction)
     setReg(instruction.r.rd, res);
 }
 
+void CPU::orWord(const Instruction &instruction)
+{
+    uint32_t left = getReg(instruction.r.rs);
+    uint32_t right = getReg(instruction.r.rt);
+    uint32_t res = left | right;
+
+    setReg(instruction.r.rd, res);
+}
+
+void CPU::xorWord(const Instruction &instruction)
+{
+    uint32_t left = getReg(instruction.r.rs);
+    uint32_t right = getReg(instruction.r.rt);
+    uint32_t res = left ^ right;
+
+    setReg(instruction.r.rd, res);
+}
+
+void CPU::norWord(const Instruction &instruction)
+{
+    uint32_t left = getReg(instruction.r.rs);
+    uint32_t right = getReg(instruction.r.rt);
+    uint32_t res = !(left | right);
+
+    setReg(instruction.r.rd, res);
+}
+
 void CPU::illegalInstruction(const Instruction &instruction)
 {
     fprintf(stderr, "Illegal instruction: ");
