@@ -142,6 +142,12 @@ void CPU::executeInstruction(const Instruction &instruction)
     case PrimaryOpCode::LWL:
         loadWordLeft(instruction);
         break;
+    case PrimaryOpCode::SLTI:
+        setOnLessThanImmediate(instruction);
+        break;
+    case PrimaryOpCode::SLTIU:
+        setOnLessThanImmediateUnsigned(instruction);
+        break;
     case PrimaryOpCode::SPECIAL:
         specialInstruction(instruction);
         break;
@@ -181,6 +187,12 @@ void CPU::specialInstruction(const Instruction &instruction)
         break;
     case SecondaryOpCode::ADD:
         addWord(instruction);
+        break;
+    case SecondaryOpCode::SLT:
+        setOnLessThan(instruction);
+        break;
+    case SecondaryOpCode::SLTU:
+        setOnLessThanUnsigned(instruction);
         break;
     default:
         illegalInstruction(instruction);
@@ -486,6 +498,41 @@ void CPU::storeWordLeft(const Instruction &instruction)
     m_bus.storeWord(address & ~3, res);
 }
 
+void CPU::setOnLessThan(const Instruction &instruction)
+{
+    int32_t left = getReg(instruction.r.rs);
+    int32_t right = getReg(instruction.r.rt);
+    int32_t res = left < right ? 1 : 0;
+
+    setReg(instruction.r.rd, res);
+}
+
+void CPU::setOnLessThanUnsigned(const Instruction &instruction)
+{
+    uint32_t left = getReg(instruction.r.rs);
+    uint32_t right = getReg(instruction.r.rt);
+    int32_t res = left < right ? 1 : 0;
+
+    setReg(instruction.r.rd, res);
+}
+
+void CPU::setOnLessThanImmediate(const Instruction &instruction)
+{
+    int32_t left = getReg(instruction.i.rs);
+    int32_t right = static_cast<int16_t>(instruction.i.immediate);
+    int32_t res = left < right ? 1 : 0;
+
+    setReg(instruction.i.rt, res);
+}
+
+void CPU::setOnLessThanImmediateUnsigned(const Instruction &instruction)
+{
+    uint32_t left = getReg(instruction.i.rs);
+    uint32_t right = static_cast<uint32_t>(static_cast<int16_t>(instruction.i.immediate));
+    int32_t res = left < right ? 1 : 0;
+
+    setReg(instruction.i.rt, res);
+}
 
 void CPU::jump(const Instruction &instruction)
 {

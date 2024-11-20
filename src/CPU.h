@@ -65,6 +65,8 @@ enum class PrimaryOpCode
     SWL = 0x2A,
     SW = 0x2B,
     SWR = 0x2E,
+    SLTI = 0x0A,
+    SLTIU = 0x0B,
 };
 
 enum class SecondaryOpCode
@@ -78,7 +80,9 @@ enum class SecondaryOpCode
     AND = 0x24,
     OR = 0x25,
     XOR = 0x26,
-    NOR = 0x27
+    NOR = 0x27,
+    SLT = 0x2A,
+    SLTU = 0x2B,
 };
 
 class CPU
@@ -100,9 +104,9 @@ class CPU
 
         // Load instructions
         void loadWord(const Instruction &instruction);
-        void loadHalfWord(const Instruction &instruction);
         void loadByte(const Instruction &instruction);
         void loadByteUnsigned(const Instruction &instruction);
+        void loadHalfWord(const Instruction &instruction);
         void loadHalfWordUnsigned(const Instruction &instruction);
 
         // Unaligned Load Instructions
@@ -125,6 +129,12 @@ class CPU
 
         void substractWordUnsigned(const Instruction &instruction);
         void substractWord(const Instruction &instruction);
+
+        // Comparison Instructions
+        void setOnLessThan(const Instruction &instruction);
+        void setOnLessThanImmediate(const Instruction &instruction);
+        void setOnLessThanUnsigned(const Instruction &instruction);
+        void setOnLessThanImmediateUnsigned(const Instruction &instruction);
 
         // Logic Instructions
         void andWord(const Instruction &instruction);
