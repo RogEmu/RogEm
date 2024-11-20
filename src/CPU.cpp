@@ -325,6 +325,21 @@ void CPU::addWordUnsigned(const Instruction &instruction)
     setReg(instruction.r.rd, tmp);
 }
 
+void CPU::addImmediate(const Instruction &instruction)
+{
+    uint32_t left = getReg(instruction.i.rs);
+    uint32_t imm = static_cast<int32_t>(getReg(instruction.i.immediate));
+    uint32_t tmp = left + imm;
+
+    if (addOverflow(left, imm))
+    {
+        // Overflow: need to raise exception on the system
+        std::cout << "Addition overflow!" << std::endl;
+        return;
+    }
+    setReg(instruction.i.rt, tmp);
+}
+
 void CPU::andWord(const Instruction &instruction)
 {
     uint32_t left = getReg(instruction.r.rs);

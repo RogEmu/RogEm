@@ -56,6 +56,7 @@ class CPU
         // Arithmetic Instructions
         void addWord(const Instruction &instruction);
         void addWordUnsigned(const Instruction &instruction);
+        void addImmediate(const Instruction &instruction);
         void addImmediateUnsigned(const Instruction &instruction);
 
         void substractWordUnsigned(const Instruction &instruction);
