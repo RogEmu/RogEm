@@ -75,6 +75,9 @@ class CPU
 
         // Logic Instructions
         void andWord(const Instruction &instruction);
+        void orWord(const Instruction &instruction);
+        void xorWord(const Instruction &instruction);
+        void norWord(const Instruction &instruction);
 
         void illegalInstruction(const Instruction &instruction);
 
