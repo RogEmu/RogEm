@@ -42,6 +42,35 @@ union Instruction {
     } j;
 };
 
+enum class PrimaryOpCode
+{
+    ILLEGAL = -1,
+    SPECIAL = 0x00,
+    J = 0x02,
+    ADDIU = 0x09,
+    ANDI = 0x0C,
+    ORI = 0x0D,
+    XORI = 0x0E,
+    LUI = 0x0F,
+    SW = 0x2B,
+    SH = 0x29,
+    SB = 0x28
+};
+
+enum class SecondaryOpCode
+{
+    ILLEGAL = -1,
+    SLL = 0x00,
+    ADD = 0x20,
+    ADDU = 0x21,
+    SUB = 0x22,
+    SUBU = 0x23,
+    AND = 0x24,
+    OR = 0x25,
+    XOR = 0x26,
+    NOR = 0x27,
+};
+
 class CPU
 {
     public:
@@ -57,7 +86,6 @@ class CPU
 
         // Instructions
         void loadUpperImmediate(const Instruction &instruction);
-        void orImmediate(const Instruction &instruction);
         void shiftLeftLogical(const Instruction &instruction);
 
         // Store instructions
@@ -78,8 +106,15 @@ class CPU
         void orWord(const Instruction &instruction);
         void xorWord(const Instruction &instruction);
         void norWord(const Instruction &instruction);
+        void andImmediateWord(const Instruction &instruction);
+        void orImmediateWord(const Instruction &instruction);
+        void xorImmediateWord(const Instruction &instruction);
+
+        // Jump Instructions
+        void jump(const Instruction &instruction);
 
         void illegalInstruction(const Instruction &instruction);
+        void specialInstruction(const Instruction &instruction);
 
     private:
         // General purpose registers
