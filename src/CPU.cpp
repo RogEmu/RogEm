@@ -8,6 +8,8 @@
 #include "CPU.h"
 #include <iostream>
 
+#include "Disassembler.h"
+
 static void printCopInstruction(const Instruction &i)
 {
     
@@ -67,9 +69,10 @@ void CPU::step()
 {
     Instruction instruction = fetchInstruction();
 
+    std::cout << Disassembler::disassemble(m_pc, instruction) << std::endl;
     executeInstruction(instruction);
-    printInstruction(instruction);
-    debugState();
+    // printInstruction(instruction);
+    // debugState();
 }
 
 Instruction CPU::fetchInstruction()

@@ -3,6 +3,7 @@ set(SRC_FILES
     BIOS.cpp
     Bus.cpp
     CPU.cpp
+    Disassembler.cpp
 )
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
