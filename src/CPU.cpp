@@ -12,13 +12,14 @@ static void printInstruction(Instruction inst)
 {
     switch (inst.r.opcode)
     {
-    case 0x0:
+    case 0x00:
         printf("op:0x%02X rs:0x%02X rt:0x%02X rd:0x%02X shamt:0x%02X func:0x%02X\n",
         inst.r.opcode, inst.r.rs, inst.r.rt, inst.r.rd, inst.r.shamt, inst.r.funct);
         break;
     case 0x02:
     case 0x03:
         printf("op:0x%02X addr:0x%08X\n", inst.j.opcode, inst.j.address);
+        break;
     default:
         printf("op:0x%02X rs:0x%02X rt:0x%02X imm:0x%04X\n", inst.i.opcode, inst.i.rs, inst.i.rt, inst.i.immediate);
         break;
@@ -63,6 +64,7 @@ void CPU::step()
 
     executeInstruction(instruction);
     printInstruction(instruction);
+    printf("-> PC: %08X\n", m_pc);
 }
 
 Instruction CPU::fetchInstruction()
@@ -79,30 +81,41 @@ uint32_t CPU::loadWord(uint32_t addr)
 
 void CPU::executeInstruction(const Instruction &instruction)
 {
-    switch (instruction.r.opcode)
+    switch (static_cast<PrimaryOpCode>(instruction.r.opcode))
     {
-    case 0x0F:
+    case PrimaryOpCode::LUI:
         loadUpperImmediate(instruction);
         break;
-    case 0x0D:
-        orImmediate(instruction);
+    case PrimaryOpCode::ORI:
+        orImmediateWord(instruction);
         break;
-    case 0x2B:
+    case PrimaryOpCode::SW:
         storeWord(instruction);
         break;
-    case 0x09:
+    case PrimaryOpCode::ADDIU:
         addImmediateUnsigned(instruction);
         break;
-    case 0x00:
-        switch (instruction.r.funct)
-        {
-        case 0x00:
-            shiftLeftLogical(instruction);
-            break;
-        default:
-            illegalInstruction(instruction);
-            break;
-        }
+    case PrimaryOpCode::J:
+        jump(instruction);
+        break;
+    case PrimaryOpCode::SPECIAL:
+        specialInstruction(instruction);
+        break;
+    default:
+        illegalInstruction(instruction);
+        break;
+    }
+}
+
+void CPU::specialInstruction(const Instruction &instruction)
+{
+    switch (static_cast<SecondaryOpCode>(instruction.r.funct))
+    {
+    case SecondaryOpCode::SLL:
+        shiftLeftLogical(instruction);
+        break;
+    case SecondaryOpCode::OR:
+        orWord(instruction);
         break;
     default:
         illegalInstruction(instruction);
@@ -125,13 +138,6 @@ void CPU::loadUpperImmediate(const Instruction &instruction)
 {
     uint32_t res = instruction.i.immediate;
     res = res << 16;
-    setReg(instruction.i.rt, res);
-}
-
-void CPU::orImmediate(const Instruction &instruction)
-{
-    uint32_t res = getReg(instruction.i.rs) | instruction.i.immediate;
-
     setReg(instruction.i.rt, res);
 }
 
@@ -259,6 +265,32 @@ void CPU::norWord(const Instruction &instruction)
     uint32_t res = !(left | right);
 
     setReg(instruction.r.rd, res);
+}
+
+void CPU::andImmediateWord(const Instruction &instruction)
+{
+    uint32_t res = getReg(instruction.i.rs) & (int32_t)instruction.i.immediate;
+
+    setReg(instruction.i.rt, res);
+}
+
+void CPU::orImmediateWord(const Instruction &instruction)
+{
+    uint32_t res = getReg(instruction.i.rs) | (int32_t)instruction.i.immediate;
+
+    setReg(instruction.i.rt, res);
+}
+
+void CPU::xorImmediateWord(const Instruction &instruction)
+{
+    uint32_t res = getReg(instruction.i.rs) ^ (int32_t)instruction.i.immediate;
+
+    setReg(instruction.i.rt, res);
+}
+
+void CPU::jump(const Instruction &instruction)
+{
+    m_pc = (m_pc & 0xF0000000) | (((uint32_t)instruction.j.address) << 2);
 }
 
 void CPU::illegalInstruction(const Instruction &instruction)
