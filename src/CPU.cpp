@@ -71,7 +71,7 @@ void CPU::step()
 {
     Instruction instruction = fetchInstruction();
 
-    // std::cout << Disassembler::disassemble(m_pc, instruction) << std::endl;
+    std::cout << Disassembler::disassemble(m_pc, instruction) << std::endl;
     executeInstruction(instruction);
     // printInstruction(instruction);
     // debugState();
@@ -81,7 +81,7 @@ Instruction CPU::fetchInstruction()
 {
     uint32_t instruction = m_bus.loadWord(m_pc);
     m_pc += 4;
-    return (Instruction){.raw=instruction};
+    return Instruction{.raw=instruction};
 }
 
 void CPU::executeInstruction(const Instruction &instruction)

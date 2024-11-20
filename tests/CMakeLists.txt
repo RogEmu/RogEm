@@ -5,6 +5,7 @@ set(SRC_FILES
     ${CMAKE_SOURCE_DIR}/src/BIOS.cpp
     ${CMAKE_SOURCE_DIR}/src/Bus.cpp
     ${CMAKE_SOURCE_DIR}/src/CPU.cpp
+    ${CMAKE_SOURCE_DIR}/src/Disassembler.cpp
 )
 
 add_executable(
@@ -21,6 +22,7 @@ target_link_libraries(
     ${TEST_BINARY_NAME}
     GTest::gtest_main
     gcov
+    fmt
 )
 target_include_directories(${TEST_BINARY_NAME} PUBLIC
     ${CMAKE_SOURCE_DIR}/src
