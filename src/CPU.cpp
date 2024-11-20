@@ -103,6 +103,33 @@ void CPU::executeInstruction(const Instruction &instruction)
     case PrimaryOpCode::J:
         jump(instruction);
         break;
+    case PrimaryOpCode::LW:
+        loadWord(instruction);
+        break;
+    case PrimaryOpCode::SH:
+        storeHalfWord(instruction);
+        break;
+    case PrimaryOpCode::LB:
+        loadByte(instruction);
+        break;
+    case PrimaryOpCode::LBU:
+        loadByteUnsigned(instruction);
+        break;
+    case PrimaryOpCode::LHU:
+        loadHalfWordUnsigned(instruction);
+        break;
+    case PrimaryOpCode::XORI:
+        xorImmediateWord(instruction);
+        break;
+    case PrimaryOpCode::ANDI:
+        andImmediateWord(instruction);
+        break;
+    case PrimaryOpCode::SB:
+        storeByte(instruction);
+        break;
+    case PrimaryOpCode::LH:
+        loadHalfWord(instruction);
+        break;
     case PrimaryOpCode::SPECIAL:
         specialInstruction(instruction);
         break;
@@ -121,6 +148,27 @@ void CPU::specialInstruction(const Instruction &instruction)
         break;
     case SecondaryOpCode::OR:
         orWord(instruction);
+        break;
+    case SecondaryOpCode::XOR:
+        xorWord(instruction);
+        break;
+    case SecondaryOpCode::NOR:
+        norWord(instruction);
+        break;
+    case SecondaryOpCode::ADDU:
+        addWordUnsigned(instruction);
+        break;
+    case SecondaryOpCode::SUBU:
+        substractWordUnsigned(instruction);
+        break;
+    case SecondaryOpCode::AND:
+        andWord(instruction);
+        break;
+    case SecondaryOpCode::SUB:
+        substractWord(instruction);
+        break;
+    case SecondaryOpCode::ADD:
+        addWord(instruction);
         break;
     default:
         illegalInstruction(instruction);
@@ -306,6 +354,70 @@ void CPU::xorImmediateWord(const Instruction &instruction)
 
     setReg(instruction.i.rt, res);
 }
+
+void CPU::loadWord(const Instruction &instruction)
+{
+    int32_t imm = static_cast<int16_t>(instruction.i.immediate);
+    uint32_t address = getReg(instruction.i.rs) + imm;
+
+    if (address % 4 != 0) {
+        // Misaligned: need to raise exception on the system
+        std::cout << "Address is misaligned,!" << std::endl;
+        return;
+    }
+
+    uint32_t value = m_bus.loadWord(address);
+    setReg(instruction.i.rt, value);  // No sign extension needed for 32-bit word load
+}
+
+void CPU::loadHalfWord(const Instruction &instruction)
+{
+    int32_t imm = static_cast<int16_t>(instruction.i.immediate);
+    uint32_t address = getReg(instruction.i.rs) + imm;
+
+    if (address % 2 != 0) {
+        // Misaligned: need to raise exception on the system
+        std::cout << "Address is misaligned,!" << std::endl;
+        return;
+    }
+
+    int16_t value = static_cast<int16_t>(m_bus.loadHalfWord(address));  // Sign-extend
+    setReg(instruction.i.rt, static_cast<int32_t>(value));
+}
+
+void CPU::loadHalfWordUnsigned(const Instruction &instruction)
+{
+    int32_t imm = static_cast<int16_t>(instruction.i.immediate);
+    uint32_t address = getReg(instruction.i.rs) + imm;
+
+    if (address % 2 != 0) {
+        // Misaligned: need to raise exception on the system
+        std::cout << "Address is misaligned,!" << std::endl;
+        return;
+    }
+
+    uint16_t value = m_bus.loadHalfWord(address);
+    setReg(instruction.i.rt, static_cast<uint32_t>(value));
+}
+
+void CPU::loadByte(const Instruction &instruction)
+{
+    int32_t imm = static_cast<int16_t>(instruction.i.immediate);
+    uint32_t address = getReg(instruction.i.rs) + imm;
+
+    int8_t value = static_cast<int8_t>(m_bus.loadByte(address));
+    setReg(instruction.i.rt, static_cast<int32_t>(value));
+}
+
+void CPU::loadByteUnsigned(const Instruction &instruction)
+{
+    int32_t imm = static_cast<int16_t>(instruction.i.immediate);
+    uint32_t address = getReg(instruction.i.rs) + imm;
+
+    uint8_t value = m_bus.loadByte(address);
+    setReg(instruction.i.rt, static_cast<uint32_t>(value));
+}
+
 
 void CPU::jump(const Instruction &instruction)
 {
