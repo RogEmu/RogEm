@@ -130,6 +130,18 @@ void CPU::executeInstruction(const Instruction &instruction)
     case PrimaryOpCode::LH:
         loadHalfWord(instruction);
         break;
+    case PrimaryOpCode::SWR:
+        storeWordRight(instruction);
+        break;
+    case PrimaryOpCode::SWL:
+        storeWordLeft(instruction);
+        break;
+    case PrimaryOpCode::LWR:
+        loadWordRight(instruction);
+        break;
+    case PrimaryOpCode::LWL:
+        loadWordLeft(instruction);
+        break;
     case PrimaryOpCode::SPECIAL:
         specialInstruction(instruction);
         break;
@@ -416,6 +428,62 @@ void CPU::loadByteUnsigned(const Instruction &instruction)
 
     uint8_t value = m_bus.loadByte(address);
     setReg(instruction.i.rt, static_cast<uint32_t>(value));
+}
+
+void CPU::loadWordRight(const Instruction &instruction)
+{
+    int32_t imm = static_cast<int16_t>(instruction.i.immediate);
+    uint32_t address = getReg(instruction.i.rs) + imm;
+    uint32_t value = m_bus.loadWord(address & ~3);
+
+    uint32_t shift = (address & 3) * 8;
+    uint32_t mask = 0xFFFFFFFF >> shift;
+    uint32_t right = (value << shift) & mask;
+
+    uint32_t res = (getReg(instruction.i.rt) & ~mask) | right;
+    setReg(instruction.i.rt, res);
+}
+
+void CPU::loadWordLeft(const Instruction &instruction)
+{
+    int32_t imm = static_cast<int16_t>(instruction.i.immediate);
+    uint32_t address = getReg(instruction.i.rs) + imm;
+    uint32_t value = m_bus.loadWord(address & ~3);
+
+    uint32_t shift = (3 - (address & 3)) * 8;
+    uint32_t mask = 0xFFFFFFFF << shift;
+    uint32_t left = (value >> shift) & mask;
+
+    uint32_t res = (getReg(instruction.i.rt) & ~mask) | left;
+    setReg(instruction.i.rt, res);
+}
+
+void CPU::storeWordRight(const Instruction &instruction)
+{
+    int32_t imm = static_cast<int16_t>(instruction.i.immediate);
+    uint32_t address = getReg(instruction.i.rs) + imm;
+    uint32_t value = getReg(instruction.i.rt);
+
+    uint32_t shift = (address & 3) * 8;
+    uint32_t mask = 0xFFFFFFFF >> shift;
+    uint32_t oldValue = m_bus.loadWord(address & ~3);
+
+    uint32_t res = (oldValue & ~mask) | ((value << shift) & mask);
+    m_bus.storeWord(address & ~3, res);
+}
+
+void CPU::storeWordLeft(const Instruction &instruction)
+{
+    int32_t imm = static_cast<int16_t>(instruction.i.immediate);
+    uint32_t address = getReg(instruction.i.rs) + imm;
+    uint32_t value = getReg(instruction.i.rt);
+
+    uint32_t shift = (3 - (address & 3)) * 8;
+    uint32_t mask = 0xFFFFFFFF << shift;
+    uint32_t oldValue = m_bus.loadWord(address & ~3);
+
+    uint32_t res = (oldValue & ~mask) | ((value >> shift) & mask);
+    m_bus.storeWord(address & ~3, res);
 }
 
 
