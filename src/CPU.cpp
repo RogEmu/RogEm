@@ -27,7 +27,27 @@ static void printInstruction(Instruction inst)
 
 static bool addOverflow(int32_t a, int32_t b)
 {
-    return ((uint32_t)(a + b) < a);
+    uint32_t res = a + b;
+    int32_t signedResult = (int32_t)res;
+
+    if ((a > 0 && b > 0 && signedResult < 0) || // Positive overflow
+        (a < 0 && b < 0 && signedResult > 0)) { // Negative overflow
+        return true;
+    }
+    return false;
+}
+
+static bool subOverflow(int32_t a, int32_t b)
+{
+    uint32_t res = a - b;
+    int32_t signedResult = (int32_t)res;
+
+    // Check for overflow conditions
+    if ((a > 0 && b < 0 && signedResult < 0) || // Positive overflow
+        (a < 0 && b > 0 && signedResult > 0)) { // Negative overflow
+        return true;
+    }
+    return false;
 }
 
 CPU::CPU(const Bus &bus) :
@@ -166,12 +186,33 @@ void CPU::substractWordUnsigned(const Instruction &instruction)
     setReg(instruction.r.rd, tmp);
 }
 
-void CPU::addWord(const Instruction &instruction)
+void CPU::substractWord(const Instruction &instruction)
 {
-    uint32_t left = getReg(instruction.r.rt);
-    uint32_t right = getReg(instruction.r.rs);
+    uint32_t left = getReg(instruction.r.rs);
+    uint32_t right = getReg(instruction.r.rt);
     uint32_t tmp = left - right;
 
+    if (subOverflow(left, right))
+    {
+        // Overflow: need to raise exception on the system
+        std::cout << "Substraction overflow!" << std::endl;
+        return;
+    }
+    setReg(instruction.r.rd, tmp);
+}
+
+void CPU::addWord(const Instruction &instruction)
+{
+    uint32_t left = getReg(instruction.r.rs);
+    uint32_t right = getReg(instruction.r.rt);
+    uint32_t tmp = left + right;
+
+    if (addOverflow(left, right))
+    {
+        // Overflow: need to raise exception on the system
+        std::cout << "Addition overflow!" << std::endl;
+        return;
+    }
     setReg(instruction.r.rd, tmp);
 }
 

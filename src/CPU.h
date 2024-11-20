@@ -71,6 +71,7 @@ class CPU
         void addImmediateUnsigned(const Instruction &instruction);
 
         void substractWordUnsigned(const Instruction &instruction);
+        void substractWord(const Instruction &instruction);
 
         void illegalInstruction(const Instruction &instruction);
 
