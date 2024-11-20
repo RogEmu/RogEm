@@ -10,6 +10,11 @@
 #include <iostream>
 #include <iomanip>
 
+BIOS::BIOS()
+{
+    m_data.fill(0);
+}
+
 BIOS::BIOS(const std::string &path)
 {
     loadFromFile(path);
