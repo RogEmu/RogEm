@@ -9,6 +9,7 @@
 #define CPU_H_
 
 #include <cstdint>
+#include <iomanip>
 #include "Bus.h"
 
 #define RESET_VECTOR 0xBFC00000
@@ -117,6 +118,9 @@ class CPU
         void specialInstruction(const Instruction &instruction);
 
     private:
+        void debugState() const;
+
+    private:
         // General purpose registers
         uint32_t m_registers[NB_GPR];
 
@@ -126,6 +130,13 @@ class CPU
         uint32_t m_lo;
 
         Bus m_bus;
+
+        const std::string m_registerNames[32] = {
+            "zero", "at", "v0", "v1", "a0", "a1", "a2", "a3",
+            "t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7",
+            "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7",
+            "t8", "t9", "k0", "k1", "gp", "sp", "fp", "ra"
+        };
 };
 
 #endif /* !CPU_H_ */
