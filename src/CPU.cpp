@@ -10,11 +10,6 @@
 
 #include "Disassembler.h"
 
-static void printCopInstruction(const Instruction &i)
-{
-    
-}
-
 static void printInstruction(const Instruction &inst)
 {
     switch (inst.r.opcode)
