@@ -192,6 +192,21 @@ void CPU::specialInstruction(const Instruction &instruction)
     case SecondaryOpCode::SLTU:
         setOnLessThanUnsigned(instruction);
         break;
+    case SecondaryOpCode::SLLV:
+        shiftLeftLogicalVariable(instruction);
+        break;
+    case SecondaryOpCode::SRL:
+        shiftRightLogical(instruction);
+        break;
+    case SecondaryOpCode::SRLV:
+        shiftRightLogicalVariable(instruction);
+        break;
+    case SecondaryOpCode::SRA:
+        shiftRightArithmetic(instruction);
+        break;
+    case SecondaryOpCode::SRAV:
+        shiftRightArithmeticVariable(instruction);
+        break;
     default:
         illegalInstruction(instruction);
         break;
@@ -545,6 +560,41 @@ void CPU::setOnLessThanImmediateUnsigned(const Instruction &instruction)
     int32_t res = left < right ? 1 : 0;
 
     setReg(instruction.i.rt, res);
+}
+
+void CPU::shiftLeftLogicalVariable(const Instruction &instruction)
+{
+    uint32_t res = getReg(instruction.r.rt) << (getReg(instruction.r.rs) & 0x1F);
+
+    setReg(instruction.r.rd, res);
+}
+
+void CPU::shiftRightLogical(const Instruction &instruction)
+{
+    uint32_t res = getReg(instruction.r.rt) >> instruction.r.shamt;
+
+    setReg(instruction.r.rd, res);
+}
+
+void CPU::shiftRightLogicalVariable(const Instruction &instruction)
+{
+    uint32_t res = getReg(instruction.r.rt) >> (getReg(instruction.r.rs) & 0x1F);
+
+    setReg(instruction.r.rd, res);
+}
+
+void CPU::shiftRightArithmetic(const Instruction &instruction)
+{
+    int32_t res = getReg(instruction.r.rt) >> instruction.r.shamt;
+
+    setReg(instruction.r.rd, res);
+}
+
+void CPU::shiftRightArithmeticVariable(const Instruction &instruction)
+{
+    int32_t res = getReg(instruction.r.rt) >> (getReg(instruction.r.rs) & 0x1F);
+
+    setReg(instruction.r.rd, res);
 }
 
 void CPU::jump(const Instruction &instruction)
