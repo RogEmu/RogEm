@@ -8,7 +8,12 @@
 #include "CPU.h"
 #include <iostream>
 
-static void printInstruction(Instruction inst)
+static void printCopInstruction(const Instruction &i)
+{
+    
+}
+
+static void printInstruction(const Instruction &inst)
 {
     switch (inst.r.opcode)
     {
@@ -64,7 +69,7 @@ void CPU::step()
 
     executeInstruction(instruction);
     printInstruction(instruction);
-    printf("-> PC: %08X\n", m_pc);
+    debugState();
 }
 
 Instruction CPU::fetchInstruction()
@@ -120,6 +125,20 @@ void CPU::specialInstruction(const Instruction &instruction)
     default:
         illegalInstruction(instruction);
         break;
+    }
+}
+
+void CPU::debugState() const
+ {
+    std::cout << "CPU Register State:\n";
+    std::cout << "PC : 0x" << std::hex << std::setw(8) << std::setfill('0') << m_pc << "    ";
+    std::cout << "HI : 0x" << std::setw(8) << m_hi << "    ";
+    std::cout << "LO : 0x" << std::setw(8) << m_lo << "\n";
+    for (int i = 0; i < 32; i++) {
+        std::cout << std::setw(4) << std::setfill(' ') << m_registerNames[i] << " : 0x"
+                << std::hex << std::setw(8) << std::setfill('0') << m_registers[i];
+        if (i % 4 == 3) std::cout << "\n";
+        else std::cout << "    ";
     }
 }
 
