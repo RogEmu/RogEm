@@ -1,4 +1,6 @@
 # RogEm
+[![Linux Build and Test](https://github.com/EpitechPromo2026/G-EIP-700-PAR-7-1-eip-hugo.raygade/actions/workflows/build_and_test_lin.yml/badge.svg?branch=dev)](https://github.com/EpitechPromo2026/G-EIP-700-PAR-7-1-eip-hugo.raygade/actions/workflows/build_and_test_lin.yml)
+
 Roger Jr's PS1 emulator
 
 ## What is RogEm ?
