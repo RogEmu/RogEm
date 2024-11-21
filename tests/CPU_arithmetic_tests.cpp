@@ -230,3 +230,286 @@ TEST(CpuTest, ADDIU_No_Underflow_2)
 
     EXPECT_EQ(cpu.m_registers[i.i.rt], value + imm);
 }
+
+TEST(CpuTest, SUB_1)
+{
+    BIOS bios;
+    Bus bus(bios);
+    CPU cpu(bus);
+    Instruction i;
+
+    uint32_t left = 36178;
+    uint32_t right = 9403875;
+
+    loadImmediate(cpu, 8, left);
+    loadImmediate(cpu, 9, right);
+    // rd = rs - rt;
+    i.r.rd = 10;
+    i.r.rs = 8;
+    i.r.rt = 9;
+    cpu.substractWord(i);
+
+    EXPECT_EQ(cpu.m_registers[i.r.rd], left - right);
+}
+
+TEST(CpuTest, SUB_Overflow)
+{
+    BIOS bios;
+    Bus bus(bios);
+    CPU cpu(bus);
+    Instruction i;
+
+    // Should overflow into negative integers
+    uint32_t left = INT32_MAX;
+    uint32_t right = -1;
+
+    uint32_t oldRd = cpu.getReg(10);
+    loadImmediate(cpu, 8, left);
+    loadImmediate(cpu, 9, right);
+    // rd = rs - rt;
+    i.r.rd = 10;
+    i.r.rs = 8;
+    i.r.rt = 9;
+    cpu.substractWord(i);
+
+    EXPECT_EQ(cpu.m_registers[i.r.rd], oldRd);
+}
+
+TEST(CpuTest, SUB_Overflow_2)
+{
+    BIOS bios;
+    Bus bus(bios);
+    CPU cpu(bus);
+    Instruction i;
+
+    // Should overflow into negative integers
+    uint32_t left = INT32_MAX;
+    uint32_t right = -79879;
+
+    uint32_t oldRd = cpu.getReg(10);
+    loadImmediate(cpu, 8, left);
+    loadImmediate(cpu, 9, right);
+    // rd = rs - rt;
+    i.r.rd = 10;
+    i.r.rs = 8;
+    i.r.rt = 9;
+    cpu.substractWord(i);
+
+    EXPECT_EQ(cpu.m_registers[i.r.rd], oldRd);
+}
+
+TEST(CpuTest, SUB_Underflow)
+{
+    BIOS bios;
+    Bus bus(bios);
+    CPU cpu(bus);
+    Instruction i;
+
+    // Should overflow into negative integers
+    uint32_t left = INT32_MIN;
+    uint32_t right = 1;
+
+    uint32_t oldRd = cpu.getReg(10);
+    loadImmediate(cpu, 8, left);
+    loadImmediate(cpu, 9, right);
+    // rd = rs - rt;
+    i.r.rd = 10;
+    i.r.rs = 8;
+    i.r.rt = 9;
+    cpu.substractWord(i);
+
+    EXPECT_EQ(cpu.m_registers[i.r.rd], oldRd);
+}
+
+TEST(CpuTest, SUB_Underflow_2)
+{
+    BIOS bios;
+    Bus bus(bios);
+    CPU cpu(bus);
+    Instruction i;
+
+    // Should overflow into negative integers
+    uint32_t left = INT32_MIN;
+    uint32_t right = 8790870;
+
+    uint32_t oldRd = cpu.getReg(10);
+    loadImmediate(cpu, 8, left);
+    loadImmediate(cpu, 9, right);
+    // rd = rs - rt;
+    i.r.rd = 10;
+    i.r.rs = 8;
+    i.r.rt = 9;
+    cpu.substractWord(i);
+
+    EXPECT_EQ(cpu.m_registers[i.r.rd], oldRd);
+}
+
+TEST(CpuTest, SUB_No_Overflow)
+{
+    BIOS bios;
+    Bus bus(bios);
+    CPU cpu(bus);
+    Instruction i;
+
+    // Should overflow into negative integers
+    uint32_t left = 1;
+    uint32_t right = 2;
+
+    loadImmediate(cpu, 8, left);
+    loadImmediate(cpu, 9, right);
+    // rd = rs - rt;
+    i.r.rd = 10;
+    i.r.rs = 8;
+    i.r.rt = 9;
+    cpu.substractWord(i);
+
+    EXPECT_EQ(cpu.m_registers[i.r.rd], left - right);
+}
+
+TEST(CpuTest, SUB_No_Overflow_2)
+{
+    BIOS bios;
+    Bus bus(bios);
+    CPU cpu(bus);
+    Instruction i;
+
+    // Should overflow into negative integers
+    uint32_t left = -1;
+    uint32_t right = -2;
+
+    loadImmediate(cpu, 8, left);
+    loadImmediate(cpu, 9, right);
+    // rd = rs - rt;
+    i.r.rd = 10;
+    i.r.rs = 8;
+    i.r.rt = 9;
+    cpu.substractWord(i);
+
+    EXPECT_EQ(cpu.m_registers[i.r.rd], left - right);
+}
+
+TEST(CpuTest, SUBU_1)
+{
+    BIOS bios;
+    Bus bus(bios);
+    CPU cpu(bus);
+    Instruction i;
+
+    uint32_t left = 986648768;
+    uint32_t right = -8790870;
+
+    loadImmediate(cpu, 8, left);
+    loadImmediate(cpu, 9, right);
+    // rd = rs - rt;
+    i.r.rd = 10;
+    i.r.rs = 8;
+    i.r.rt = 9;
+    cpu.substractWordUnsigned(i);
+
+    EXPECT_EQ(cpu.m_registers[i.r.rd], left - right);
+}
+
+TEST(CpuTest, SUBU_2)
+{
+    BIOS bios;
+    Bus bus(bios);
+    CPU cpu(bus);
+    Instruction i;
+
+    uint32_t left = -891840298;
+    uint32_t right = 8790870;
+
+    loadImmediate(cpu, 8, left);
+    loadImmediate(cpu, 9, right);
+    // rd = rs - rt;
+    i.r.rd = 10;
+    i.r.rs = 8;
+    i.r.rt = 9;
+    cpu.substractWordUnsigned(i);
+
+    EXPECT_EQ(cpu.m_registers[i.r.rd], left - right);
+}
+
+TEST(CpuTest, SUBU_3)
+{
+    BIOS bios;
+    Bus bus(bios);
+    CPU cpu(bus);
+    Instruction i;
+
+    uint32_t left = -891840298;
+    uint32_t right = -8790870;
+
+    loadImmediate(cpu, 8, left);
+    loadImmediate(cpu, 9, right);
+    // rd = rs - rt;
+    i.r.rd = 10;
+    i.r.rs = 8;
+    i.r.rt = 9;
+    cpu.substractWordUnsigned(i);
+
+    EXPECT_EQ(cpu.m_registers[i.r.rd], left - right);
+}
+
+TEST(CpuTest, SUBU_4)
+{
+    BIOS bios;
+    Bus bus(bios);
+    CPU cpu(bus);
+    Instruction i;
+
+    uint32_t left = -891840298;
+    uint32_t right = 8790870;
+
+    loadImmediate(cpu, 8, left);
+    loadImmediate(cpu, 9, right);
+    // rd = rs - rt;
+    i.r.rd = 10;
+    i.r.rs = 8;
+    i.r.rt = 9;
+    cpu.substractWordUnsigned(i);
+
+    EXPECT_EQ(cpu.m_registers[i.r.rd], left - right);
+}
+
+TEST(CpuTest, SUBU_No_Overflow)
+{
+    BIOS bios;
+    Bus bus(bios);
+    CPU cpu(bus);
+    Instruction i;
+
+    uint32_t left = INT32_MAX;
+    uint32_t right = -1;
+
+    loadImmediate(cpu, 8, left);
+    loadImmediate(cpu, 9, right);
+    // rd = rs - rt;
+    i.r.rd = 10;
+    i.r.rs = 8;
+    i.r.rt = 9;
+    cpu.substractWordUnsigned(i);
+
+    EXPECT_EQ(cpu.m_registers[i.r.rd], left - right);
+}
+
+TEST(CpuTest, SUBU_No_Overflow_2)
+{
+    BIOS bios;
+    Bus bus(bios);
+    CPU cpu(bus);
+    Instruction i;
+
+    uint32_t left = INT32_MIN;
+    uint32_t right = 1;
+
+    loadImmediate(cpu, 8, left);
+    loadImmediate(cpu, 9, right);
+    // rd = rs - rt;
+    i.r.rd = 10;
+    i.r.rs = 8;
+    i.r.rt = 9;
+    cpu.substractWordUnsigned(i);
+
+    EXPECT_EQ(cpu.m_registers[i.r.rd], left - right);
+}
