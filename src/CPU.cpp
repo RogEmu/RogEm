@@ -37,26 +37,19 @@ static void printInstruction(const Instruction &inst)
 
 static bool addOverflow(int32_t a, int32_t b)
 {
-    uint32_t res = a + b;
-    int32_t signedResult = (int32_t)res;
-
-    if ((a > 0 && b > 0 && signedResult < 0) || // Positive overflow
-        (a < 0 && b < 0 && signedResult > 0)) { // Negative overflow
+    if (a > 0 && b > 0 && a > INT32_MAX - b)
         return true;
-    }
+    if (a < 0 && b < 0 && a < INT32_MIN - b)
+        return true;
     return false;
 }
 
 static bool subOverflow(int32_t a, int32_t b)
 {
-    uint32_t res = a - b;
-    int32_t signedResult = (int32_t)res;
-
-    // Check for overflow conditions
-    if ((a > 0 && b < 0 && signedResult < 0) || // Positive overflow
-        (a < 0 && b > 0 && signedResult > 0)) { // Negative overflow
+    if (b < 0 && a > INT32_MAX + b)
         return true;
-    }
+    if (b > 0 && a < INT32_MIN + b)
+        return true;
     return false;
 }
 
@@ -344,6 +337,8 @@ void CPU::addImmediate(const Instruction &instruction)
     uint32_t imm = static_cast<int16_t>(instruction.i.immediate);
     uint32_t tmp = left + imm;
 
+    printf("orig: %i %x imm: %i %x\n", instruction.i.immediate, instruction.i.immediate, imm, imm);
+    printf("reg: %i %x\n", left, left);
     if (addOverflow(left, imm))
     {
         // Overflow: need to raise exception on the system

@@ -7,6 +7,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 set(BINARY_NAME "rogem")
 set(CMAKE_COLOR_DIAGNOSTICS ON)
 
+if (MSVC)
+    add_compile_options(/W4 /WX)
+else()
+    add_compile_options(-Wall -Wextra -pedantic -Werror)
+endif()
+
 add_subdirectory(src)
 
 option(ENABLE_TESTING "Compile Unit Tests" ON)
