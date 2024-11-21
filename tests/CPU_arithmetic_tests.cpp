@@ -9,7 +9,7 @@ TEST(CpuTest, ADDI_1)
     Instruction i;
 
     uint32_t value = 0xB16B00B5;
-    int16_t imm = 0xFFFF;
+    int16_t imm = -1;
 
     loadImmediate(cpu, 11, value);
     i.i.rs = 11;
@@ -47,7 +47,7 @@ TEST(CpuTest, ADDI_Negative_1)
     Instruction i;
 
     uint32_t value = 0x1;
-    int16_t imm = 0xFFFF; // <-- same as -1 in a 16-bit integer
+    int16_t imm = -1;
 
     loadImmediate(cpu, 11, value);
     i.i.rs = 11;
@@ -144,7 +144,7 @@ TEST(CpuTest, ADDIU_1)
     Instruction i;
 
     uint32_t value = 0xC0FFEE;
-    int16_t imm = 0xFFFF;
+    int16_t imm = -1;
 
     loadImmediate(cpu, 8, value);
     i.i.rs = 8;
@@ -163,7 +163,7 @@ TEST(CpuTest, ADDIU_2)
     Instruction i;
 
     uint32_t value = 0xBADBABE;
-    int16_t imm = 0x8000;
+    int16_t imm = INT16_MIN;
 
     loadImmediate(cpu, 8, value);
     i.i.rs = 8;
