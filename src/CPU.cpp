@@ -591,7 +591,9 @@ void CPU::shiftRightArithmetic(const Instruction &instruction)
 
 void CPU::shiftRightArithmeticVariable(const Instruction &instruction)
 {
-    int32_t res = getReg(instruction.r.rt) >> (getReg(instruction.r.rs) & 0x1F);
+    int32_t value = getReg(instruction.r.rt);
+    uint32_t shiftAmount = getReg(instruction.r.rs) & 0x1F;
+    uint32_t res =  value >> shiftAmount;
 
     setReg(instruction.r.rd, res);
 }
