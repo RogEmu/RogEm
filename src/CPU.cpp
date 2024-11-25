@@ -584,7 +584,8 @@ void CPU::shiftRightLogicalVariable(const Instruction &instruction)
 
 void CPU::shiftRightArithmetic(const Instruction &instruction)
 {
-    int32_t res = getReg(instruction.r.rt) >> instruction.r.shamt;
+    int32_t value = getReg(instruction.r.rt);
+    int32_t res = value >> instruction.r.shamt;
 
     setReg(instruction.r.rd, res);
 }
