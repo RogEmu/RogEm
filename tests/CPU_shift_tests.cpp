@@ -95,3 +95,39 @@ TEST(CpuTest, SLL_Large_Shift)
 
     EXPECT_EQ(cpu.m_registers[i.r.rd], value << (shiftAmount & 0x1F));
 }
+
+TEST(CpuTest, SRL_1)
+{
+    BIOS bios;
+    Bus bus(bios);
+    CPU cpu(bus);
+    Instruction i;
+
+    uint32_t value = 0xFFFFAAAA;
+    uint8_t shiftAmount = 12;
+    loadImmediate(cpu, 8, value); // Value that will be shifted in register $8
+    i.r.rt = 8;
+    i.r.rd = 9;
+    i.r.shamt = shiftAmount;
+    cpu.shiftRightLogical(i);
+
+    EXPECT_EQ(cpu.m_registers[i.r.rd], value >> (shiftAmount & 0x1F));
+}
+
+TEST(CpuTest, SRL_Large_Shift)
+{
+    BIOS bios;
+    Bus bus(bios);
+    CPU cpu(bus);
+    Instruction i;
+
+    uint32_t value = 0xFFFFAAAA;
+    uint8_t shiftAmount = 78;
+    loadImmediate(cpu, 8, value); // Value that will be shifted in register $8
+    i.r.rt = 8;
+    i.r.rd = 9;
+    i.r.shamt = shiftAmount;
+    cpu.shiftRightLogical(i);
+
+    EXPECT_EQ(cpu.m_registers[i.r.rd], value >> (shiftAmount & 0x1F));
+}
