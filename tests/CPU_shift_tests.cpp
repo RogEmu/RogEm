@@ -243,3 +243,41 @@ TEST(CpuTest, SRA_MSB_Positive_2)
 
     EXPECT_EQ(cpu.m_registers[i.r.rd], 1);
 }
+
+TEST(CpuTest, SRAV_MSB_Negative)
+{
+    BIOS bios;
+    Bus bus(bios);
+    CPU cpu(bus);
+    Instruction i;
+
+    uint32_t value = 0x80000000;
+    uint32_t shiftAmount = 31; // Should shift all 1s
+    loadImmediate(cpu, 8, value); // Value that will be shifted in register $8
+    loadImmediate(cpu, 9, shiftAmount); // Shift amount
+    i.r.rs = 9;
+    i.r.rt = 8;
+    i.r.rd = 8;
+    cpu.shiftRightArithmeticVariable(i);
+
+    EXPECT_EQ(cpu.m_registers[i.r.rd], 0xFFFFFFFF);
+}
+
+TEST(CpuTest, SRAV_MSB_Positive)
+{
+    BIOS bios;
+    Bus bus(bios);
+    CPU cpu(bus);
+    Instruction i;
+
+    uint32_t value = 0x40000000;
+    uint32_t shiftAmount = 30; // Should shift all 1s
+    loadImmediate(cpu, 8, value); // Value that will be shifted in register $8
+    loadImmediate(cpu, 9, shiftAmount); // Shift amount
+    i.r.rs = 9;
+    i.r.rt = 8;
+    i.r.rd = 8;
+    cpu.shiftRightArithmeticVariable(i);
+
+    EXPECT_EQ(cpu.m_registers[i.r.rd], 1);
+}
