@@ -188,3 +188,58 @@ TEST(CpuTest, SRLV_No_Shift)
 
     EXPECT_EQ(cpu.m_registers[i.r.rd], value);
 }
+
+TEST(CpuTest, SRA_MSB_Negative)
+{
+    BIOS bios;
+    Bus bus(bios);
+    CPU cpu(bus);
+    Instruction i;
+
+    uint32_t value = 0x80000000;
+    uint32_t shiftAmount = 31; // Should shift and get all ones
+    loadImmediate(cpu, 8, value); // Value that will be shifted in register $8
+    i.r.rt = 8;
+    i.r.rd = 8;
+    i.r.shamt = shiftAmount;
+    cpu.shiftRightArithmetic(i);
+
+    EXPECT_EQ(cpu.m_registers[i.r.rd], (uint32_t)(((int32_t)value) >> shiftAmount));
+}
+
+
+TEST(CpuTest, SRA_MSB_Positive)
+{
+    BIOS bios;
+    Bus bus(bios);
+    CPU cpu(bus);
+    Instruction i;
+
+    uint32_t value = 0x40000000;
+    uint32_t shiftAmount = 31; // Should shift all zeroes
+    loadImmediate(cpu, 8, value); // Value that will be shifted in register $8
+    i.r.rt = 8;
+    i.r.rd = 8;
+    i.r.shamt = shiftAmount;
+    cpu.shiftRightArithmetic(i);
+
+    EXPECT_EQ(cpu.m_registers[i.r.rd], 0);
+}
+
+TEST(CpuTest, SRA_MSB_Positive_2)
+{
+    BIOS bios;
+    Bus bus(bios);
+    CPU cpu(bus);
+    Instruction i;
+
+    uint32_t value = 0x40000000;
+    uint32_t shiftAmount = 30; // Should shift and result in 1
+    loadImmediate(cpu, 8, value); // Value that will be shifted in register $8
+    i.r.rt = 8;
+    i.r.rd = 8;
+    i.r.shamt = shiftAmount;
+    cpu.shiftRightArithmetic(i);
+
+    EXPECT_EQ(cpu.m_registers[i.r.rd], 1);
+}
