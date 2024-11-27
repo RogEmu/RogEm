@@ -599,6 +599,17 @@ void CPU::shiftRightArithmeticVariable(const Instruction &instruction)
     setReg(instruction.r.rd, res);
 }
 
+void CPU::multiply(const Instruction &instruction)
+{
+    int32_t left = static_cast<int32_t>(getReg(instruction.r.rs));
+    int32_t right = static_cast<int32_t>(getReg(instruction.r.rt));
+
+    int64_t res = static_cast<int64_t>(left) * static_cast<int64_t>(right);
+
+    m_lo = static_cast<int32_t>(res & 0xFFFFFFFF);
+    m_hi = static_cast<int32_t>(res >> 32);
+}
+
 void CPU::jump(const Instruction &instruction)
 {
     m_pc = (m_pc & 0xF0000000) | (((uint32_t)instruction.j.address) << 2);

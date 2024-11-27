@@ -18,6 +18,7 @@ add_executable(
     CPU_tests.cpp
     CPU_arithmetic_tests.cpp
     CPU_logical_tests.cpp
+    CPU_multiply_tests.cpp
     CPU_shift_tests.cpp
 )
 

@@ -52,6 +52,12 @@ static const std::unordered_map<SecondaryOpCode, InstructionData> secondaryData 
     {SecondaryOpCode::SUB, InstructionData{"sub", arithmeticFormat}},
     {SecondaryOpCode::SUBU, InstructionData{"subu", arithmeticFormat}},
     {SecondaryOpCode::XOR, InstructionData{"xor", arithmeticFormat}},
+    {SecondaryOpCode::SRL, InstructionData{"srl", "$%rd, $%rs, %imm"}},
+    {SecondaryOpCode::SRA, InstructionData{"sra", "$%rd, $%rs, %imm"}},
+    {SecondaryOpCode::SLLV, InstructionData{"sllv", arithmeticFormat}},
+    {SecondaryOpCode::SRLV, InstructionData{"srlv", arithmeticFormat}},
+    {SecondaryOpCode::SRAV, InstructionData{"srav", arithmeticFormat}},
+    {SecondaryOpCode::MULT, InstructionData{"mult", arithmeticFormat}}
 };
 
 static std::string formatAsHexBytes(uint32_t value) {
