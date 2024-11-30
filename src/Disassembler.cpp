@@ -9,7 +9,7 @@
 
 #include <unordered_map>
 #include <regex>
-#include <fmt/core.h>
+#include <fmt/format.h>
 
 using namespace Disassembler;
 
