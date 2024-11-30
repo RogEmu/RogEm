@@ -8,6 +8,9 @@ set(SRC_FILES
     ${CMAKE_SOURCE_DIR}/src/Disassembler.cpp
 )
 
+find_package(GTest CONFIG REQUIRED)
+find_package(fmt CONFIG REQUIRED)
+
 add_executable(
     ${TEST_BINARY_NAME}
     ${SRC_FILES}
@@ -19,12 +22,13 @@ add_executable(
 )
 
 target_compile_options(${TEST_BINARY_NAME} PRIVATE --coverage)
-target_link_libraries(
-    ${TEST_BINARY_NAME}
+
+target_link_libraries( ${TEST_BINARY_NAME} PRIVATE
     GTest::gtest_main
     gcov
-    fmt
+    fmt::fmt
 )
+
 target_include_directories(${TEST_BINARY_NAME} PUBLIC
     ${CMAKE_SOURCE_DIR}/src
 )

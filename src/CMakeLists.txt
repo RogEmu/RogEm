@@ -1,3 +1,7 @@
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+find_package(fmt CONFIG REQUIRED)
+
 set(SRC_FILES
     main.cpp
     BIOS.cpp
@@ -6,12 +10,8 @@ set(SRC_FILES
     Disassembler.cpp
 )
 
-find_package(fmt CONFIG REQUIRED)
-
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-
 add_executable(${BINARY_NAME} ${SRC_FILES})
 
-target_link_libraries(${BINARY_NAME}
-    fmt
+target_link_libraries(${BINARY_NAME} PRIVATE
+    fmt::fmt
 )
