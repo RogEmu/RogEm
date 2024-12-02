@@ -610,6 +610,17 @@ void CPU::multiply(const Instruction &instruction)
     m_hi = static_cast<int32_t>(res >> 32);
 }
 
+void CPU::multiplyUnsigned(const Instruction &instruction)
+{
+    uint32_t left = static_cast<int32_t>(getReg(instruction.r.rs));
+    uint32_t right = static_cast<int32_t>(getReg(instruction.r.rt));
+
+    uint64_t res = static_cast<uint64_t>(left) * static_cast<uint64_t>(right);
+
+    m_lo = static_cast<uint32_t>(res & 0xFFFFFFFF);
+    m_hi = static_cast<uint32_t>(res >> 32);
+}
+
 void CPU::jump(const Instruction &instruction)
 {
     m_pc = (m_pc & 0xF0000000) | (((uint32_t)instruction.j.address) << 2);
