@@ -82,6 +82,7 @@ struct CPU
 
     // Multiply Instructions
     void multiply(const Instruction &instruction);
+    void multiplyUnsigned(const Instruction &instruction);
 
     // Jump Instructions
     void jump(const Instruction &instruction);

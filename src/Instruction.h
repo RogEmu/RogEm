@@ -48,6 +48,7 @@ enum class SecondaryOpCode
     SRLV = 0x06,
     SRAV = 0x07,
     MULT = 0x18,
+    MULTU = 0x19,
     ADD = 0x20,
     ADDU = 0x21,
     SUB = 0x22,
