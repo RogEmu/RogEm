@@ -60,27 +60,27 @@ Using `git config` is the preferred way.
 
 ### Begin work
 
-1. Open an issue
+1. **Open an issue**
    - Define the purpose of the issue, its scope (labels), task points[^Point_estimation] and current status (generally ready or backlog)
-2. Link this issue to a newly created branch
+2. **Link this issue to a newly created branch**
    - Remember to correclty choose the parent branch of the new feature branch, by default it should be `dev`
-3. Start working on the issue on its corresponding feature branch
-4. Write unit tests (unless it is impossible or cumbersome)
+3. **Start working on the issue on its corresponding feature branch**
+4. **Write unit tests (unless it is impossible or cumbersome)**
    - When writing unit tests, please make sure the expected test values and behaviors are correct and verified. A test with unverified expected values or behaviors is useless and obfuscated real problems
-5. Run the tests locally to ensure tests are passing
-6. Commit and push the code onto the remote branch of your local branch
+5. **Run the tests locally to ensure tests are passing**
+6. **Commit and push the code onto the remote branch of your local branch**
    - When commiting, don't forget the **closing keywords** to traxk the issue related to this commit
    - i.e for *78-my-feature-branch* the remote is *origin/78-my-feature-branch*
-7. Open a Pull Request on GitHub
+7. **Open a Pull Request on GitHub**
    - Select the parent branch to megre your branch onto
    - Default is to merge on `dev` branch
    - Set the PM as a reviewer on the PR
-8. Set the issues that are tacked by the PR
+8. **Set the issues that are tacked by the PR**
    - This setting is situated under the **developpement** menu on the right hand side of the PR
-9. Tests are run automatically on every pull request targeting `dev`
+9. **Tests are run automatically on every pull request targeting `dev`**
    - If all tests pass, then the PR can be reviewed
    - After review there may be discussions about implementation details.
-10. Finally, the PR shall be merged onto `dev`
+10. **Finally, the PR shall be merged onto `dev`**
 
 
 > [!NOTE]
