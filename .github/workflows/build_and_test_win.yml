@@ -29,27 +29,18 @@ jobs:
             c_compiler: cl
             cpp_compiler: cl
 
-    env:
-      vcpkg_packages: fmt
-      VCPKG_VERSION: b2cb0da531c2f1f740045bfe7c4dac59f0b2b69c
-
     steps:
     - uses: actions/checkout@v4
 
-    - name: Install dependecies
-      uses: lukka/run-vcpkg@v7
-      with:
-        vcpkgArguments: ${{ env.vcpkg_packages }}
-        vcpkgDirectory: '${{ github.workspace }}\vcpkg'
-        vcpkgGitCommitId: ${{ env.VCPKG_VERSION }}
-        vcpkgTriplet: x64-windows
+    - name: Init Submodules
+      run: |
+        git submodule update --init
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       run: >
         cmake -B ${{ github.workspace }}/build
-        -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake"
         -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
