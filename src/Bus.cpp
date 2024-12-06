@@ -131,7 +131,7 @@ uint8_t Bus::loadByte(uint32_t addr) const
     }
     if (RAM_RANGE.contains(pAddress))
     {
-        return m_ram.loadHalfWord(RAM_RANGE.remap(pAddress));
+        return m_ram.loadByte(RAM_RANGE.remap(pAddress));
     }
     return 0;
 }

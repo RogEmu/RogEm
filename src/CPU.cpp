@@ -253,7 +253,7 @@ void CPU::storeHalfWord(const Instruction &instruction)
 {
     int32_t imm = (int16_t)instruction.i.immediate;
     uint32_t address = getReg(instruction.i.rs) + imm;
-    uint16_t value = getReg(instruction.i.rt);
+    uint16_t value = static_cast<uint16_t>(getReg(instruction.i.rt));
 
     m_bus.storeHalfWord(address, value);
 }
@@ -262,7 +262,7 @@ void CPU::storeByte(const Instruction &instruction)
 {
     int32_t imm = (int16_t)instruction.i.immediate;
     uint32_t address = getReg(instruction.i.rs) + imm;
-    uint8_t value = getReg(instruction.i.rt);
+    uint8_t value = static_cast<uint8_t>(getReg(instruction.i.rt));
 
     m_bus.storeByte(address, value);
 }
