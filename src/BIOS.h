@@ -12,7 +12,7 @@
 #include <string>
 #include <cstdint>
 
-#define BIOS_SIZE 512 * 1024
+#define BIOS_SIZE (512 * 1024)
 
 class BIOS
 {
