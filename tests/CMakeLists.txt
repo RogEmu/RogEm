@@ -1,5 +1,7 @@
 enable_testing()
 
+option(ENABLE_COVERAGE OFF)
+
 set(TEST_BINARY_NAME rogem_tests)
 set(SRC_FILES
     ${CMAKE_SOURCE_DIR}/src/BIOS.cpp
@@ -22,11 +24,13 @@ add_executable(
     CPU_shift_tests.cpp
 )
 
-target_compile_options(${TEST_BINARY_NAME} PRIVATE --coverage)
+if (${ENABLE_COVERAGE})
+    target_compile_options(${TEST_BINARY_NAME} PRIVATE --coverage)
+    target_link_libraries(${TEST_BINARY_NAME} PRIVATE gcov)
+endif()
 
 target_link_libraries( ${TEST_BINARY_NAME} PRIVATE
     GTest::gtest_main
-    gcov
     fmt::fmt
 )
 
