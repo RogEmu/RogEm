@@ -123,7 +123,7 @@ TEST(CpuTest, ADDI_Negative_Underflow)
     CPU cpu(bus);
     Instruction i;
 
-    uint32_t value = INT32_MIN;
+    uint32_t value = (uint32_t)INT32_MIN;
     int16_t imm = -1; // <-- Should underflow in signed arithmetic
 
     loadImmediate(cpu, 8, value);
@@ -219,7 +219,7 @@ TEST(CpuTest, ADDIU_No_Underflow_2)
     CPU cpu(bus);
     Instruction i;
 
-    uint32_t value = INT32_MIN;
+    uint32_t value = (uint32_t)INT32_MIN;
     int16_t imm = -1;
 
     loadImmediate(cpu, 8, value);
@@ -306,7 +306,7 @@ TEST(CpuTest, SUB_Underflow)
     Instruction i;
 
     // Should overflow into negative integers
-    uint32_t left = INT32_MIN;
+    uint32_t left = (uint32_t)INT32_MIN;
     uint32_t right = 1;
 
     uint32_t oldRd = cpu.getReg(10);
@@ -329,7 +329,7 @@ TEST(CpuTest, SUB_Underflow_2)
     Instruction i;
 
     // Should overflow into negative integers
-    uint32_t left = INT32_MIN;
+    uint32_t left = (uint32_t)INT32_MIN;
     uint32_t right = 8790870;
 
     uint32_t oldRd = cpu.getReg(10);
@@ -374,8 +374,8 @@ TEST(CpuTest, SUB_No_Overflow_2)
     Instruction i;
 
     // Should overflow into negative integers
-    uint32_t left = -1;
-    uint32_t right = -2;
+    uint32_t left = (uint32_t)-1;
+    uint32_t right = (uint32_t)-2;
 
     loadImmediate(cpu, 8, left);
     loadImmediate(cpu, 9, right);
@@ -396,7 +396,7 @@ TEST(CpuTest, SUBU_1)
     Instruction i;
 
     uint32_t left = 986648768;
-    uint32_t right = -8790870;
+    uint32_t right = (uint32_t)-8790870;
 
     loadImmediate(cpu, 8, left);
     loadImmediate(cpu, 9, right);
@@ -416,7 +416,7 @@ TEST(CpuTest, SUBU_2)
     CPU cpu(bus);
     Instruction i;
 
-    uint32_t left = -891840298;
+    uint32_t left = (uint32_t)-891840298;
     uint32_t right = 8790870;
 
     loadImmediate(cpu, 8, left);
@@ -437,8 +437,8 @@ TEST(CpuTest, SUBU_3)
     CPU cpu(bus);
     Instruction i;
 
-    uint32_t left = -891840298;
-    uint32_t right = -8790870;
+    uint32_t left = (uint32_t)-891840298;
+    uint32_t right = (uint32_t)-8790870;
 
     loadImmediate(cpu, 8, left);
     loadImmediate(cpu, 9, right);
@@ -458,7 +458,7 @@ TEST(CpuTest, SUBU_4)
     CPU cpu(bus);
     Instruction i;
 
-    uint32_t left = -891840298;
+    uint32_t left = (uint32_t)-891840298;
     uint32_t right = 8790870;
 
     loadImmediate(cpu, 8, left);
@@ -480,7 +480,7 @@ TEST(CpuTest, SUBU_No_Overflow)
     Instruction i;
 
     uint32_t left = INT32_MAX;
-    uint32_t right = -1;
+    uint32_t right = (uint32_t)-1;
 
     loadImmediate(cpu, 8, left);
     loadImmediate(cpu, 9, right);
@@ -500,7 +500,7 @@ TEST(CpuTest, SUBU_No_Overflow_2)
     CPU cpu(bus);
     Instruction i;
 
-    uint32_t left = INT32_MIN;
+    uint32_t left = (uint32_t)INT32_MIN;
     uint32_t right = 1;
 
     loadImmediate(cpu, 8, left);

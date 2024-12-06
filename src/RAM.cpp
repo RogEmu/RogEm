@@ -2,7 +2,6 @@
 
 RAM::RAM()
 {
-    m_data.assign(RAM_SIZE, 0xbd);
 }
 
 uint32_t RAM::loadWord(uint32_t addr) const
@@ -16,8 +15,8 @@ uint32_t RAM::loadWord(uint32_t addr) const
 
 uint16_t RAM::loadHalfWord(uint32_t addr) const
 {
-    uint32_t b1 = m_data[addr];
-    uint32_t b2 = m_data[addr + 1] << 8;
+    uint16_t b1 = m_data[addr];
+    uint16_t b2 = m_data[addr + 1] << 8;
     return b1 | b2;
 }
 
