@@ -261,7 +261,7 @@ TEST(CpuTest, SUB_Overflow)
 
     // Should overflow into negative integers
     uint32_t left = INT32_MAX;
-    uint32_t right = -1;
+    uint32_t right = (uint32_t)-1;
 
     uint32_t oldRd = cpu.getReg(10);
     loadImmediate(cpu, 8, left);
@@ -284,7 +284,7 @@ TEST(CpuTest, SUB_Overflow_2)
 
     // Should overflow into negative integers
     uint32_t left = INT32_MAX;
-    uint32_t right = -79879;
+    uint32_t right = (uint32_t)-79879;
 
     uint32_t oldRd = cpu.getReg(10);
     loadImmediate(cpu, 8, left);

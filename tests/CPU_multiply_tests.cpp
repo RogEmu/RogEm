@@ -92,7 +92,7 @@ TEST(CpuTest, MULTU_NEGATIVE)
     CPU cpu(bus);
     Instruction i;
 
-    uint32_t left = -1612441061;
+    uint32_t left = (uint32_t)-1612441061;
     uint32_t right = 1612441061;
     uint64_t res = static_cast<uint64_t>(left) * static_cast<uint64_t>(right);
 
