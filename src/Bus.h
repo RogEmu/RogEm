@@ -9,6 +9,7 @@
 #define BUS_H_
 
 #include "BIOS.h"
+#include "RAM.h"
 
 struct MemRange
 {
@@ -26,6 +27,14 @@ struct MemRange
     }
 };
 
+enum class MemorySegments
+{
+    KUSEG,
+    KSEG0,
+    KSEG1,
+    KSEG2
+};
+
 class Bus
 {
     public:
@@ -39,8 +48,11 @@ class Bus
         uint8_t loadByte(uint32_t addr) const;
         void storeByte(uint32_t addr, uint8_t value);
 
+        uint32_t mapAddress(uint32_t addr) const;
+
     private:
         BIOS m_bios;
+        RAM m_ram;
 };
 
 #endif /* !BUS_H_ */

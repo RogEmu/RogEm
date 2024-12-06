@@ -5,6 +5,7 @@ find_package(fmt CONFIG REQUIRED)
 set(SRC_FILES
     main.cpp
     BIOS.cpp
+    RAM.cpp
     Bus.cpp
     CPU.cpp
     Disassembler.cpp

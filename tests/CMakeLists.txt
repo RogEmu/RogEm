@@ -5,6 +5,7 @@ option(ENABLE_COVERAGE OFF)
 set(TEST_BINARY_NAME rogem_tests)
 set(SRC_FILES
     ${CMAKE_SOURCE_DIR}/src/BIOS.cpp
+    ${CMAKE_SOURCE_DIR}/src/RAM.cpp
     ${CMAKE_SOURCE_DIR}/src/Bus.cpp
     ${CMAKE_SOURCE_DIR}/src/CPU.cpp
     ${CMAKE_SOURCE_DIR}/src/Disassembler.cpp
@@ -22,6 +23,7 @@ add_executable(
     CPU_logical_tests.cpp
     CPU_multiply_tests.cpp
     CPU_shift_tests.cpp
+    Bus_tests.cpp
 )
 
 if (${ENABLE_COVERAGE})
@@ -31,6 +33,9 @@ endif()
 
 target_link_libraries( ${TEST_BINARY_NAME} PRIVATE
     GTest::gtest_main
+    GTest::gtest
+    GTest::gmock
+    GTest::gmock_main
     fmt::fmt
 )
 
