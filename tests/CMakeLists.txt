@@ -32,8 +32,8 @@ if (${ENABLE_COVERAGE})
 endif()
 
 target_link_libraries( ${TEST_BINARY_NAME} PRIVATE
-    GTest::gtest_main
     GTest::gtest
+    GTest::gtest_main
     GTest::gmock
     GTest::gmock_main
     fmt::fmt
