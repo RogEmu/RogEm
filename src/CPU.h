@@ -80,11 +80,13 @@ struct CPU
     void shiftRightArithmeticVariable(const Instruction &instruction);
     void shiftRightLogicalVariable(const Instruction &instruction);
 
-    // Multiply Instructions
+    // Multiplication and division Instructions
     void multiply(const Instruction &instruction);
     void multiplyUnsigned(const Instruction &instruction);
+    void divide(const Instruction &instruction);
+    void divideUnsigned(const Instruction &instruction);
 
-    // Jump Instructions
+    // Jump and branche Instructions
     void jump(const Instruction &instruction);
 
     void illegalInstruction(const Instruction &instruction);

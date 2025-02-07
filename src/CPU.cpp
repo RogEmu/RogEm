@@ -621,6 +621,40 @@ void CPU::multiplyUnsigned(const Instruction &instruction)
     m_hi = static_cast<uint32_t>(res >> 32);
 }
 
+void CPU::divide(const Instruction &instruction)
+{
+    int32_t left = static_cast<int32_t>(getReg(instruction.r.rs));
+    int32_t right = static_cast<int32_t>(getReg(instruction.r.rt));
+
+    if (right == 0)
+    {
+        m_lo = 0;
+        m_hi = left;
+    }
+    else
+    {
+        m_lo = left / right;
+        m_hi = left % right;
+    }
+}
+
+void CPU::divideUnsigned(const Instruction &instruction)
+{
+    uint32_t left = getReg(instruction.r.rs);
+    uint32_t right = getReg(instruction.r.rt);
+
+    if (right == 0)
+    {
+        m_lo = 0;
+        m_hi = left;
+    }
+    else
+    {
+        m_lo = left / right;
+        m_hi = left % right;
+    }
+}
+
 void CPU::jump(const Instruction &instruction)
 {
     m_pc = (m_pc & 0xF0000000) | (((uint32_t)instruction.j.address) << 2);
