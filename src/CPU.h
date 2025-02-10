@@ -85,6 +85,10 @@ struct CPU
     void multiplyUnsigned(const Instruction &instruction);
     void divide(const Instruction &instruction);
     void divideUnsigned(const Instruction &instruction);
+    void moveFromHi(const Instruction &instruction);
+    void moveFromLo(const Instruction &instruction);
+    void moveToHi(const Instruction &instruction);
+    void moveToLo(const Instruction &instruction);
 
     // Jump and branche Instructions
     void jump(const Instruction &instruction);

@@ -186,3 +186,69 @@ TEST(CpuTest, DIVU_NEGATIVE)
     EXPECT_EQ(cpu.m_lo, left / right);
     EXPECT_EQ(cpu.m_hi, left % right);
 }
+
+TEST(CpuTest, MFHI)
+{
+    BIOS bios;
+    Bus bus(bios);
+    CPU cpu(bus);
+    Instruction i;
+
+    uint32_t value = 0x12345678;
+    loadImmediate(cpu, 8, value);
+    cpu.m_hi = value;
+
+    i.r.rd = 9;
+    cpu.moveFromHi(i);
+
+    EXPECT_EQ(cpu.getReg(9), value);
+}
+
+TEST(CpuTest, MFLO)
+{
+    BIOS bios;
+    Bus bus(bios);
+    CPU cpu(bus);
+    Instruction i;
+
+    uint32_t value = 0x12345678;
+    loadImmediate(cpu, 8, value);
+    cpu.m_lo = value;
+
+    i.r.rd = 9;
+    cpu.moveFromLo(i);
+
+    EXPECT_EQ(cpu.getReg(9), value);
+}
+
+TEST(CpuTest, MTHI)
+{
+    BIOS bios;
+    Bus bus(bios);
+    CPU cpu(bus);
+    Instruction i;
+
+    uint32_t value = 0x12345678;
+    loadImmediate(cpu, 8, value);
+
+    i.r.rs = 8;
+    cpu.moveToHi(i);
+
+    EXPECT_EQ(cpu.m_hi, value);
+}
+
+TEST(CpuTest, MTLO)
+{
+    BIOS bios;
+    Bus bus(bios);
+    CPU cpu(bus);
+    Instruction i;
+
+    uint32_t value = 0x12345678;
+    loadImmediate(cpu, 8, value);
+
+    i.r.rs = 8;
+    cpu.moveToLo(i);
+
+    EXPECT_EQ(cpu.m_lo, value);
+}

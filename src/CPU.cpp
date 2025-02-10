@@ -202,6 +202,30 @@ void CPU::specialInstruction(const Instruction &instruction)
     case SecondaryOpCode::SRAV:
         shiftRightArithmeticVariable(instruction);
         break;
+    case SecondaryOpCode::MULT:
+        multiply(instruction);
+        break;
+    case SecondaryOpCode::MULTU:
+        multiplyUnsigned(instruction);
+        break;
+    case SecondaryOpCode::DIV:
+        divide(instruction);
+        break;
+    case SecondaryOpCode::DIVU:
+        divideUnsigned(instruction);
+        break;
+    case SecondaryOpCode::MFHI:
+        moveFromHi(instruction);
+        break;
+    case SecondaryOpCode::MFLO:
+        moveFromLo(instruction);
+        break;
+    case SecondaryOpCode::MTHI:
+        moveToHi(instruction);
+        break;
+    case SecondaryOpCode::MTLO:
+        moveToLo(instruction);
+        break;
     default:
         illegalInstruction(instruction);
         break;
@@ -653,6 +677,26 @@ void CPU::divideUnsigned(const Instruction &instruction)
         m_lo = left / right;
         m_hi = left % right;
     }
+}
+
+void CPU::moveFromHi(const Instruction &instruction)
+{
+    setReg(instruction.r.rd, m_hi);
+}
+
+void CPU::moveFromLo(const Instruction &instruction)
+{
+    setReg(instruction.r.rd, m_lo);
+}
+
+void CPU::moveToHi(const Instruction &instruction)
+{
+    m_hi = getReg(instruction.r.rs);
+}
+
+void CPU::moveToLo(const Instruction &instruction)
+{
+    m_lo = getReg(instruction.r.rs);
 }
 
 void CPU::jump(const Instruction &instruction)

@@ -60,7 +60,11 @@ static const std::unordered_map<SecondaryOpCode, InstructionData> secondaryData 
     {SecondaryOpCode::MULT, InstructionData{"mult", arithmeticFormat}},
     {SecondaryOpCode::MULTU, InstructionData{"multu", arithmeticFormat}},
     {SecondaryOpCode::DIV, InstructionData{"div", arithmeticFormat}},
-    {SecondaryOpCode::DIVU, InstructionData{"divu", arithmeticFormat}}
+    {SecondaryOpCode::DIVU, InstructionData{"divu", arithmeticFormat}},
+    {SecondaryOpCode::MFHI, InstructionData{"mfhi", "$%rd"}},
+    {SecondaryOpCode::MFLO, InstructionData{"mflo", "$%rd"}},
+    {SecondaryOpCode::MTHI, InstructionData{"mthi", "$%rs"}},
+    {SecondaryOpCode::MTLO, InstructionData{"mtlo", "$%rs"}}
 };
 
 static std::string formatAsHexBytes(uint32_t value) {
