@@ -96,6 +96,9 @@ void CPU::executeInstruction(const Instruction &instruction)
     case PrimaryOpCode::J:
         jump(instruction);
         break;
+    case PrimaryOpCode::JAL:
+        jumpAndLink(instruction);
+        break;
     case PrimaryOpCode::LW:
         loadWord(instruction);
         break;
@@ -701,6 +704,12 @@ void CPU::moveToLo(const Instruction &instruction)
 
 void CPU::jump(const Instruction &instruction)
 {
+    m_pc = (m_pc & 0xF0000000) | (((uint32_t)instruction.j.address) << 2);
+}
+
+void CPU::jumpAndLink(const Instruction &instruction)
+{
+    setReg(31, m_pc);
     m_pc = (m_pc & 0xF0000000) | (((uint32_t)instruction.j.address) << 2);
 }
 

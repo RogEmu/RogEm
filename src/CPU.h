@@ -92,6 +92,7 @@ struct CPU
 
     // Jump and branche Instructions
     void jump(const Instruction &instruction);
+    void jumpAndLink(const Instruction &instruction);
 
     void illegalInstruction(const Instruction &instruction);
     void specialInstruction(const Instruction &instruction);

@@ -21,6 +21,7 @@ static const std::unordered_map<PrimaryOpCode, InstructionData> primaryData = {
     {PrimaryOpCode::ADDIU, InstructionData{"addiu", arithmeticImmediateFormat}},
     {PrimaryOpCode::ANDI, InstructionData{"andi", arithmeticImmediateFormat}},
     {PrimaryOpCode::J, InstructionData{"jump", "%address"}},
+    {PrimaryOpCode::JAL, InstructionData{"jal", "%address"}},
     {PrimaryOpCode::LB, InstructionData{"lb", loadStoreFormat}},
     {PrimaryOpCode::LBU, InstructionData{"lbu", loadStoreFormat}},
     {PrimaryOpCode::LH, InstructionData{"lh", loadStoreFormat}},

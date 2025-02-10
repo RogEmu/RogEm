@@ -15,6 +15,7 @@ enum class PrimaryOpCode
     ILLEGAL = -1,
     SPECIAL = 0x00,
     J = 0x02,
+    JAL = 0x03,
     ADDI = 0x08,
     ADDIU = 0x09,
     ANDI = 0x0C,
