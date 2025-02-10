@@ -14,3 +14,18 @@ TEST(CpuTest, JUMP)
 
     EXPECT_EQ(cpu.m_pc, address);
 }
+
+TEST(CpuTest, JUMP_AND_LINK)
+{
+    BIOS bios;
+    Bus bus(bios);
+    CPU cpu(bus);
+    Instruction i;
+
+    uint32_t address = 0x12345678;
+    i.j.address = address;
+    cpu.jumpAndLink(i);
+
+    EXPECT_EQ(cpu.m_pc, address);
+    EXPECT_EQ(cpu.m_registers[31], 0x0);
+}
