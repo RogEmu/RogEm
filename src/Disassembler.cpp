@@ -65,7 +65,8 @@ static const std::unordered_map<SecondaryOpCode, InstructionData> secondaryData 
     {SecondaryOpCode::MFHI, InstructionData{"mfhi", "$%rd"}},
     {SecondaryOpCode::MFLO, InstructionData{"mflo", "$%rd"}},
     {SecondaryOpCode::MTHI, InstructionData{"mthi", "$%rs"}},
-    {SecondaryOpCode::MTLO, InstructionData{"mtlo", "$%rs"}}
+    {SecondaryOpCode::MTLO, InstructionData{"mtlo", "$%rs"}},
+    {SecondaryOpCode::JR, InstructionData{"jr", "$%rs"}},
 };
 
 static std::string formatAsHexBytes(uint32_t value) {
