@@ -17,7 +17,7 @@ TEST(CpuTest, BEQ_1)
     i.i.immediate = imm;
     cpu.branchOnEqual(i);
 
-    EXPECT_EQ(cpu.m_pc, RESET_VECTOR + 8);
+    EXPECT_EQ(cpu.m_pc, RESET_VECTOR + 4 + (imm << 2));
 }
 
 TEST(CpuTest, BEQ_2)
@@ -30,12 +30,15 @@ TEST(CpuTest, BEQ_2)
     uint32_t value = 0xB16B00B5;
     int16_t imm = 0x0004;
 
+    cpu.m_pc = RESET_VECTOR;  // Set initial PC
+
     loadImmediate(cpu, 11, value);
+    cpu.m_registers[12] = 0;  // Ensure $12 is zero
+
     i.i.rs = 11;
     i.i.rt = 12;
     i.i.immediate = imm;
     cpu.branchOnEqual(i);
 
-    EXPECT_EQ(cpu.m_pc, RESET_VECTOR + 4);
+    EXPECT_EQ(cpu.m_pc, RESET_VECTOR + 4);  // ✅ Correct expected behavior
 }
-

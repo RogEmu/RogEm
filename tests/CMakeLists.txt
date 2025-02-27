@@ -19,6 +19,7 @@ add_executable(
     ${SRC_FILES}
     Utils.cpp
     CPU_tests.cpp
+    CPU_branch_tests.cpp
     CPU_arithmetic_tests.cpp
     CPU_logical_tests.cpp
     CPU_multiply_tests.cpp
