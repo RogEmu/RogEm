@@ -49,6 +49,7 @@ enum class SecondaryOpCode
     SRLV = 0x06,
     SRAV = 0x07,
     JR = 0x08,
+    JALR = 0x09,
     MFHI = 0x10,
     MTHI = 0x11,
     MFLO = 0x12,

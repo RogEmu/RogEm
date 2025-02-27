@@ -718,6 +718,12 @@ void CPU::jumpRegister(const Instruction &instruction)
     m_pc = getReg(instruction.r.rs);
 }
 
+void CPU::jumpAndLinkRegister(const Instruction &instruction)
+{
+    setReg(31, m_pc);
+    m_pc = getReg(instruction.r.rs);
+}
+
 void CPU::illegalInstruction(const Instruction &instruction)
 {
     fprintf(stderr, "Illegal instruction: ");
