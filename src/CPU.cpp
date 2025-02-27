@@ -724,6 +724,14 @@ void CPU::jumpAndLinkRegister(const Instruction &instruction)
     m_pc = getReg(instruction.r.rs);
 }
 
+void CPU::branchOnEqual(const Instruction &instruction)
+{
+    if (getReg(instruction.i.rs) == getReg(instruction.i.rt))
+    {
+        m_pc += (int16_t)instruction.i.immediate << 2;
+    }
+}
+
 void CPU::illegalInstruction(const Instruction &instruction)
 {
     fprintf(stderr, "Illegal instruction: ");
