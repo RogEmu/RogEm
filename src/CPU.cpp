@@ -709,7 +709,7 @@ void CPU::jump(const Instruction &instruction)
 
 void CPU::jumpAndLink(const Instruction &instruction)
 {
-    setReg(31, m_pc);
+    setReg(31, m_pc + 8);
     m_pc = (m_pc & 0xF0000000) | (((uint32_t)instruction.j.address) << 2);
 }
 
@@ -720,16 +720,16 @@ void CPU::jumpRegister(const Instruction &instruction)
 
 void CPU::jumpAndLinkRegister(const Instruction &instruction)
 {
-    setReg(31, m_pc);
+    setReg(31, m_pc + 8);
     m_pc = getReg(instruction.r.rs);
 }
 
 void CPU::branchOnEqual(const Instruction &instruction)
 {
     if (getReg(instruction.i.rs) == getReg(instruction.i.rt))
-    {
-        m_pc += (int16_t)instruction.i.immediate << 2;
-    }
+        m_pc += 4 + ((int16_t)instruction.i.immediate << 2);
+    else
+        m_pc += 4;
 }
 
 void CPU::illegalInstruction(const Instruction &instruction)
