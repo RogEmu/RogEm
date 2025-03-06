@@ -15,6 +15,7 @@ enum class PrimaryOpCode
     ILLEGAL = -1,
     SPECIAL = 0x00,
     BLTZ = 0x01,
+    BGEZ = 0x01,
     J = 0x02,
     JAL = 0x03,
     BEQ = 0x04,

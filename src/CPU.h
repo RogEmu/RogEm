@@ -98,6 +98,7 @@ struct CPU
     void branchOnEqual(const Instruction &instruction);
     void branchOnNotEqual(const Instruction &instruction);
     void branchOnLessThanZero(const Instruction &instruction);
+    void branchOnGreaterThanOrEqualToZero(const Instruction &instruction);
 
     void illegalInstruction(const Instruction &instruction);
     void specialInstruction(const Instruction &instruction);
