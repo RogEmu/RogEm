@@ -23,6 +23,7 @@ static const std::unordered_map<PrimaryOpCode, InstructionData> primaryData = {
     {PrimaryOpCode::J, InstructionData{"jump", "%address"}},
     {PrimaryOpCode::JAL, InstructionData{"jal", "%address"}},
     {PrimaryOpCode::BEQ, InstructionData{"beq", arithmeticImmediateFormat}},
+    {PrimaryOpCode::BNE, InstructionData{"bne", arithmeticImmediateFormat}},
     {PrimaryOpCode::LB, InstructionData{"lb", loadStoreFormat}},
     {PrimaryOpCode::LBU, InstructionData{"lbu", loadStoreFormat}},
     {PrimaryOpCode::LH, InstructionData{"lh", loadStoreFormat}},
