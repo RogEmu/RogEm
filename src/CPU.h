@@ -97,6 +97,7 @@ struct CPU
     void jumpAndLinkRegister(const Instruction &instruction);
     void branchOnEqual(const Instruction &instruction);
     void branchOnNotEqual(const Instruction &instruction);
+    void branchOnLessThanZero(const Instruction &instruction);
 
     void illegalInstruction(const Instruction &instruction);
     void specialInstruction(const Instruction &instruction);
