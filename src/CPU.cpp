@@ -764,6 +764,14 @@ void CPU::branchOnGreaterThanZero(const Instruction &instruction)
         m_pc += 4;
 }
 
+void CPU::branchOnLessThanOrEqualToZero(const Instruction &instruction)
+{
+    if (getReg(instruction.i.rs) <= 0)
+        m_pc += 4 + ((int16_t)instruction.i.immediate << 2);
+    else
+        m_pc += 4;
+}
+
 void CPU::illegalInstruction(const Instruction &instruction)
 {
     fprintf(stderr, "Illegal instruction: ");
