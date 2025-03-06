@@ -20,7 +20,7 @@ enum class PrimaryOpCode
     JAL = 0x03,
     BEQ = 0x04,
     BNE = 0x05,
-    BGEZ = 0x07,
+    BGTZ = 0x07,
     ADDI = 0x08,
     ADDIU = 0x09,
     ANDI = 0x0C,
