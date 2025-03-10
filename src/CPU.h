@@ -104,6 +104,7 @@ struct CPU
 
     void illegalInstruction(const Instruction &instruction);
     void specialInstruction(const Instruction &instruction);
+    void branchOnConditionZero(const Instruction &instruction);
 
     void debugState() const;
 

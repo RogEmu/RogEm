@@ -147,8 +147,33 @@ void CPU::executeInstruction(const Instruction &instruction)
     case PrimaryOpCode::SPECIAL:
         specialInstruction(instruction);
         break;
+    case PrimaryOpCode::BcondZ:
+        branchOnConditionZero(instruction);
+        break;
     default:
         illegalInstruction(instruction);
+        break;
+    }
+}
+
+void CPU::branchOnConditionZero(const Instruction &Instruction)
+{
+    switch (static_cast<BranchOnConditionZero>(Instruction.i.rt))
+    {
+    case BranchOnConditionZero::BLTZ:
+        branchOnLessThanZero(Instruction);
+        break;
+    case BranchOnConditionZero::BGEZ:
+        branchOnGreaterThanOrEqualToZero(Instruction);
+        break;
+    // case BranchOnConditionZero::BLTZAL:
+    //     branchOnLessThanZeroAndLink(Instruction);
+    //     break;
+    // case BranchOnConditionZero::BGEZAL:
+    //     branchOnGreaterOrEqualZeroAndLink(Instruction);
+    //     break;
+    default:
+        illegalInstruction(Instruction);
         break;
     }
 }
