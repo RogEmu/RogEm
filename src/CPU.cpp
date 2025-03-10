@@ -767,7 +767,7 @@ void CPU::branchOnNotEqual(const Instruction &instruction)
 
 void CPU::branchOnLessThanZero(const Instruction &instruction)
 {
-    if (getReg(instruction.i.rs) < 0)
+    if (static_cast<int32_t>(getReg(instruction.i.rs)) < 0)
         m_pc += 4 + ((int16_t)instruction.i.immediate << 2);
     else
         m_pc += 4;
@@ -775,7 +775,7 @@ void CPU::branchOnLessThanZero(const Instruction &instruction)
 
 void CPU::branchOnGreaterThanOrEqualToZero(const Instruction &instruction)
 {
-    if (getReg(instruction.i.rs) >= 0)
+    if (static_cast<int32_t>(getReg(instruction.i.rs)) >= 0)
         m_pc += 4 + ((int16_t)instruction.i.immediate << 2);
     else
         m_pc += 4;
@@ -783,7 +783,7 @@ void CPU::branchOnGreaterThanOrEqualToZero(const Instruction &instruction)
 
 void CPU::branchOnGreaterThanZero(const Instruction &instruction)
 {
-    if (getReg(instruction.i.rs) > 0)
+    if (static_cast<int32_t>(getReg(instruction.i.rs)) > 0)
         m_pc += 4 + ((int16_t)instruction.i.immediate << 2);
     else
         m_pc += 4;
@@ -791,7 +791,7 @@ void CPU::branchOnGreaterThanZero(const Instruction &instruction)
 
 void CPU::branchOnLessThanOrEqualToZero(const Instruction &instruction)
 {
-    if (getReg(instruction.i.rs) <= 0)
+    if (static_cast<int32_t>(getReg(instruction.i.rs)) <= 0)
         m_pc += 4 + ((int16_t)instruction.i.immediate << 2);
     else
         m_pc += 4;
