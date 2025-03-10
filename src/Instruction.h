@@ -14,8 +14,7 @@ enum class PrimaryOpCode
 {
     ILLEGAL = -1,
     SPECIAL = 0x00,
-    BLTZ = 0x01,
-    BGEZ = 0x01,
+    BcondZ = 0x01,
     J = 0x02,
     JAL = 0x03,
     BEQ = 0x04,
@@ -74,6 +73,14 @@ enum class SecondaryOpCode
     NOR = 0x27,
     SLT = 0x2A,
     SLTU = 0x2B,
+};
+
+enum class BranchOnConditionZero
+{
+    BLTZ = 0x00,
+    BGEZ = 0x01,
+    BLTZAL = 0x10,
+    BGEZAL = 0x11,
 };
 
 union Instruction {

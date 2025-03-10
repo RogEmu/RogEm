@@ -24,8 +24,6 @@ static const std::unordered_map<PrimaryOpCode, InstructionData> primaryData = {
     {PrimaryOpCode::JAL, InstructionData{"jal", "%address"}},
     {PrimaryOpCode::BEQ, InstructionData{"beq", arithmeticImmediateFormat}},
     {PrimaryOpCode::BNE, InstructionData{"bne", arithmeticImmediateFormat}},
-    {PrimaryOpCode::BLTZ, InstructionData{"bltz", arithmeticImmediateFormat}},
-    {PrimaryOpCode::BGEZ, InstructionData{"bgez", arithmeticImmediateFormat}},
     {PrimaryOpCode::BGTZ, InstructionData{"bgtz", arithmeticImmediateFormat}},
     {PrimaryOpCode::BLEZ, InstructionData{"blez", arithmeticImmediateFormat}},
     {PrimaryOpCode::LB, InstructionData{"lb", loadStoreFormat}},
@@ -110,6 +108,25 @@ static std::string disassembleSpecial(uint32_t pc, Instruction i)
     return std::string("MIPS Disassembler: Illegal instruction");
 }
 
+static std::string dissambleBcondZ(uint32_t pc, Instruction i)
+{
+    auto bcond = static_cast<BranchOnConditionZero>(i.i.rt);
+
+    switch (bcond)
+    {
+    case BranchOnConditionZero::BLTZ:
+        return formatAssembly(pc, i, InstructionData{"bltz", "$%rs, %imm"});
+    case BranchOnConditionZero::BGEZ:
+        return formatAssembly(pc, i, InstructionData{"bgez", "$%rs, %imm"});
+    case BranchOnConditionZero::BLTZAL:
+        return formatAssembly(pc, i, InstructionData{"bltzal", "$%rs, %imm"});
+    case BranchOnConditionZero::BGEZAL:
+        return formatAssembly(pc, i, InstructionData{"bgezal", "$%rs, %imm"});
+    default:
+        return std::string("MIPS Disassembler: Illegal instruction");
+    }
+}
+
 std::string Disassembler::disassemble(uint32_t pc, Instruction i)
 {
     auto primary = static_cast<PrimaryOpCode>(i.r.opcode);
@@ -117,6 +134,10 @@ std::string Disassembler::disassemble(uint32_t pc, Instruction i)
     if (primary == PrimaryOpCode::SPECIAL)
     {
         return disassembleSpecial(pc, i);
+    }
+    if (primary == PrimaryOpCode::BcondZ)
+    {
+        return dissambleBcondZ(pc, i);
     }
     if (primaryData.find(primary) != primaryData.end())
     {
