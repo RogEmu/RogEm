@@ -806,6 +806,28 @@ void CPU::mtc0(const Instruction &instruction)
     m_cop0Reg[regn] = data;
 }
 
+void CPU::branchOnLessThanZeroAndLink(const Instruction &instruction)
+{
+    if (static_cast<int32_t>(getReg(instruction.i.rs)) < 0)
+    {
+        setReg(31, m_pc + 8);
+        m_pc += 4 + ((int16_t)instruction.i.immediate << 2);
+    }
+    else
+        m_pc += 4;
+}
+
+void CPU::branchOnGreaterThanOrEqualToZeroAndLink(const Instruction &instruction)
+{
+    if (static_cast<int32_t>(getReg(instruction.i.rs)) >= 0)
+    {
+        setReg(31, m_pc + 8);
+        m_pc += 4 + ((int16_t)instruction.i.immediate << 2);
+    }
+    else
+        m_pc += 4;
+}
+
 void CPU::illegalInstruction(const Instruction &instruction)
 {
     fprintf(stderr, "Illegal instruction: ");

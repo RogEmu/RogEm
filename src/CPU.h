@@ -107,6 +107,8 @@ struct CPU
     void branchOnGreaterThanZero(const Instruction &instruction);
     void branchOnGreaterThanZeroAndLink(const Instruction &instruction);
     void branchOnLessThanOrEqualToZero(const Instruction &instruction);
+    void branchOnLessThanZeroAndLink(const Instruction &instruction);
+    void branchOnGreaterThanOrEqualToZeroAndLink(const Instruction &instruction);
 
     //COP0 Instructions
     void executeCop0(const Instruction &instruction);
