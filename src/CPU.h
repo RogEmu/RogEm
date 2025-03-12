@@ -113,6 +113,10 @@ struct CPU
     void executeCop0(const Instruction &instruction);
     void mtc0(const Instruction &instruction);
 
+    //COP0 Instructions
+    void executeCop0(const Instruction &instruction);
+    void mtc0(const Instruction &instruction);
+
     void illegalInstruction(const Instruction &instruction);
     void specialInstruction(const Instruction &instruction);
     void branchOnConditionZero(const Instruction &instruction);
