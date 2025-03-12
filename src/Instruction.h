@@ -14,7 +14,7 @@ enum class PrimaryOpCode
 {
     ILLEGAL = -1,
     SPECIAL = 0x00,
-    BcondZ = 0x01,
+    BCONDZ = 0x01,
     J = 0x02,
     JAL = 0x03,
     BEQ = 0x04,
@@ -27,6 +27,7 @@ enum class PrimaryOpCode
     ORI = 0x0D,
     XORI = 0x0E,
     LUI = 0x0F,
+    COP0 = 0x10,
     LB = 0x20,
     LH = 0x21,
     LWL = 0x22,
@@ -81,6 +82,15 @@ enum class BranchOnConditionZero
     BGEZ = 0x01,
     BLTZAL = 0x10,
     BGEZAL = 0x11,
+};
+
+enum class CoprocessorOpcodes
+{
+    MFC = 0b0,
+    CFC = 0b01,
+    MTC = 0b100,
+    BC = 0b1000,
+    IMM25 = 0b10000
 };
 
 union Instruction {

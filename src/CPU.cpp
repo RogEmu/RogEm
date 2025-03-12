@@ -10,31 +10,6 @@
 
 #include "Disassembler.h"
 
-static const std::string m_registerNames[32] = {
-    "zero", "at", "v0", "v1", "a0", "a1", "a2", "a3",
-    "t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7",
-    "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7",
-    "t8", "t9", "k0", "k1", "gp", "sp", "fp", "ra"
-};
-
-static void printInstruction(const Instruction &inst)
-{
-    switch (inst.r.opcode)
-    {
-    case 0x00:
-        printf("op:0x%02X rs:0x%02X rt:0x%02X rd:0x%02X shamt:0x%02X func:0x%02X\n",
-        inst.r.opcode, inst.r.rs, inst.r.rt, inst.r.rd, inst.r.shamt, inst.r.funct);
-        break;
-    case 0x02:
-    case 0x03:
-        printf("op:0x%02X addr:0x%08X\n", inst.j.opcode, inst.j.address);
-        break;
-    default:
-        printf("op:0x%02X rs:0x%02X rt:0x%02X imm:0x%04X\n", inst.i.opcode, inst.i.rs, inst.i.rt, inst.i.immediate);
-        break;
-    }
-}
-
 static bool addOverflow(int32_t a, int32_t b)
 {
     if (a > 0 && b > 0 && a > INT32_MAX - b)
@@ -58,22 +33,22 @@ CPU::CPU(const Bus &bus) :
     m_bus(bus)
 {
     m_registers[0] = 0;
+    m_inBranchDelay = false;
 }
 
 void CPU::step()
 {
     Instruction instruction = fetchInstruction();
-
     std::cout << Disassembler::disassemble(m_pc, instruction) << std::endl;
+    m_pc += 4;
     executeInstruction(instruction);
     // printInstruction(instruction);
-    // debugState();
+    Disassembler::debugState(m_pc, m_registers);
 }
 
 Instruction CPU::fetchInstruction()
 {
-    uint32_t instruction = m_bus.loadWord(m_pc);
-    m_pc += 4;
+    uint32_t instruction = m_bus.loadWord(m_inBranchDelay ? m_branchSlotAddr : m_pc);
     return Instruction{.raw=instruction};
 }
 
@@ -147,8 +122,11 @@ void CPU::executeInstruction(const Instruction &instruction)
     case PrimaryOpCode::SPECIAL:
         specialInstruction(instruction);
         break;
-    case PrimaryOpCode::BcondZ:
+    case PrimaryOpCode::BCONDZ:
         branchOnConditionZero(instruction);
+        break;
+    case PrimaryOpCode::COP0:
+        executeCop0(instruction);
         break;
     default:
         illegalInstruction(instruction);
@@ -257,20 +235,6 @@ void CPU::specialInstruction(const Instruction &instruction)
     default:
         illegalInstruction(instruction);
         break;
-    }
-}
-
-void CPU::debugState() const
- {
-    std::cout << "CPU Register State:\n";
-    std::cout << "PC : 0x" << std::hex << std::setw(8) << std::setfill('0') << m_pc << "    ";
-    std::cout << "HI : 0x" << std::setw(8) << m_hi << "    ";
-    std::cout << "LO : 0x" << std::setw(8) << m_lo << "\n";
-    for (int i = 0; i < 32; i++) {
-        std::cout << std::setw(4) << std::setfill(' ') << m_registerNames[i] << " : 0x"
-                << std::hex << std::setw(8) << std::setfill('0') << m_registers[i];
-        if (i % 4 == 3) std::cout << "\n";
-        else std::cout << "    ";
     }
 }
 
@@ -797,10 +761,33 @@ void CPU::branchOnLessThanOrEqualToZero(const Instruction &instruction)
         m_pc += 4;
 }
 
+void CPU::executeCop0(const Instruction &instruction)
+{
+    auto code = static_cast<CoprocessorOpcodes>(instruction.r.rs);
+
+    switch (code)
+    {
+        case CoprocessorOpcodes::MTC:
+            mtc0(instruction);
+            break;
+        default:
+            break;
+    }
+}
+
+void CPU::mtc0(const Instruction &instruction)
+{
+    // mtc# rt,rd       ;cop#datRd = rt ;data regs
+    uint8_t regn = instruction.r.rd;
+    uint32_t data = m_registers[instruction.r.rt];
+
+    m_cop0Reg[regn] = data;
+}
+
 void CPU::illegalInstruction(const Instruction &instruction)
 {
     fprintf(stderr, "Illegal instruction: ");
-    printInstruction(instruction);
+    std::cout << Disassembler::disassemble(m_pc, instruction) << std::endl;
 
     // Temporary exit until exception handling is properly implemented
     exit(1);

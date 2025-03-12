@@ -22,7 +22,7 @@ int main(int ac, char **av)
 
     while (true)
     {
-        getchar();
+        // getchar();
         cpu.step();
     }
     return 0;

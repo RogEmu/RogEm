@@ -15,6 +15,7 @@
 
 #define RESET_VECTOR 0xBFC00000
 #define NB_GPR 32
+#define COP0_NB_REG 16
 
 struct CPU
 {
@@ -102,6 +103,10 @@ struct CPU
     void branchOnGreaterThanZero(const Instruction &instruction);
     void branchOnLessThanOrEqualToZero(const Instruction &instruction);
 
+    //COP0 Instructions
+    void executeCop0(const Instruction &instruction);
+    void mtc0(const Instruction &instruction);
+
     void illegalInstruction(const Instruction &instruction);
     void specialInstruction(const Instruction &instruction);
     void branchOnConditionZero(const Instruction &instruction);
@@ -117,6 +122,12 @@ struct CPU
     uint32_t m_lo;
 
     Bus m_bus;
+
+    uint32_t m_branchSlotAddr;
+    bool m_inBranchDelay;
+
+    // COP0 registers
+    uint32_t m_cop0Reg[COP0_NB_REG];
 };
 
 #endif /* !CPU_H_ */
