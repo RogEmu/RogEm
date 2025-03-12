@@ -814,6 +814,15 @@ void CPU::branchOnGreaterThanOrEqualToZeroAndLink(const Instruction &instruction
         m_pc += 4;
 }
 
+void CPU::mtc0(const Instruction &instruction)
+{
+    // mtc# rt,rd       ;cop#datRd = rt ;data regs
+    uint8_t regn = instruction.r.rd;
+    uint32_t data = m_registers[instruction.r.rt];
+
+    m_cop0Reg[regn] = data;
+}
+
 void CPU::executeCop0(const Instruction &instruction)
 {
     auto code = static_cast<CoprocessorOpcodes>(instruction.r.rs);
