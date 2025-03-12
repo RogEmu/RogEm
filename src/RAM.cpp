@@ -2,6 +2,7 @@
 
 RAM::RAM()
 {
+    m_data.resize(RAM_SIZE, 0xdb);
 }
 
 uint32_t RAM::loadWord(uint32_t addr) const
