@@ -91,16 +91,21 @@ struct CPU
     void moveToHi(const Instruction &instruction);
     void moveToLo(const Instruction &instruction);
 
-    // Jump and branche Instructions
+    // Jump Instructions
     void jump(const Instruction &instruction);
     void jumpAndLink(const Instruction &instruction);
     void jumpRegister(const Instruction &instruction);
     void jumpAndLinkRegister(const Instruction &instruction);
+
+    // Branch instructions
+    void executeBranch(const Instruction &instruction);
     void branchOnEqual(const Instruction &instruction);
     void branchOnNotEqual(const Instruction &instruction);
     void branchOnLessThanZero(const Instruction &instruction);
+    void branchOnLessThanZeroAndLink(const Instruction &instruction);
     void branchOnGreaterThanOrEqualToZero(const Instruction &instruction);
     void branchOnGreaterThanZero(const Instruction &instruction);
+    void branchOnGreaterThanZeroAndLink(const Instruction &instruction);
     void branchOnLessThanOrEqualToZero(const Instruction &instruction);
 
     //COP0 Instructions
@@ -110,8 +115,6 @@ struct CPU
     void illegalInstruction(const Instruction &instruction);
     void specialInstruction(const Instruction &instruction);
     void branchOnConditionZero(const Instruction &instruction);
-
-    void debugState() const;
 
     // General purpose registers
     uint32_t m_registers[NB_GPR];

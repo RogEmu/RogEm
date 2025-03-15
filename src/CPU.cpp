@@ -40,15 +40,24 @@ void CPU::step()
 {
     Instruction instruction = fetchInstruction();
     std::cout << Disassembler::disassemble(m_pc, instruction) << std::endl;
-    m_pc += 4;
+    auto nextPc = m_pc;
+    if (m_inBranchDelay)
+    {
+        nextPc = m_branchSlotAddr;
+        m_inBranchDelay = false;
+    }
+    else
+    {
+        nextPc += 4;
+    }
     executeInstruction(instruction);
-    // printInstruction(instruction);
     Disassembler::debugState(m_pc, m_registers);
+    m_pc = nextPc;
 }
 
 Instruction CPU::fetchInstruction()
 {
-    uint32_t instruction = m_bus.loadWord(m_inBranchDelay ? m_branchSlotAddr : m_pc);
+    uint32_t instruction = m_bus.loadWord(m_pc);
     return Instruction{.raw=instruction};
 }
 
@@ -67,6 +76,9 @@ void CPU::executeInstruction(const Instruction &instruction)
         break;
     case PrimaryOpCode::ADDIU:
         addImmediateUnsigned(instruction);
+        break;
+    case PrimaryOpCode::ADDI:
+        addImmediate(instruction);
         break;
     case PrimaryOpCode::J:
         jump(instruction);
@@ -127,6 +139,12 @@ void CPU::executeInstruction(const Instruction &instruction)
         break;
     case PrimaryOpCode::COP0:
         executeCop0(instruction);
+        break;
+    case PrimaryOpCode::BNE:
+        branchOnNotEqual(instruction);
+        break;
+    case PrimaryOpCode::BEQ:
+        branchOnEqual(instruction);
         break;
     default:
         illegalInstruction(instruction);
@@ -353,8 +371,6 @@ void CPU::addImmediate(const Instruction &instruction)
     uint32_t imm = static_cast<int16_t>(instruction.i.immediate);
     uint32_t tmp = left + imm;
 
-    printf("orig: %i %x imm: %i %x\n", instruction.i.immediate, instruction.i.immediate, imm, imm);
-    printf("reg: %i %x\n", left, left);
     if (addOverflow(left, imm))
     {
         // Overflow: need to raise exception on the system
@@ -693,7 +709,8 @@ void CPU::moveToLo(const Instruction &instruction)
 
 void CPU::jump(const Instruction &instruction)
 {
-    m_pc = (m_pc & 0xF0000000) | (((uint32_t)instruction.j.address) << 2);
+    m_branchSlotAddr = (m_pc & 0xF0000000) | (((uint32_t)instruction.j.address) << 2);
+    m_inBranchDelay = true;
 }
 
 void CPU::jumpAndLink(const Instruction &instruction)
@@ -713,6 +730,12 @@ void CPU::jumpAndLinkRegister(const Instruction &instruction)
     m_pc = getReg(instruction.r.rs);
 }
 
+void CPU::executeBranch(const Instruction &instruction)
+{
+    m_branchSlotAddr = m_pc + 4 + ((int16_t)instruction.i.immediate << 2);
+    m_inBranchDelay = true;
+}
+
 void CPU::branchOnEqual(const Instruction &instruction)
 {
     if (getReg(instruction.i.rs) == getReg(instruction.i.rt))
@@ -724,41 +747,31 @@ void CPU::branchOnEqual(const Instruction &instruction)
 void CPU::branchOnNotEqual(const Instruction &instruction)
 {
     if (getReg(instruction.i.rs) != getReg(instruction.i.rt))
-        m_pc += 4 + ((int16_t)instruction.i.immediate << 2);
-    else
-        m_pc += 4;
+        executeBranch(instruction);
 }
 
 void CPU::branchOnLessThanZero(const Instruction &instruction)
 {
     if (static_cast<int32_t>(getReg(instruction.i.rs)) < 0)
-        m_pc += 4 + ((int16_t)instruction.i.immediate << 2);
-    else
-        m_pc += 4;
+        executeBranch(instruction);
 }
 
 void CPU::branchOnGreaterThanOrEqualToZero(const Instruction &instruction)
 {
     if (static_cast<int32_t>(getReg(instruction.i.rs)) >= 0)
-        m_pc += 4 + ((int16_t)instruction.i.immediate << 2);
-    else
-        m_pc += 4;
+        executeBranch(instruction);
 }
 
 void CPU::branchOnGreaterThanZero(const Instruction &instruction)
 {
     if (static_cast<int32_t>(getReg(instruction.i.rs)) > 0)
-        m_pc += 4 + ((int16_t)instruction.i.immediate << 2);
-    else
-        m_pc += 4;
+        executeBranch(instruction);
 }
 
 void CPU::branchOnLessThanOrEqualToZero(const Instruction &instruction)
 {
     if (static_cast<int32_t>(getReg(instruction.i.rs)) <= 0)
-        m_pc += 4 + ((int16_t)instruction.i.immediate << 2);
-    else
-        m_pc += 4;
+        executeBranch(instruction);
 }
 
 void CPU::executeCop0(const Instruction &instruction)
