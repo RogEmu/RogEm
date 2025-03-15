@@ -745,6 +745,12 @@ void CPU::executeBranch(const Instruction &instruction)
     m_inBranchDelay = true;
 }
 
+void CPU::executeBranch(const Instruction &instruction)
+{
+    m_branchSlotAddr = m_pc + 4 + ((int16_t)instruction.i.immediate << 2);
+    m_inBranchDelay = true;
+}
+
 void CPU::branchOnEqual(const Instruction &instruction)
 {
     if (getReg(instruction.i.rs) == getReg(instruction.i.rt))
