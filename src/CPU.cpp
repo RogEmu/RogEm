@@ -734,7 +734,7 @@ void CPU::jumpRegister(const Instruction &instruction)
 
 void CPU::jumpAndLinkRegister(const Instruction &instruction)
 {
-    setReg(instruction.r.rd, m_pc + 8);
+    setReg(31, m_pc + 8);
     m_branchSlotAddr = getReg(instruction.r.rs);
     m_inBranchDelay = true;
 }
