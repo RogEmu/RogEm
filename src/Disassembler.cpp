@@ -29,7 +29,7 @@ static const std::unordered_map<PrimaryOpCode, InstructionData> primaryData = {
     {PrimaryOpCode::ADDI, InstructionData{"addi", arithmeticImmediateFormat}},
     {PrimaryOpCode::ADDIU, InstructionData{"addiu", arithmeticImmediateFormat}},
     {PrimaryOpCode::ANDI, InstructionData{"andi", arithmeticImmediateFormat}},
-    {PrimaryOpCode::J, InstructionData{"jmp", "%address"}},
+    {PrimaryOpCode::J, InstructionData{"j", "%address"}},
     {PrimaryOpCode::JAL, InstructionData{"jal", "%address"}},
     {PrimaryOpCode::BEQ, InstructionData{"beq", arithmeticImmediateFormat}},
     {PrimaryOpCode::BNE, InstructionData{"bne", arithmeticImmediateFormat}},
@@ -92,6 +92,11 @@ static std::string formatAsHexBytes(uint32_t value) {
                         value & 0xFF);         // Least significant byte
 }
 
+static int16_t computeBranchOffset(Instruction i)
+{
+    return (int16_t)i.i.immediate << 2;
+}
+
 static std::string formatAssembly(uint32_t pc, Instruction i, const InstructionData &data)
 {
     std::string result = fmt::format("{:3} {}", data.name, data.asmFormat);
@@ -99,8 +104,16 @@ static std::string formatAssembly(uint32_t pc, Instruction i, const InstructionD
     result = std::regex_replace(result, std::regex("%rt"), registerNames[i.r.rt]);
     result = std::regex_replace(result, std::regex("%rd"), registerNames[i.r.rd]);
     result = std::regex_replace(result, std::regex("%shamt"), std::to_string(i.r.shamt));
-    result = std::regex_replace(result, std::regex("%imm"), fmt::format("0x{:x}", (uint16_t)i.i.immediate));
     result = std::regex_replace(result, std::regex("%address"), fmt::format("0x{:x}", (uint32_t)i.j.address));
+
+    auto code = static_cast<PrimaryOpCode>(i.i.opcode);
+    uint32_t immediateValue = 0;
+    if (code == PrimaryOpCode::BEQ || code == PrimaryOpCode::BNE || code == PrimaryOpCode::BGTZ || code == PrimaryOpCode::BLEZ)
+        immediateValue = pc + 4 + computeBranchOffset(i);
+    else
+        immediateValue = i.i.immediate;
+
+    result = std::regex_replace(result, std::regex("%imm"), fmt::format("0x{:x}", immediateValue));
 
     result = fmt::format("0x{:08x}:  {}  {}", pc, formatAsHexBytes(i.raw), result);
     return result;

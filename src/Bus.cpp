@@ -69,7 +69,7 @@ void Bus::storeWord(uint32_t addr, uint32_t value)
     }
     else if (HW_REGISTERS.contains(pAddress))
     {
-        printf("Trying to write word 0x%08x into Hardware Registers: Not supported yet\n", value);
+        fprintf(stderr, "Trying to write word 0x%08x into Hardware Registers: Not supported yet\n", value);
     }
     else
     {
@@ -113,7 +113,7 @@ void Bus::storeHalfWord(uint32_t addr, uint16_t value)
     }
     else if (HW_REGISTERS.contains(pAddress))
     {
-        printf("Trying to write halfword 0x%04x into Hardware Registers: Not supported yet\n", value);
+        fprintf(stderr, "Trying to write halfword 0x%04x into Hardware Registers: Not supported yet\n", value);
     }
     else
     {
@@ -146,7 +146,7 @@ void Bus::storeByte(uint32_t addr, uint8_t value)
     }
     else if (HW_REGISTERS.contains(pAddress))
     {
-        printf("Trying to write byte 0x%02x into Hardware Registers: Not supported yet\n", value);
+        fprintf(stderr, "Trying to write byte 0x%02x into Hardware Registers: Not supported yet\n", value);
     }
     else
     {

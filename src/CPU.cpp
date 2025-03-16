@@ -39,7 +39,7 @@ CPU::CPU(const Bus &bus) :
 void CPU::step()
 {
     Instruction instruction = fetchInstruction();
-    std::cout << Disassembler::disassemble(m_pc, instruction) << std::endl;
+    // std::cout << Disassembler::disassemble(m_pc, instruction) << std::endl;
     auto nextPc = m_pc;
     if (m_inBranchDelay)
     {
@@ -51,7 +51,7 @@ void CPU::step()
         nextPc += 4;
     }
     executeInstruction(instruction);
-    Disassembler::debugState(m_pc, m_registers);
+    // Disassembler::debugState(m_pc, m_registers);
     m_pc = nextPc;
 }
 
@@ -250,6 +250,12 @@ void CPU::specialInstruction(const Instruction &instruction)
     case SecondaryOpCode::MTLO:
         moveToLo(instruction);
         break;
+    case SecondaryOpCode::JR:
+        jumpRegister(instruction);
+        break;
+    case SecondaryOpCode::JALR:
+        jumpAndLinkRegister(instruction);
+        break;
     default:
         illegalInstruction(instruction);
         break;
@@ -335,7 +341,7 @@ void CPU::substractWord(const Instruction &instruction)
     if (subOverflow(left, right))
     {
         // Overflow: need to raise exception on the system
-        std::cout << "Substraction overflow! : TODO Raise Exception" << std::endl;
+        std::cerr << "Substraction overflow! : TODO Raise Exception" << std::endl;
         return;
     }
     setReg(instruction.r.rd, tmp);
@@ -350,7 +356,7 @@ void CPU::addWord(const Instruction &instruction)
     if (addOverflow(left, right))
     {
         // Overflow: need to raise exception on the system
-        std::cout << "Addition overflow! : TODO Raise Exception : TODO Raise Exception" << std::endl;
+        std::cerr << "Addition overflow! : TODO Raise Exception : TODO Raise Exception" << std::endl;
         return;
     }
     setReg(instruction.r.rd, tmp);
@@ -375,7 +381,7 @@ void CPU::addImmediate(const Instruction &instruction)
     {
         // Overflow: need to raise exception on the system
         // Do not modify register on overflow
-        std::cout << "Addition overflow! : TODO Raise Exception" << std::endl;
+        std::cerr << "Addition overflow! : TODO Raise Exception" << std::endl;
         return;
     }
     setReg(instruction.i.rt, tmp);
@@ -445,7 +451,7 @@ void CPU::loadWord(const Instruction &instruction)
 
     if (address % 4 != 0) {
         // Misaligned: need to raise exception on the system
-        std::cout << "Address is misaligned,!" << std::endl;
+        std::cerr << "Address is misaligned,!" << std::endl;
         return;
     }
 
@@ -460,7 +466,7 @@ void CPU::loadHalfWord(const Instruction &instruction)
 
     if (address % 2 != 0) {
         // Misaligned: need to raise exception on the system
-        std::cout << "Address is misaligned,!" << std::endl;
+        std::cerr << "Address is misaligned,!" << std::endl;
         return;
     }
 
@@ -475,7 +481,7 @@ void CPU::loadHalfWordUnsigned(const Instruction &instruction)
 
     if (address % 2 != 0) {
         // Misaligned: need to raise exception on the system
-        std::cout << "Address is misaligned,!" << std::endl;
+        std::cerr << "Address is misaligned,!" << std::endl;
         return;
     }
 
@@ -716,18 +722,21 @@ void CPU::jump(const Instruction &instruction)
 void CPU::jumpAndLink(const Instruction &instruction)
 {
     setReg(31, m_pc + 8);
-    m_pc = (m_pc & 0xF0000000) | (((uint32_t)instruction.j.address) << 2);
+    m_branchSlotAddr = (m_pc & 0xF0000000) | (((uint32_t)instruction.j.address) << 2);
+    m_inBranchDelay = true;
 }
 
 void CPU::jumpRegister(const Instruction &instruction)
 {
-    m_pc = getReg(instruction.r.rs);
+    m_branchSlotAddr = getReg(instruction.r.rs);
+    m_inBranchDelay = true;
 }
 
 void CPU::jumpAndLinkRegister(const Instruction &instruction)
 {
     setReg(31, m_pc + 8);
-    m_pc = getReg(instruction.r.rs);
+    m_branchSlotAddr = getReg(instruction.r.rs);
+    m_inBranchDelay = true;
 }
 
 void CPU::executeBranch(const Instruction &instruction)
@@ -800,7 +809,7 @@ void CPU::mtc0(const Instruction &instruction)
 void CPU::illegalInstruction(const Instruction &instruction)
 {
     fprintf(stderr, "Illegal instruction: ");
-    std::cout << Disassembler::disassemble(m_pc, instruction) << std::endl;
+    std::cerr << Disassembler::disassemble(m_pc, instruction) << std::endl;
 
     // Temporary exit until exception handling is properly implemented
     exit(1);

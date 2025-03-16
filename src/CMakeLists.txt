@@ -9,10 +9,19 @@ set(SRC_FILES
     Bus.cpp
     CPU.cpp
     Disassembler.cpp
+    Debugger/Window.cpp
+    Debugger/RegistersWindow.cpp
+    Debugger/InstructionsWindow.cpp
 )
 
 add_executable(${BINARY_NAME} ${SRC_FILES})
 
+include_directories(
+    ./
+    Debugger/
+)
+
 target_link_libraries(${BINARY_NAME} PRIVATE
     fmt::fmt
+    ncurses
 )
