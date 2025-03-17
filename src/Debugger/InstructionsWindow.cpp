@@ -49,8 +49,14 @@ void InstructionsWindow::drawElements() const
 
         int row = (i + half_window) + 1; // Adjust row position
 
-        if (addr == (*m_pc)) wattron(m_window, A_BOLD | A_REVERSE);
+        if (line.length() < static_cast<size_t>(m_size.x))
+        {
+            line.append(static_cast<size_t>(m_size.x) - line.length() - 4, ' ');
+        }
+        if ((addr / 4 % 2 == 0)) wattron(m_window, COLOR_PAIR(2));
+        if (addr == (*m_pc)) wattron(m_window, A_BOLD | A_REVERSE | COLOR_PAIR(1));
         mvwprintw(m_window, row, 2, line.c_str());
-        if (addr == (*m_pc)) wattroff(m_window, A_BOLD | A_REVERSE);
+        if ((addr / 4 % 2 == 0)) wattroff(m_window, COLOR_PAIR(2));
+        if (addr == (*m_pc)) wattroff(m_window, A_BOLD | A_REVERSE | COLOR_PAIR(1));
     }
 }

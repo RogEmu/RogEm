@@ -58,9 +58,7 @@ std::string Window::getTitle(void) const
 
 void Window::drawElements() const
 {
-    wattron(m_window, A_BOLD);
-    wattron(m_window, COLOR_PAIR(1));
+    wattron(m_window, A_BOLD | COLOR_PAIR(1));
     mvwprintw(m_window, 0, 2, fmt::format(" {} ", m_title).c_str());
-    wattroff(m_window, COLOR_PAIR(1));
-    wattroff(m_window, A_BOLD);
+    wattroff(m_window, A_BOLD | COLOR_PAIR(1));
 }

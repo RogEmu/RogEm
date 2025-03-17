@@ -27,7 +27,8 @@ void init_ncurses()
     refresh();
     start_color();
 
-    init_pair(1, COLOR_RED, COLOR_BLACK);
+    init_pair(1, 220, COLOR_BLACK);
+    init_pair(2, COLOR_WHITE, 236);
 }
 
 void cleanup_ncurses()
@@ -73,18 +74,21 @@ int main(int ac, char **av)
         {
             pause = !pause;
         }
-        ch = 0;
 
         if (pause)
-            continue;
+        {
+            if (ch != ' ')
+            {
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                continue;
+            }
+        }
 
         cpu.step();
         insWin.addInstruction(cpu.m_pc, Instruction{bus.loadWord(cpu.m_pc)});
         insWin.draw();
         regWin.draw();
-        // draw_registers(cpu.m_registers, cpu.m_hi, cpu.m_lo, cpu.m_pc);
-        // draw_instructions(cpu.m_pc, {});
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
     cleanup_ncurses();
     return 0;
