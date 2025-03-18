@@ -9,7 +9,7 @@
 #define CPU_H_
 
 #include <cstdint>
-#include <iomanip>
+#include <memory>
 #include "Instruction.h"
 #include "Bus.h"
 
@@ -19,7 +19,7 @@
 
 struct CPU
 {
-    CPU(const Bus &bus);
+    CPU(const std::shared_ptr<Bus> &bus);
 
     void step();
     Instruction fetchInstruction();
@@ -107,7 +107,6 @@ struct CPU
     void branchOnGreaterThanZero(const Instruction &instruction);
     void branchOnGreaterThanZeroAndLink(const Instruction &instruction);
     void branchOnLessThanOrEqualToZero(const Instruction &instruction);
-    void branchOnLessThanZeroAndLink(const Instruction &instruction);
     void branchOnGreaterThanOrEqualToZeroAndLink(const Instruction &instruction);
 
     //COP0 Instructions
@@ -126,7 +125,7 @@ struct CPU
     uint32_t m_hi;
     uint32_t m_lo;
 
-    Bus m_bus;
+    std::shared_ptr<Bus> m_bus;
 
     uint32_t m_branchSlotAddr;
     bool m_inBranchDelay;

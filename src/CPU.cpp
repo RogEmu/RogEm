@@ -28,7 +28,7 @@ static bool subOverflow(int32_t a, int32_t b)
     return false;
 }
 
-CPU::CPU(const Bus &bus) :
+CPU::CPU(const std::shared_ptr<Bus> &bus) :
     m_pc(RESET_VECTOR),
     m_bus(bus)
 {
@@ -57,7 +57,7 @@ void CPU::step()
 
 Instruction CPU::fetchInstruction()
 {
-    uint32_t instruction = m_bus.loadWord(m_pc);
+    uint32_t instruction = m_bus->loadWord(m_pc);
     return Instruction{.raw=instruction};
 }
 
@@ -286,7 +286,7 @@ void CPU::storeWord(const Instruction &instruction)
     uint32_t address = getReg(instruction.i.rs) + imm;
     uint32_t value = getReg(instruction.i.rt);
 
-    m_bus.storeWord(address, value);
+    m_bus->storeWord(address, value);
 }
 
 void CPU::storeHalfWord(const Instruction &instruction)
@@ -295,7 +295,7 @@ void CPU::storeHalfWord(const Instruction &instruction)
     uint32_t address = getReg(instruction.i.rs) + imm;
     uint16_t value = static_cast<uint16_t>(getReg(instruction.i.rt));
 
-    m_bus.storeHalfWord(address, value);
+    m_bus->storeHalfWord(address, value);
 }
 
 void CPU::storeByte(const Instruction &instruction)
@@ -304,7 +304,7 @@ void CPU::storeByte(const Instruction &instruction)
     uint32_t address = getReg(instruction.i.rs) + imm;
     uint8_t value = static_cast<uint8_t>(getReg(instruction.i.rt));
 
-    m_bus.storeByte(address, value);
+    m_bus->storeByte(address, value);
 }
 
 void CPU::shiftLeftLogical(const Instruction &instruction)
@@ -455,7 +455,7 @@ void CPU::loadWord(const Instruction &instruction)
         return;
     }
 
-    uint32_t value = m_bus.loadWord(address);
+    uint32_t value = m_bus->loadWord(address);
     setReg(instruction.i.rt, value);  // No sign extension needed for 32-bit word load
 }
 
@@ -470,7 +470,7 @@ void CPU::loadHalfWord(const Instruction &instruction)
         return;
     }
 
-    int16_t value = static_cast<int16_t>(m_bus.loadHalfWord(address));  // Sign-extend
+    int16_t value = static_cast<int16_t>(m_bus->loadHalfWord(address));  // Sign-extend
     setReg(instruction.i.rt, static_cast<int32_t>(value));
 }
 
@@ -485,7 +485,7 @@ void CPU::loadHalfWordUnsigned(const Instruction &instruction)
         return;
     }
 
-    uint16_t value = m_bus.loadHalfWord(address);
+    uint16_t value = m_bus->loadHalfWord(address);
     setReg(instruction.i.rt, static_cast<uint32_t>(value));
 }
 
@@ -494,7 +494,7 @@ void CPU::loadByte(const Instruction &instruction)
     int32_t imm = static_cast<int16_t>(instruction.i.immediate);
     uint32_t address = getReg(instruction.i.rs) + imm;
 
-    int8_t value = static_cast<int8_t>(m_bus.loadByte(address));
+    int8_t value = static_cast<int8_t>(m_bus->loadByte(address));
     setReg(instruction.i.rt, static_cast<int32_t>(value));
 }
 
@@ -503,7 +503,7 @@ void CPU::loadByteUnsigned(const Instruction &instruction)
     int32_t imm = static_cast<int16_t>(instruction.i.immediate);
     uint32_t address = getReg(instruction.i.rs) + imm;
 
-    uint8_t value = m_bus.loadByte(address);
+    uint8_t value = m_bus->loadByte(address);
     setReg(instruction.i.rt, static_cast<uint32_t>(value));
 }
 
@@ -511,7 +511,7 @@ void CPU::loadWordRight(const Instruction &instruction)
 {
     int32_t imm = static_cast<int16_t>(instruction.i.immediate);
     uint32_t address = getReg(instruction.i.rs) + imm;
-    uint32_t value = m_bus.loadWord(address & ~3);
+    uint32_t value = m_bus->loadWord(address & ~3);
 
     uint32_t shift = (address & 3) * 8;
     uint32_t mask = 0xFFFFFFFF >> shift;
@@ -525,7 +525,7 @@ void CPU::loadWordLeft(const Instruction &instruction)
 {
     int32_t imm = static_cast<int16_t>(instruction.i.immediate);
     uint32_t address = getReg(instruction.i.rs) + imm;
-    uint32_t value = m_bus.loadWord(address & ~3);
+    uint32_t value = m_bus->loadWord(address & ~3);
 
     uint32_t shift = (3 - (address & 3)) * 8;
     uint32_t mask = 0xFFFFFFFF << shift;
@@ -543,10 +543,10 @@ void CPU::storeWordRight(const Instruction &instruction)
 
     uint32_t shift = (address & 3) * 8;
     uint32_t mask = 0xFFFFFFFF >> shift;
-    uint32_t oldValue = m_bus.loadWord(address & ~3);
+    uint32_t oldValue = m_bus->loadWord(address & ~3);
 
     uint32_t res = (oldValue & ~mask) | ((value << shift) & mask);
-    m_bus.storeWord(address & ~3, res);
+    m_bus->storeWord(address & ~3, res);
 }
 
 void CPU::storeWordLeft(const Instruction &instruction)
@@ -557,10 +557,10 @@ void CPU::storeWordLeft(const Instruction &instruction)
 
     uint32_t shift = (3 - (address & 3)) * 8;
     uint32_t mask = 0xFFFFFFFF << shift;
-    uint32_t oldValue = m_bus.loadWord(address & ~3);
+    uint32_t oldValue = m_bus->loadWord(address & ~3);
 
     uint32_t res = (oldValue & ~mask) | ((value >> shift) & mask);
-    m_bus.storeWord(address & ~3, res);
+    m_bus->storeWord(address & ~3, res);
 }
 
 void CPU::setOnLessThan(const Instruction &instruction)
@@ -734,14 +734,8 @@ void CPU::jumpRegister(const Instruction &instruction)
 
 void CPU::jumpAndLinkRegister(const Instruction &instruction)
 {
-    setReg(31, m_pc + 8);
+    setReg(instruction.r.rd, m_pc + 8);
     m_branchSlotAddr = getReg(instruction.r.rs);
-    m_inBranchDelay = true;
-}
-
-void CPU::executeBranch(const Instruction &instruction)
-{
-    m_branchSlotAddr = m_pc + 4 + ((int16_t)instruction.i.immediate << 2);
     m_inBranchDelay = true;
 }
 
@@ -783,33 +777,19 @@ void CPU::branchOnGreaterThanZero(const Instruction &instruction)
         executeBranch(instruction);
 }
 
+void CPU::branchOnGreaterThanZeroAndLink(const Instruction &instruction)
+{
+    if (static_cast<int32_t>(getReg(instruction.i.rs)) > 0)
+    {
+        setReg(31, m_pc + 8);
+        executeBranch(instruction);
+    }
+}
+
 void CPU::branchOnLessThanOrEqualToZero(const Instruction &instruction)
 {
     if (static_cast<int32_t>(getReg(instruction.i.rs)) <= 0)
         executeBranch(instruction);
-}
-
-void CPU::executeCop0(const Instruction &instruction)
-{
-    auto code = static_cast<CoprocessorOpcodes>(instruction.r.rs);
-
-    switch (code)
-    {
-        case CoprocessorOpcodes::MTC:
-            mtc0(instruction);
-            break;
-        default:
-            break;
-    }
-}
-
-void CPU::mtc0(const Instruction &instruction)
-{
-    // mtc# rt,rd       ;cop#datRd = rt ;data regs
-    uint8_t regn = instruction.r.rd;
-    uint32_t data = m_registers[instruction.r.rt];
-
-    m_cop0Reg[regn] = data;
 }
 
 void CPU::branchOnLessThanZeroAndLink(const Instruction &instruction)

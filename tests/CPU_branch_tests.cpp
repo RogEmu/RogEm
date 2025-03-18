@@ -1,10 +1,13 @@
 #include <gtest/gtest.h>
 #include "Utils.h"
+#include "BIOS.h"
+#include "Bus.h"
+#include "CPU.h"
 
 TEST(CpuTest, BEQ_1)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -22,8 +25,8 @@ TEST(CpuTest, BEQ_1)
 
 TEST(CpuTest, BEQ_2)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 

@@ -11,6 +11,7 @@
 #include "Window.hpp"
 #include "Instruction.h"
 
+#include <memory>
 #include <map>
 
 class Bus;
@@ -23,14 +24,14 @@ class InstructionsWindow : public Window
 
         void setPc(uint32_t *const pc);
         void addInstruction(uint32_t pc, const Instruction &i);
-        void setBus(Bus *bus);
+        void setBus(const std::shared_ptr<Bus> &bus);
 
     protected:
         void drawElements() const override;
 
     private:
         uint32_t *m_pc;
-        Bus *m_bus;
+        std::shared_ptr<Bus> m_bus;
         std::map<uint32_t, Instruction> m_instructionMap;
 };
 

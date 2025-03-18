@@ -1,10 +1,13 @@
 #include <gtest/gtest.h>
 #include "Utils.h"
+#include "BIOS.h"
+#include "Bus.h"
+#include "CPU.h"
 
 TEST(CpuTest, Constructor)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
 
     EXPECT_EQ(cpu.m_registers[0], 0);
@@ -12,8 +15,8 @@ TEST(CpuTest, Constructor)
 
 TEST(CpuTest, LUI_1)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
 
     // Load upper immediate value 0xAAAA into $8
@@ -28,8 +31,8 @@ TEST(CpuTest, LUI_1)
 
 TEST(CpuTest, LUI_2)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
 
     // Load upper immediate value 0xFF40 into $8
@@ -44,8 +47,8 @@ TEST(CpuTest, LUI_2)
 
 TEST(CpuTest, LUI_3)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
 
     // Load upper immediate value 0xDEAD into $1
@@ -60,8 +63,8 @@ TEST(CpuTest, LUI_3)
 
 TEST(CpuTest, Load_Immediate)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
 
     uint32_t value = 0x12345678;

@@ -1,10 +1,13 @@
 #include <gtest/gtest.h>
 #include "Utils.h"
+#include "BIOS.h"
+#include "Bus.h"
+#include "CPU.h"
 
 TEST(CpuTest, ORI_1)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
 
     // Or immediate value 0x1F1F with $0 into $5
@@ -20,8 +23,8 @@ TEST(CpuTest, ORI_1)
 
 TEST(CpuTest, ORI_2)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
 
     // Or immediate value 0x1F1F with $0 into $1
@@ -50,8 +53,8 @@ TEST(CpuTest, ORI_2)
 
 TEST(CpuTest, ANDI_1)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -66,8 +69,8 @@ TEST(CpuTest, ANDI_1)
 
 TEST(CpuTest, ANDI_2)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -85,8 +88,8 @@ TEST(CpuTest, ANDI_2)
 
 TEST(CpuTest, ANDI_3)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -104,8 +107,8 @@ TEST(CpuTest, ANDI_3)
 
 TEST(CpuTest, XORI_1)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -123,8 +126,8 @@ TEST(CpuTest, XORI_1)
 
 TEST(CpuTest, AND_1)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -144,8 +147,8 @@ TEST(CpuTest, AND_1)
 
 TEST(CpuTest, AND_2)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -164,8 +167,8 @@ TEST(CpuTest, AND_2)
 
 TEST(CpuTest, AND_3)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -184,8 +187,8 @@ TEST(CpuTest, AND_3)
 
 TEST(CpuTest, OR_1)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -204,8 +207,8 @@ TEST(CpuTest, OR_1)
 
 TEST(CpuTest, OR_2)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -225,8 +228,8 @@ TEST(CpuTest, OR_2)
 
 TEST(CpuTest, OR_3)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -245,8 +248,8 @@ TEST(CpuTest, OR_3)
 
 TEST(CpuTest, XOR_1)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -265,8 +268,8 @@ TEST(CpuTest, XOR_1)
 
 TEST(CpuTest, XOR_2)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -285,8 +288,8 @@ TEST(CpuTest, XOR_2)
 
 TEST(CpuTest, NOR_1)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -308,8 +311,8 @@ TEST(CpuTest, NOR_1)
 
 TEST(CpuTest, NOR_2)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 

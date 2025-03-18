@@ -7,6 +7,9 @@
 
 #include "Bus.h"
 
+#include "BIOS.h"
+#include "RAM.h"
+
 // When adding address spaces, use physical addresses
 const MemRange BIOS_RANGE = {0x1FC00000, 512 * 1024};
 const MemRange RAM_RANGE = {0x0, 2 * 1024 * 1024};
@@ -23,8 +26,9 @@ const MemorySegments AddressSegments[] = {
     MemorySegments::KSEG2,
 };
 
-Bus::Bus(const BIOS &bios) :
-    m_bios(bios)
+Bus::Bus(const std::shared_ptr<BIOS> &bios, const std::shared_ptr<RAM> &ram) :
+    m_bios(bios),
+    m_ram(ram)
 {
 }
 
@@ -44,11 +48,11 @@ uint32_t Bus::loadWord(uint32_t addr) const
 
     if (BIOS_RANGE.contains(pAddress))
     {
-        return m_bios.loadWord(BIOS_RANGE.remap(pAddress));
+        return m_bios->loadWord(BIOS_RANGE.remap(pAddress));
     }
     if (RAM_RANGE.contains(pAddress))
     {
-        return m_ram.loadWord(RAM_RANGE.remap(pAddress));
+        return m_ram->loadWord(RAM_RANGE.remap(pAddress));
     }
     return 0;
 }
@@ -65,7 +69,7 @@ void Bus::storeWord(uint32_t addr, uint32_t value)
 
     if (RAM_RANGE.contains(pAddress))
     {
-        m_ram.storeWord(pAddress, value);
+        m_ram->storeWord(pAddress, value);
     }
     else if (HW_REGISTERS.contains(pAddress))
     {
@@ -89,11 +93,11 @@ uint16_t Bus::loadHalfWord(uint32_t addr) const
 
     if (BIOS_RANGE.contains(pAddress))
     {
-        return m_bios.loadHalfWord(BIOS_RANGE.remap(pAddress));
+        return m_bios->loadHalfWord(BIOS_RANGE.remap(pAddress));
     }
     else if (RAM_RANGE.contains(pAddress))
     {
-        return m_ram.loadHalfWord(RAM_RANGE.remap(pAddress));
+        return m_ram->loadHalfWord(RAM_RANGE.remap(pAddress));
     }
     return 0;
 }
@@ -109,7 +113,7 @@ void Bus::storeHalfWord(uint32_t addr, uint16_t value)
     }
     if (RAM_RANGE.contains(pAddress))
     {
-        m_ram.storeHalfWord(pAddress, value);
+        m_ram->storeHalfWord(pAddress, value);
     }
     else if (HW_REGISTERS.contains(pAddress))
     {
@@ -127,11 +131,11 @@ uint8_t Bus::loadByte(uint32_t addr) const
 
     if (BIOS_RANGE.contains(pAddress))
     {
-        return m_bios.loadByte(BIOS_RANGE.remap(pAddress));
+        return m_bios->loadByte(BIOS_RANGE.remap(pAddress));
     }
     if (RAM_RANGE.contains(pAddress))
     {
-        return m_ram.loadByte(RAM_RANGE.remap(pAddress));
+        return m_ram->loadByte(RAM_RANGE.remap(pAddress));
     }
     return 0;
 }
@@ -142,7 +146,7 @@ void Bus::storeByte(uint32_t addr, uint8_t value)
 
     if (RAM_RANGE.contains(pAddress))
     {
-        m_ram.storeByte(pAddress, value);
+        m_ram->storeByte(pAddress, value);
     }
     else if (HW_REGISTERS.contains(pAddress))
     {

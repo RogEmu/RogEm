@@ -8,8 +8,10 @@
 #ifndef BUS_H_
 #define BUS_H_
 
-#include "BIOS.h"
-#include "RAM.h"
+#include <memory>
+
+class BIOS;
+class RAM;
 
 struct MemRange
 {
@@ -38,7 +40,7 @@ enum class MemorySegments
 class Bus
 {
     public:
-        Bus(const BIOS &bios);
+        Bus(const std::shared_ptr<BIOS> &bios, const std::shared_ptr<RAM> &ram);
         ~Bus();
 
         uint32_t loadWord(uint32_t addr) const;
@@ -51,8 +53,8 @@ class Bus
         uint32_t mapAddress(uint32_t addr) const;
 
     private:
-        BIOS m_bios;
-        RAM m_ram;
+        std::shared_ptr<BIOS> m_bios;
+        std::shared_ptr<RAM> m_ram;
 };
 
 #endif /* !BUS_H_ */

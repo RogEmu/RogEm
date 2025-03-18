@@ -16,7 +16,7 @@ class Window;
 
 class Debugger {
     public:
-        Debugger(CPU *cpu);
+        Debugger(const std::shared_ptr<CPU> &cpu);
         ~Debugger();
 
         void addWindow(const std::shared_ptr<Window> &window);
@@ -30,7 +30,7 @@ class Debugger {
         void drawWindows(void);
 
     private:
-        CPU *m_cpu;
+        std::shared_ptr<CPU> m_cpu;
         std::list<std::shared_ptr<Window>> m_windows;
 
         bool m_paused;

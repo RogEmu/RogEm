@@ -1,10 +1,13 @@
 #include <gtest/gtest.h>
 #include "Utils.h"
+#include "BIOS.h"
+#include "Bus.h"
+#include "CPU.h"
 
 TEST(CpuTest, ADDI_1)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -22,8 +25,8 @@ TEST(CpuTest, ADDI_1)
 
 TEST(CpuTest, ADDI_2)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -41,8 +44,8 @@ TEST(CpuTest, ADDI_2)
 
 TEST(CpuTest, ADDI_Negative_1)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -60,8 +63,8 @@ TEST(CpuTest, ADDI_Negative_1)
 
 TEST(CpuTest, ADDI_Negative_Overflow)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -80,8 +83,8 @@ TEST(CpuTest, ADDI_Negative_Overflow)
 
 TEST(CpuTest, ADDI_Negative_No_Overflow)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -99,8 +102,8 @@ TEST(CpuTest, ADDI_Negative_No_Overflow)
 
 TEST(CpuTest, ADDI_Negative_No_Underflow)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -118,8 +121,8 @@ TEST(CpuTest, ADDI_Negative_No_Underflow)
 
 TEST(CpuTest, ADDI_Negative_Underflow)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -138,8 +141,8 @@ TEST(CpuTest, ADDI_Negative_Underflow)
 
 TEST(CpuTest, ADDIU_1)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -157,8 +160,8 @@ TEST(CpuTest, ADDIU_1)
 
 TEST(CpuTest, ADDIU_2)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -176,8 +179,8 @@ TEST(CpuTest, ADDIU_2)
 
 TEST(CpuTest, ADDIU_No_Overflow)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -195,8 +198,8 @@ TEST(CpuTest, ADDIU_No_Overflow)
 
 TEST(CpuTest, ADDIU_No_Underflow)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -214,8 +217,8 @@ TEST(CpuTest, ADDIU_No_Underflow)
 
 TEST(CpuTest, ADDIU_No_Underflow_2)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -233,8 +236,8 @@ TEST(CpuTest, ADDIU_No_Underflow_2)
 
 TEST(CpuTest, SUB_1)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -254,8 +257,8 @@ TEST(CpuTest, SUB_1)
 
 TEST(CpuTest, SUB_Overflow)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -277,8 +280,8 @@ TEST(CpuTest, SUB_Overflow)
 
 TEST(CpuTest, SUB_Overflow_2)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -300,8 +303,8 @@ TEST(CpuTest, SUB_Overflow_2)
 
 TEST(CpuTest, SUB_Underflow)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -323,8 +326,8 @@ TEST(CpuTest, SUB_Underflow)
 
 TEST(CpuTest, SUB_Underflow_2)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -346,8 +349,8 @@ TEST(CpuTest, SUB_Underflow_2)
 
 TEST(CpuTest, SUB_No_Overflow)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -368,8 +371,8 @@ TEST(CpuTest, SUB_No_Overflow)
 
 TEST(CpuTest, SUB_No_Overflow_2)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -390,8 +393,8 @@ TEST(CpuTest, SUB_No_Overflow_2)
 
 TEST(CpuTest, SUBU_1)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -411,8 +414,8 @@ TEST(CpuTest, SUBU_1)
 
 TEST(CpuTest, SUBU_2)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -432,8 +435,8 @@ TEST(CpuTest, SUBU_2)
 
 TEST(CpuTest, SUBU_3)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -453,8 +456,8 @@ TEST(CpuTest, SUBU_3)
 
 TEST(CpuTest, SUBU_4)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -474,8 +477,8 @@ TEST(CpuTest, SUBU_4)
 
 TEST(CpuTest, SUBU_No_Overflow)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -495,8 +498,8 @@ TEST(CpuTest, SUBU_No_Overflow)
 
 TEST(CpuTest, SUBU_No_Overflow_2)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 

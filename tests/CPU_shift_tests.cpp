@@ -1,10 +1,13 @@
 #include <gtest/gtest.h>
 #include "Utils.h"
+#include "BIOS.h"
+#include "Bus.h"
+#include "CPU.h"
 
 TEST(CpuTest, SLLV_1)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -22,8 +25,8 @@ TEST(CpuTest, SLLV_1)
 
 TEST(CpuTest, SLLV_2)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -41,8 +44,8 @@ TEST(CpuTest, SLLV_2)
 
 TEST(CpuTest, SLLV_No_Shift)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -60,8 +63,8 @@ TEST(CpuTest, SLLV_No_Shift)
 
 TEST(CpuTest, SLL_1)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -79,8 +82,8 @@ TEST(CpuTest, SLL_1)
 
 TEST(CpuTest, SLL_Large_Shift)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -98,8 +101,8 @@ TEST(CpuTest, SLL_Large_Shift)
 
 TEST(CpuTest, SRL_1)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -116,8 +119,8 @@ TEST(CpuTest, SRL_1)
 
 TEST(CpuTest, SRL_Large_Shift)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -134,8 +137,8 @@ TEST(CpuTest, SRL_Large_Shift)
 
 TEST(CpuTest, SRLV_1)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -153,8 +156,8 @@ TEST(CpuTest, SRLV_1)
 
 TEST(CpuTest, SRLV_Large_Shift)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -172,8 +175,8 @@ TEST(CpuTest, SRLV_Large_Shift)
 
 TEST(CpuTest, SRLV_No_Shift)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -191,8 +194,8 @@ TEST(CpuTest, SRLV_No_Shift)
 
 TEST(CpuTest, SRA_MSB_Negative)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -210,8 +213,8 @@ TEST(CpuTest, SRA_MSB_Negative)
 
 TEST(CpuTest, SRA_MSB_Positive)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -228,8 +231,8 @@ TEST(CpuTest, SRA_MSB_Positive)
 
 TEST(CpuTest, SRA_MSB_Positive_2)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -246,8 +249,8 @@ TEST(CpuTest, SRA_MSB_Positive_2)
 
 TEST(CpuTest, SRAV_MSB_Negative)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 
@@ -265,8 +268,8 @@ TEST(CpuTest, SRAV_MSB_Negative)
 
 TEST(CpuTest, SRAV_MSB_Positive)
 {
-    BIOS bios;
-    Bus bus(bios);
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
     CPU cpu(bus);
     Instruction i;
 

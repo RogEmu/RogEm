@@ -28,7 +28,7 @@ void InstructionsWindow::addInstruction(uint32_t pc, const Instruction &i)
     m_instructionMap[pc] = i;
 }
 
-void InstructionsWindow::setBus(Bus *bus)
+void InstructionsWindow::setBus(const std::shared_ptr<Bus> &bus)
 {
     m_bus = bus;
 }
