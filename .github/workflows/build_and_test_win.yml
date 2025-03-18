@@ -69,4 +69,5 @@ jobs:
       working-directory: ${{ github.workspace }}/build
       # Execute tests defined by the CMake configuration. Note that --build-config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
-      run: ctest --build-config ${{ matrix.build_type }} --test-dir ${{ github.workspace }}/build/tests/${{ matrix.build_type }}
+      # run: ctest --build-config ${{ matrix.build_type }} --test-dir ${{ github.workspace }}/build/tests/${{ matrix.build_type }}
+      run: ${{ github.workspace }}\\build\\tests\\${{ matrix.build_type }}\\rogem_tests.exe
