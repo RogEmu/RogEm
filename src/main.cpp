@@ -31,10 +31,12 @@ void init_ncurses()
     init_pair(1, COLOR_RED, COLOR_BLACK);
 }
 
-void cleanup_ncurses()
-{
-    endwin();
-}
+//     init_pair(1, COLOR_YELLOW, COLOR_BLACK);
+//     init_pair(3, COLOR_WHITE, COLOR_BLACK);
+//     init_pair(2, COLOR_BRIGHT_WHITE, COLOR_BRIGHT_BLACK);
+
+//     refresh();
+// }
 
 int main(int ac, char **av)
 {
@@ -69,6 +71,5 @@ int main(int ac, char **av)
         cpu->step();
         dbg->update();
     }
-    cleanup_ncurses();
     return 0;
 }
