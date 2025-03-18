@@ -22,16 +22,23 @@ Window::~Window()
     delwin(m_window);
 }
 
+Vec2i Window::size(void) const
+{
+    return m_size;
+}
+
 void Window::resize(int x, int y)
 {
     m_size.x = x;
     m_size.y = y;
+    wresize(m_window, y, x);
 }
 
 void Window::move(int x, int y)
 {
     m_pos.x = x;
     m_pos.y = y;
+    mvwin(m_window, y, x);
 }
 
 void Window::draw(void)

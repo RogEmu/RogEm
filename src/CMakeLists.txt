@@ -12,6 +12,7 @@ set(SRC_FILES
     Debugger/Window.cpp
     Debugger/RegistersWindow.cpp
     Debugger/InstructionsWindow.cpp
+    Debugger/Debugger.cpp
 )
 
 add_executable(${BINARY_NAME} ${SRC_FILES})

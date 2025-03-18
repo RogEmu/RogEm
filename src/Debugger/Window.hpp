@@ -11,18 +11,18 @@
 #include <ncurses.h>
 #include <string>
 
-struct Position
+struct Vec2i
 {
     int x;
     int y;
 };
 
-using Size = Position;
-
 class Window {
     public:
         Window(int x, int y, int w, int h);
         ~Window();
+
+        Vec2i size(void) const;
 
         void resize(int x, int y);
         void move(int x, int y);
@@ -35,8 +35,8 @@ class Window {
         virtual void drawElements() const;
 
     protected:
-        Position m_pos;
-        Size m_size;
+        Vec2i m_pos;
+        Vec2i m_size;
         std::string m_title;
         WINDOW *m_window;
 };
