@@ -11,33 +11,6 @@
 #include "RAM.h"
 #include "Debugger.hpp"
 
-#include "Debugger/Window.hpp"
-#include "Debugger/RegistersWindow.hpp"
-#include "Debugger/InstructionsWindow.hpp"
-
-#include <ncurses.h>
-#include <thread>
-
-void init_ncurses()
-{
-    initscr();             // Start ncurses mode
-    cbreak();              // Disable line buffering
-    noecho();              // Don't echo user input
-    keypad(stdscr, TRUE);  // Enable arrow keys
-    curs_set(0);           // Hide the cursor
-    refresh();
-    start_color();
-
-    init_pair(1, COLOR_RED, COLOR_BLACK);
-}
-
-//     init_pair(1, COLOR_YELLOW, COLOR_BLACK);
-//     init_pair(3, COLOR_WHITE, COLOR_BLACK);
-//     init_pair(2, COLOR_BRIGHT_WHITE, COLOR_BRIGHT_BLACK);
-
-//     refresh();
-// }
-
 int main(int ac, char **av)
 {
     if (ac != 2)
@@ -50,20 +23,6 @@ int main(int ac, char **av)
     auto bus = std::make_shared<Bus>(bios, ram);
     auto cpu = std::make_shared<CPU>(bus);
     auto dbg = std::make_shared<Debugger>(cpu);
-
-    init_ncurses();
-
-    InstructionsWindow insWin(1, 1, 60, 38);
-    RegistersWindow regWin(61, 1, 21, 38);
-
-    insWin.setTitle("Instructions");
-    regWin.setTitle("Registers");
-
-    regWin.setGPR(cpu.m_registers);
-    regWin.setSpecialRegisters(&cpu.m_pc, &cpu.m_hi, &cpu.m_lo);
-
-    insWin.setPc(&cpu.m_pc);
-    insWin.setBus(&bus);
 
     while (true)
     {
