@@ -1,5 +1,3 @@
-enable_testing()
-
 option(ENABLE_COVERAGE OFF)
 
 set(TEST_BINARY_NAME rogem_tests)
