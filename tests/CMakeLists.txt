@@ -34,8 +34,6 @@ endif()
 target_link_libraries( ${TEST_BINARY_NAME} PRIVATE
     GTest::gtest
     GTest::gtest_main
-    GTest::gmock
-    GTest::gmock_main
     fmt::fmt
 )
 
