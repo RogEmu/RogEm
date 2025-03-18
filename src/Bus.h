@@ -11,7 +11,7 @@
 #include <memory>
 
 class BIOS;
-class RAM;
+struct RAM;
 
 struct MemRange
 {
