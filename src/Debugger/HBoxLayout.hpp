@@ -5,28 +5,19 @@
 ** HBoxLayout
 */
 
-#ifndef HBoxLayout_HPP_
-#define HBoxLayout_HPP_
+#ifndef HBOXLAYOUT_HPP_
+#define HBOXLAYOUT_HPP_
 
-#include "Widget.hpp"
+#include "ABoxLayout.hpp"
 
-class HBoxLayout : public Widget
+class HBoxLayout : public ABoxLayout
 {
     public:
         HBoxLayout();
         ~HBoxLayout();
 
-        void addWidget(const std::shared_ptr<Widget> &widget);
-
-        void draw(WINDOW *window) override;
-
-        void resize(int w, int h) override;
-
-    private:
-        void resizeInternalWidgets();
-
-    private:
-        std::list<std::shared_ptr<Widget>> m_widgets;
+    protected:
+        virtual void resizeInternalWidgets() override;
 };
 
-#endif /* !HBoxLayout_HPP_ */
+#endif /* !HBOXLAYOUT_HPP_ */

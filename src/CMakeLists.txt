@@ -14,7 +14,9 @@ set(SRC_FILES
     # Debugger/RegistersWindow.cpp
     # Debugger/InstructionsWindow.cpp
     # Debugger/Label.cpp
+    Debugger/ABoxLayout.cpp
     Debugger/HBoxLayout.cpp
+    Debugger/VBoxLayout.cpp
     Debugger/Debugger.cpp
 )
 

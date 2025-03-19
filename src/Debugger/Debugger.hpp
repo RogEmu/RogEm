@@ -11,8 +11,6 @@
 #include <list>
 #include <memory>
 
-#include "HBoxLayout.hpp"
-
 class CPU;
 class Widget;
 
@@ -34,7 +32,7 @@ class Debugger {
 
     private:
         std::shared_ptr<CPU> m_cpu;
-        std::shared_ptr<HBoxLayout> m_layout;
+        std::shared_ptr<Widget> m_rootWidget;
 
         bool m_paused;
 };

@@ -64,6 +64,7 @@ void Widget::draw(WINDOW *window)
         }
     }
     wattroff(window, COLOR_PAIR(m_colorPair));
+    drawBorder(window);
 }
 
 void Widget::setParent(const std::shared_ptr<Widget> &parent)

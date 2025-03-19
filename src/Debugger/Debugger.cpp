@@ -12,6 +12,7 @@
 
 #include "CPU.h"
 #include "HBoxLayout.hpp"
+#include "VBoxLayout.hpp"
 
 #define COLOR_BRIGHT_BLACK 8
 #define COLOR_BRIGHT_RED 9
@@ -27,28 +28,34 @@ Debugger::Debugger(const std::shared_ptr<CPU> &cpu) :
 {
     beginCurses();
 
-    m_layout = std::make_shared<HBoxLayout>();
-    m_layout->resize(COLS, LINES);
+    auto hLayout = std::make_shared<HBoxLayout>();
+    hLayout->resize(COLS, LINES);
+
+    auto vLayout = std::make_shared<VBoxLayout>();
+    vLayout->resize(COLS, LINES);
+    vLayout->addWidget(hLayout);
 
     auto widget1 = std::make_shared<Widget>(0, 0, 5, 5);
     widget1->setColorPair(20);
-    m_layout->addWidget(widget1);
+    hLayout->addWidget(widget1);
 
     auto widget2 = std::make_shared<Widget>(0, 0, 5, 5);
     widget2->setColorPair(21);
-    m_layout->addWidget(widget2);
+    hLayout->addWidget(widget2);
 
-    // auto widget3 = std::make_shared<Widget>(0, 0, 5, 5);
-    // widget3->setColorPair(22);
-    // m_layout->addWidget(widget3);
+    auto widget3 = std::make_shared<Widget>(0, 0, 5, 5);
+    widget3->setColorPair(22);
+    hLayout->addWidget(widget3);
 
     auto widget4 = std::make_shared<Widget>(0, 0, 5, 5);
     widget4->setColorPair(20);
-    m_layout->addWidget(widget4);
+    vLayout->addWidget(widget4);
 
     auto widget5 = std::make_shared<Widget>(0, 0, 5, 5);
     widget5->setColorPair(21);
-    m_layout->addWidget(widget5);
+    vLayout->addWidget(widget5);
+
+    m_rootWidget = vLayout;
 
     // auto label = std::make_shared<Label>(0, 0, COLS, 1);
     // label->setText("PSX DEBUGGER v0.0.1");
@@ -89,7 +96,7 @@ void Debugger::update(void)
         m_paused = !m_paused;
     if (c == KEY_RESIZE)
     {
-        m_layout->resize(COLS, LINES);
+        m_rootWidget->resize(COLS, LINES);
     }
     drawWindows();
 }
@@ -102,7 +109,7 @@ bool Debugger::isPaused() const
 void Debugger::drawWindows(void)
 {
     werase(stdscr);
-    m_layout->draw(stdscr);
+    m_rootWidget->draw(stdscr);
     wrefresh(stdscr);
 }
 

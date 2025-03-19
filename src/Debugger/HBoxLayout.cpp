@@ -8,34 +8,12 @@
 #include "HBoxLayout.hpp"
 
 HBoxLayout::HBoxLayout() :
-    Widget(0, 0, 0, 0)
+    ABoxLayout()
 {
 }
 
 HBoxLayout::~HBoxLayout()
 {
-}
-
-void HBoxLayout::addWidget(const std::shared_ptr<Widget> &widget)
-{
-    m_widgets.push_back(widget);
-    widget->setParent(std::make_shared<Widget>(*this));
-    resizeInternalWidgets();
-}
-
-void HBoxLayout::draw(WINDOW *window)
-{
-    for (auto &widget : m_widgets)
-    {
-        widget->draw(window);
-    }
-    // drawBorder(window);
-}
-
-void HBoxLayout::resize(int w, int h)
-{
-    Widget::resize(w, h);
-    resizeInternalWidgets();
 }
 
 void HBoxLayout::resizeInternalWidgets()
@@ -48,11 +26,11 @@ void HBoxLayout::resizeInternalWidgets()
     {
         widget->resize(currentWidgetWidth, m_size.y);
         widget->move(currentWidgetPos, widget->position().y);
-        currentWidgetPos += currentWidgetWidth + 1;
+        currentWidgetPos += currentWidgetWidth + 2;
 
-        if (currentWidgetPos + currentWidgetWidth + 1 > COLS)
+        if (currentWidgetPos + currentWidgetWidth > COLS)
         {
-            currentWidgetWidth = COLS - currentWidgetPos - 1;
+            currentWidgetWidth = COLS - currentWidgetPos;
         }
     }
 }
