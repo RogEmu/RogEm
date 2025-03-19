@@ -14,6 +14,7 @@
 #include "HBoxLayout.hpp"
 #include "VBoxLayout.hpp"
 #include "RegistersWindow.hpp"
+#include "InstructionsWindow.hpp"
 
 #define COLOR_BRIGHT_BLACK 8
 #define COLOR_BRIGHT_RED 9
@@ -45,8 +46,10 @@ Debugger::Debugger(const std::shared_ptr<CPU> &cpu) :
     registers->setGPR(cpu->m_registers);
     registers->setSpecialRegisters(&m_cpu->m_pc, &m_cpu->m_hi, &m_cpu->m_lo);
 
-    auto instructionWindow = std::make_shared<Window>(0, 0, 0, 0); // RED
+    auto instructionWindow = std::make_shared<InstructionsWindow>(0, 0, 0, 0); // RED
     instructionWindow->setTitle("Instructions");
+    instructionWindow->setBus(m_cpu->m_bus);
+    instructionWindow->setPc(&m_cpu->m_pc);
 
     vLayout->addWidget(hLayout);
     vLayout->addWidget(ramWindow);
@@ -57,15 +60,6 @@ Debugger::Debugger(const std::shared_ptr<CPU> &cpu) :
     // label->setText("PSX DEBUGGER v0.0.1");
     // label->setSpan(3);
     // m_layout[0]->addWidget(label);
-
-    // auto instructions = std::make_shared<InstructionsWindow>(0, 1, 55, 38);
-    // instructions->setTitle("Instructions");
-    // instructions->setBus(m_cpu->m_bus);
-    // instructions->setPc(&m_cpu->m_pc);
-    // instructions->setSpan(2);
-    // m_layout[1]->addWidget(instructions);
-
-
 }
 
 Debugger::~Debugger()

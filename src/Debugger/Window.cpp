@@ -44,6 +44,6 @@ void Window::draw(WINDOW *window)
 {
     drawBorder(window);
     wattron(window, A_BOLD | COLOR_PAIR(1));
-    mvwprintw(window, m_pos.y, m_pos.x + 1, fmt::format(" {} ", m_title).c_str());
+    mvwprintw(window, m_pos.y, m_pos.x + 2, fmt::format(" {} ", m_title).c_str());
     wattroff(window, A_BOLD | COLOR_PAIR(1));
 }
