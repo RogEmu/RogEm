@@ -11,6 +11,7 @@
 #include <ncurses.h>
 #include <memory>
 #include <list>
+#include <string>
 
 struct vec2
 {
@@ -35,7 +36,10 @@ class Widget
 
         virtual void draw(WINDOW *window);
 
-        void setParent(const std::shared_ptr<Widget> &parent);
+        void setParent(Widget *parent);
+
+        void setId(const std::string &id);
+        std::string id() const;
 
     protected:
         void drawBorder(WINDOW *window);
@@ -44,8 +48,9 @@ class Widget
         vec2 m_pos;
         vec2 m_size;
         int m_colorPair;
+        std::string m_id;
 
-        std::shared_ptr<Widget> m_parent;
+        Widget *m_parent;
 };
 
 #endif /* !WIDGET_HPP_ */

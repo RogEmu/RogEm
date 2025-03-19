@@ -18,19 +18,22 @@ HBoxLayout::~HBoxLayout()
 
 void HBoxLayout::resizeInternalWidgets()
 {
-    int sizePerWidget = ((COLS - m_pos.x) / static_cast<float>(m_widgets.size()));
+    if (m_widgets.empty())
+        return;
+
+    int sizePerWidget = m_size.x / static_cast<float>(m_widgets.size());
     int currentWidgetPos = 0;
     int currentWidgetWidth = sizePerWidget;
 
     for (auto &widget : m_widgets)
     {
         widget->resize(currentWidgetWidth, m_size.y);
-        widget->move(currentWidgetPos, widget->position().y);
-        currentWidgetPos += currentWidgetWidth + 2;
+        widget->move(currentWidgetPos + m_pos.x, m_pos.y);
+        currentWidgetPos += currentWidgetWidth + 1;
 
-        if (currentWidgetPos + currentWidgetWidth > COLS)
+        if (currentWidgetPos + currentWidgetWidth > m_size.x)
         {
-            currentWidgetWidth = COLS - currentWidgetPos;
+            currentWidgetWidth = m_size.x - currentWidgetPos;
         }
     }
 }

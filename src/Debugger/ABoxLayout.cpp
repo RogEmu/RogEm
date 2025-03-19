@@ -8,7 +8,7 @@
 #include "ABoxLayout.hpp"
 
 ABoxLayout::ABoxLayout() :
-    Widget(0, 0, 0, 0)
+    Widget(0, 0, COLS, LINES)
 {
 }
 
@@ -19,7 +19,7 @@ ABoxLayout::~ABoxLayout()
 void ABoxLayout::addWidget(const std::shared_ptr<Widget> &widget)
 {
     m_widgets.push_back(widget);
-    widget->setParent(std::make_shared<Widget>(*this));
+    widget->setParent(this);
     resizeInternalWidgets();
 }
 

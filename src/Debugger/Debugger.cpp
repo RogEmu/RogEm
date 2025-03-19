@@ -28,34 +28,27 @@ Debugger::Debugger(const std::shared_ptr<CPU> &cpu) :
 {
     beginCurses();
 
-    auto hLayout = std::make_shared<HBoxLayout>();
-    hLayout->resize(COLS, LINES);
-
     auto vLayout = std::make_shared<VBoxLayout>();
-    vLayout->resize(COLS, LINES);
-    vLayout->addWidget(hLayout);
+    auto hLayout = std::make_shared<HBoxLayout>();
 
-    auto widget1 = std::make_shared<Widget>(0, 0, 5, 5);
-    widget1->setColorPair(20);
-    hLayout->addWidget(widget1);
-
-    auto widget2 = std::make_shared<Widget>(0, 0, 5, 5);
-    widget2->setColorPair(21);
-    hLayout->addWidget(widget2);
-
-    auto widget3 = std::make_shared<Widget>(0, 0, 5, 5);
-    widget3->setColorPair(22);
-    hLayout->addWidget(widget3);
-
-    auto widget4 = std::make_shared<Widget>(0, 0, 5, 5);
-    widget4->setColorPair(20);
-    vLayout->addWidget(widget4);
-
-    auto widget5 = std::make_shared<Widget>(0, 0, 5, 5);
-    widget5->setColorPair(21);
-    vLayout->addWidget(widget5);
+    vLayout->setId("VLAYOUT");
+    hLayout->setId("HLAYOUT");
 
     m_rootWidget = vLayout;
+
+    auto widget1 = std::make_shared<Widget>(0, 0, 0, 0); // GREEN
+    widget1->setColorPair(20);
+
+    auto widget2 = std::make_shared<Widget>(0, 0, 0, 0); // BLUE
+    widget2->setColorPair(21);
+
+    auto widget3 = std::make_shared<Widget>(0, 0, 0, 0); // RED
+    widget3->setColorPair(22);
+
+    vLayout->addWidget(hLayout);
+    vLayout->addWidget(widget1);
+    hLayout->addWidget(widget2);
+    hLayout->addWidget(widget3);
 
     // auto label = std::make_shared<Label>(0, 0, COLS, 1);
     // label->setText("PSX DEBUGGER v0.0.1");
@@ -122,7 +115,9 @@ void Debugger::initColors()
     init_pair(20, COLOR_WHITE, COLOR_GREEN);
     init_pair(21, COLOR_WHITE, COLOR_BLUE);
     init_pair(22, COLOR_WHITE, COLOR_RED);
-
+    init_pair(23, COLOR_WHITE, COLOR_YELLOW);
+    init_pair(24, COLOR_WHITE, COLOR_MAGENTA);
+    init_pair(25, COLOR_WHITE, COLOR_CYAN);
 }
 
 void Debugger::beginCurses()

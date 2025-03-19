@@ -29,6 +29,7 @@ vec2 Widget::position(void) const
 
 void Widget::resize(int w, int h)
 {
+    // fprintf(stderr, "New size: %d, %d color(%d)\n", m_size.x, m_size.y, m_colorPair);
     m_size.x = w;
     m_size.y = h;
 }
@@ -51,47 +52,45 @@ int Widget::coloPair() const
 
 void Widget::draw(WINDOW *window)
 {
-    vec2 parentPos = {0, 0};
-
-    if (m_parent)
-        parentPos = m_parent->position();
+    vec2 absPos = m_pos;
 
     wattron(window, COLOR_PAIR(m_colorPair));
-    // Fill widget background
-    for (int i = 0; i < m_size.y; i++) {
-        for (int j = 0; j < m_size.x; j++) {
-            mvwaddch(window, m_pos.y + i + parentPos.y, m_pos.x + j + parentPos.x, ' '); // Fill with spaces
-        }
-    }
+    for (int i = 0; i < m_size.y; i++)
+        for (int j = 0; j < m_size.x; j++)
+            mvwaddch(window, absPos.y + i, absPos.x + j, ' ');
     wattroff(window, COLOR_PAIR(m_colorPair));
-    drawBorder(window);
 }
 
-void Widget::setParent(const std::shared_ptr<Widget> &parent)
+void Widget::setParent(Widget *parent)
 {
     m_parent = parent;
 }
 
+void Widget::setId(const std::string &id)
+{
+    if (id != m_id)
+        m_id = id;
+}
+
+std::string Widget::id() const
+{
+    return m_id;
+}
+
 void Widget::drawBorder(WINDOW *window)
 {
-    vec2 relPos = m_pos;
-
-    if (m_parent)
-    {
-        relPos.x += m_parent->m_pos.x;
-        relPos.y += m_parent->m_pos.y;
-    }
+    vec2 absPos = m_pos;
 
     for (int i = 0; i < m_size.x; i++) {
-        mvwaddch(window, relPos.y, relPos.x + i, '-');  // Top border
-        mvwaddch(window, relPos.y + m_size.y - 1, relPos.x + i, '-');  // Bottom border
+        mvwaddch(window, absPos.y, absPos.x + i, '-');  // Top border
+        mvwaddch(window, absPos.y + m_size.y - 1, absPos.x + i, '-');  // Bottom border
     }
     for (int i = 0; i < m_size.y; i++) {
-        mvwaddch(window, relPos.y + i, relPos.x, '|');  // Left border
-        mvwaddch(window, relPos.y + i, relPos.x + m_size.x - 1, '|');  // Right border
+        mvwaddch(window, absPos.y + i, absPos.x, '|');  // Left border
+        mvwaddch(window, absPos.y + i, absPos.x + m_size.x - 1, '|');  // Right border
     }
-    mvwaddch(window, relPos.y, relPos.x, '+');  // Corners
-    mvwaddch(window, relPos.y, relPos.x + m_size.x - 1, '+');
-    mvwaddch(window, relPos.y + m_size.y - 1, relPos.x, '+');
-    mvwaddch(window, relPos.y + m_size.y - 1, relPos.x + m_size.x - 1, '+');
+    mvwaddch(window, absPos.y, absPos.x, '+');  // Corners
+    mvwaddch(window, absPos.y, absPos.x + m_size.x - 1, '+');
+    mvwaddch(window, absPos.y + m_size.y - 1, absPos.x, '+');
+    mvwaddch(window, absPos.y + m_size.y - 1, absPos.x + m_size.x - 1, '+');
 }

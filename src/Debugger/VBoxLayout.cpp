@@ -18,19 +18,22 @@ VBoxLayout::~VBoxLayout()
 
 void VBoxLayout::resizeInternalWidgets()
 {
-    int heightPerWidget = ((LINES - m_pos.y) / static_cast<float>(m_widgets.size()));
+    if (m_widgets.empty())
+        return;
+
+    int heightPerWidget = m_size.y / static_cast<float>(m_widgets.size());
     int currentWidgetPos = 0;
     int currentWidgetHeight = heightPerWidget;
 
     for (auto &widget : m_widgets)
     {
         widget->resize(m_size.x, currentWidgetHeight);
-        widget->move(widget->position().x, currentWidgetPos);
+        widget->move(m_pos.x, currentWidgetPos + m_pos.y);
         currentWidgetPos += currentWidgetHeight + 1;
 
-        if (currentWidgetPos + currentWidgetHeight > LINES)
+        if (currentWidgetPos + currentWidgetHeight > m_size.y)
         {
-            currentWidgetHeight = LINES - currentWidgetPos;
+            currentWidgetHeight = m_size.y - currentWidgetPos;
         }
     }
 }
