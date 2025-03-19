@@ -9,9 +9,12 @@ set(SRC_FILES
     Bus.cpp
     CPU.cpp
     Disassembler.cpp
-    Debugger/Window.cpp
-    Debugger/RegistersWindow.cpp
-    Debugger/InstructionsWindow.cpp
+    # Debugger/Window.cpp
+    Debugger/Widget.cpp
+    # Debugger/RegistersWindow.cpp
+    # Debugger/InstructionsWindow.cpp
+    # Debugger/Label.cpp
+    Debugger/HBoxLayout.cpp
     Debugger/Debugger.cpp
 )
 

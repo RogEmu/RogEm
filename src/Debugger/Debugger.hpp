@@ -11,27 +11,30 @@
 #include <list>
 #include <memory>
 
+#include "HBoxLayout.hpp"
+
 class CPU;
-class Window;
+class Widget;
 
 class Debugger {
     public:
         Debugger(const std::shared_ptr<CPU> &cpu);
         ~Debugger();
 
-        void addWindow(const std::shared_ptr<Window> &window);
-        void update(void);
+        void addWidget(const std::shared_ptr<Widget> &window);
+        void update();
 
         bool isPaused() const;
 
         private:
-        void beginCurses() const;
-        void endCurses() const;
-        void drawWindows(void);
+        void beginCurses();
+        void endCurses();
+        void drawWindows();
+        void initColors();
 
     private:
         std::shared_ptr<CPU> m_cpu;
-        std::list<std::shared_ptr<Window>> m_windows;
+        std::shared_ptr<HBoxLayout> m_layout;
 
         bool m_paused;
 };

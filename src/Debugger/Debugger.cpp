@@ -7,11 +7,11 @@
 
 #include "Debugger.hpp"
 #include <ncurses.h>
+#include <fmt/format.h>
+#include <memory>
 
 #include "CPU.h"
-#include "Window.hpp"
-#include "RegistersWindow.hpp"
-#include "InstructionsWindow.hpp"
+#include "HBoxLayout.hpp"
 
 #define COLOR_BRIGHT_BLACK 8
 #define COLOR_BRIGHT_RED 9
@@ -27,17 +27,47 @@ Debugger::Debugger(const std::shared_ptr<CPU> &cpu) :
 {
     beginCurses();
 
-    auto instructions = std::make_shared<InstructionsWindow>(0, 0, 55, 38);
-    instructions->setTitle("Instructions");
-    instructions->setBus(m_cpu->m_bus);
-    instructions->setPc(&m_cpu->m_pc);
-    addWindow(instructions);
+    m_layout = std::make_shared<HBoxLayout>();
+    m_layout->resize(COLS, LINES);
 
-    auto registers = std::make_shared<RegistersWindow>(0, 0, 21, 38);
-    registers->setTitle("Registers");
-    registers->setGPR(cpu->m_registers);
-    registers->setSpecialRegisters(&m_cpu->m_pc, &m_cpu->m_hi, &m_cpu->m_lo);
-    addWindow(registers);
+    auto widget1 = std::make_shared<Widget>(0, 0, 5, 5);
+    widget1->setColorPair(20);
+    m_layout->addWidget(widget1);
+
+    auto widget2 = std::make_shared<Widget>(0, 0, 5, 5);
+    widget2->setColorPair(21);
+    m_layout->addWidget(widget2);
+
+    // auto widget3 = std::make_shared<Widget>(0, 0, 5, 5);
+    // widget3->setColorPair(22);
+    // m_layout->addWidget(widget3);
+
+    auto widget4 = std::make_shared<Widget>(0, 0, 5, 5);
+    widget4->setColorPair(20);
+    m_layout->addWidget(widget4);
+
+    auto widget5 = std::make_shared<Widget>(0, 0, 5, 5);
+    widget5->setColorPair(21);
+    m_layout->addWidget(widget5);
+
+    // auto label = std::make_shared<Label>(0, 0, COLS, 1);
+    // label->setText("PSX DEBUGGER v0.0.1");
+    // label->setSpan(3);
+    // m_layout[0]->addWidget(label);
+
+    // auto instructions = std::make_shared<InstructionsWindow>(0, 1, 55, 38);
+    // instructions->setTitle("Instructions");
+    // instructions->setBus(m_cpu->m_bus);
+    // instructions->setPc(&m_cpu->m_pc);
+    // instructions->setSpan(2);
+    // m_layout[1]->addWidget(instructions);
+
+    // auto registers = std::make_shared<RegistersWindow>(0, 1, 21, 38);
+    // registers->setTitle("Registers");
+    // registers->setGPR(cpu->m_registers);
+    // registers->setSpecialRegisters(&m_cpu->m_pc, &m_cpu->m_hi, &m_cpu->m_lo);
+    // registers->setSpan(1);
+    // m_layout[1]->addWidget(registers);
 }
 
 Debugger::~Debugger()
@@ -45,9 +75,10 @@ Debugger::~Debugger()
     endCurses();
 }
 
-void Debugger::addWindow(const std::shared_ptr<Window> &window)
+void Debugger::addWidget(const std::shared_ptr<Widget> &window)
 {
-    m_windows.push_back(window);
+    (void)window;
+    // m_widgets.push_back(window);
 }
 
 void Debugger::update(void)
@@ -56,7 +87,10 @@ void Debugger::update(void)
 
     if (c == 'p')
         m_paused = !m_paused;
-
+    if (c == KEY_RESIZE)
+    {
+        m_layout->resize(COLS, LINES);
+    }
     drawWindows();
 }
 
@@ -67,17 +101,24 @@ bool Debugger::isPaused() const
 
 void Debugger::drawWindows(void)
 {
-    int newtWinX = 0;
-
-    for (auto &window : m_windows)
-    {
-        window->move(newtWinX, 2);
-        window->draw();
-        newtWinX += window->size().x + 2;
-    }
+    werase(stdscr);
+    m_layout->draw(stdscr);
+    wrefresh(stdscr);
 }
 
-void Debugger::beginCurses() const
+void Debugger::initColors()
+{
+    init_pair(1, COLOR_YELLOW, COLOR_BLACK);
+    init_pair(3, COLOR_WHITE, COLOR_BLACK);
+    init_pair(2, COLOR_BRIGHT_WHITE, COLOR_BRIGHT_BLACK);
+
+    init_pair(20, COLOR_WHITE, COLOR_GREEN);
+    init_pair(21, COLOR_WHITE, COLOR_BLUE);
+    init_pair(22, COLOR_WHITE, COLOR_RED);
+
+}
+
+void Debugger::beginCurses()
 {
     initscr();             // Start ncurses mode
     cbreak();              // Disable line buffering
@@ -86,15 +127,12 @@ void Debugger::beginCurses() const
     curs_set(0);           // Hide the cursor
     nodelay(stdscr, true);
     start_color();
-
-    init_pair(1, COLOR_YELLOW, COLOR_BLACK);
-    init_pair(3, COLOR_WHITE, COLOR_BLACK);
-    init_pair(2, COLOR_BRIGHT_WHITE, COLOR_BRIGHT_BLACK);
+    initColors();
 
     refresh();
 }
 
-void Debugger::endCurses() const
+void Debugger::endCurses()
 {
     endwin();
 }

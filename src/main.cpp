@@ -6,6 +6,8 @@
 */
 
 #include <iostream>
+#include <thread>
+
 #include "BIOS.h"
 #include "CPU.h"
 #include "RAM.h"
@@ -26,9 +28,9 @@ int main(int ac, char **av)
 
     while (true)
     {
-        // getchar();
-        cpu->step();
+        // cpu->step();
         dbg->update();
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
     return 0;
 }
