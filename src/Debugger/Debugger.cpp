@@ -13,6 +13,7 @@
 #include "CPU.h"
 #include "HBoxLayout.hpp"
 #include "VBoxLayout.hpp"
+#include "RegistersWindow.hpp"
 
 #define COLOR_BRIGHT_BLACK 8
 #define COLOR_BRIGHT_RED 9
@@ -36,19 +37,21 @@ Debugger::Debugger(const std::shared_ptr<CPU> &cpu) :
 
     m_rootWidget = vLayout;
 
-    auto widget1 = std::make_shared<Widget>(0, 0, 0, 0); // GREEN
-    widget1->setColorPair(20);
+    auto ramWindow = std::make_shared<Window>(0, 0, 0, 0); // GREEN
+    ramWindow->setTitle("Memory Viewer");
 
-    auto widget2 = std::make_shared<Widget>(0, 0, 0, 0); // BLUE
-    widget2->setColorPair(21);
+    auto registers = std::make_shared<RegistersWindow>(0, 0, 0, 0);
+    registers->setTitle("Registers");
+    registers->setGPR(cpu->m_registers);
+    registers->setSpecialRegisters(&m_cpu->m_pc, &m_cpu->m_hi, &m_cpu->m_lo);
 
-    auto widget3 = std::make_shared<Widget>(0, 0, 0, 0); // RED
-    widget3->setColorPair(22);
+    auto instructionWindow = std::make_shared<Window>(0, 0, 0, 0); // RED
+    instructionWindow->setTitle("Instructions");
 
     vLayout->addWidget(hLayout);
-    vLayout->addWidget(widget1);
-    hLayout->addWidget(widget2);
-    hLayout->addWidget(widget3);
+    vLayout->addWidget(ramWindow);
+    hLayout->addWidget(instructionWindow);
+    hLayout->addWidget(registers);
 
     // auto label = std::make_shared<Label>(0, 0, COLS, 1);
     // label->setText("PSX DEBUGGER v0.0.1");
@@ -62,12 +65,7 @@ Debugger::Debugger(const std::shared_ptr<CPU> &cpu) :
     // instructions->setSpan(2);
     // m_layout[1]->addWidget(instructions);
 
-    // auto registers = std::make_shared<RegistersWindow>(0, 1, 21, 38);
-    // registers->setTitle("Registers");
-    // registers->setGPR(cpu->m_registers);
-    // registers->setSpecialRegisters(&m_cpu->m_pc, &m_cpu->m_hi, &m_cpu->m_lo);
-    // registers->setSpan(1);
-    // m_layout[1]->addWidget(registers);
+
 }
 
 Debugger::~Debugger()
