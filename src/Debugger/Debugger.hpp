@@ -13,6 +13,7 @@
 
 class CPU;
 class Widget;
+class MemoryWindow;
 
 class Debugger {
     public:
@@ -33,6 +34,8 @@ class Debugger {
     private:
         std::shared_ptr<CPU> m_cpu;
         std::shared_ptr<Widget> m_rootWidget;
+
+        std::shared_ptr<MemoryWindow> m_memWindow;
 
         bool m_paused;
 };

@@ -13,7 +13,7 @@ set(SRC_FILES
     Debugger/Widget.cpp
     Debugger/RegistersWindow.cpp
     Debugger/InstructionsWindow.cpp
-    # Debugger/Label.cpp
+    Debugger/MemoryWindow.cpp
     Debugger/ABoxLayout.cpp
     Debugger/HBoxLayout.cpp
     Debugger/VBoxLayout.cpp

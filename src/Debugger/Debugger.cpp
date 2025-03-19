@@ -15,6 +15,7 @@
 #include "VBoxLayout.hpp"
 #include "RegistersWindow.hpp"
 #include "InstructionsWindow.hpp"
+#include "MemoryWindow.hpp"
 
 #define COLOR_BRIGHT_BLACK 8
 #define COLOR_BRIGHT_RED 9
@@ -33,28 +34,26 @@ Debugger::Debugger(const std::shared_ptr<CPU> &cpu) :
     auto vLayout = std::make_shared<VBoxLayout>();
     auto hLayout = std::make_shared<HBoxLayout>();
 
-    vLayout->setId("VLAYOUT");
-    hLayout->setId("HLAYOUT");
+    m_rootWidget = hLayout;
 
-    m_rootWidget = vLayout;
-
-    auto ramWindow = std::make_shared<Window>(0, 0, 0, 0); // GREEN
-    ramWindow->setTitle("Memory Viewer");
+    m_memWindow = std::make_shared<MemoryWindow>();
+    m_memWindow->setTitle("Memory Viewer");
+    m_memWindow->setBus(m_cpu->m_bus);
 
     auto registers = std::make_shared<RegistersWindow>(0, 0, 0, 0);
     registers->setTitle("Registers");
     registers->setGPR(cpu->m_registers);
     registers->setSpecialRegisters(&m_cpu->m_pc, &m_cpu->m_hi, &m_cpu->m_lo);
 
-    auto instructionWindow = std::make_shared<InstructionsWindow>(0, 0, 0, 0); // RED
+    auto instructionWindow = std::make_shared<InstructionsWindow>(0, 0, 0, 0);
     instructionWindow->setTitle("Instructions");
     instructionWindow->setBus(m_cpu->m_bus);
     instructionWindow->setPc(&m_cpu->m_pc);
 
-    vLayout->addWidget(hLayout);
-    vLayout->addWidget(ramWindow);
+    // vLayout->addWidget(hLayout);
     hLayout->addWidget(instructionWindow);
     hLayout->addWidget(registers);
+    hLayout->addWidget(m_memWindow);
 
     // auto label = std::make_shared<Label>(0, 0, COLS, 1);
     // label->setText("PSX DEBUGGER v0.0.1");
@@ -82,6 +81,14 @@ void Debugger::update(void)
     if (c == KEY_RESIZE)
     {
         m_rootWidget->resize(COLS, LINES);
+    }
+    if (c == 'p')
+    {
+        m_memWindow->addressUp();
+    }
+    if (c == 'm')
+    {
+        m_memWindow->addressDown();
     }
     drawWindows();
 }

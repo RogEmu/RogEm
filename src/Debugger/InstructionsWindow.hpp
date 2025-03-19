@@ -23,7 +23,6 @@ class InstructionsWindow : public Window
         ~InstructionsWindow();
 
         void setPc(uint32_t *const pc);
-        void addInstruction(uint32_t pc, const Instruction &i);
         void setBus(const std::shared_ptr<Bus> &bus);
 
         void draw(WINDOW *window) override;
@@ -31,7 +30,6 @@ class InstructionsWindow : public Window
     private:
         uint32_t *m_pc;
         std::shared_ptr<Bus> m_bus;
-        std::map<uint32_t, Instruction> m_instructionMap;
 };
 
 #endif /* !INSTRUCTIONSWINDOW_HPP_ */
