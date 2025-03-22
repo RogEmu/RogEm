@@ -25,5 +25,8 @@ struct InstructionData
 std::string disassemble(uint32_t pc, Instruction i);
 void debugState(uint32_t pc, const uint32_t *registers);
 
+const std::string* getRegisterNames();
 };
+
+
 #endif /* !DISASSEMBLER_H_ */

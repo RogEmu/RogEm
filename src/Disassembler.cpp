@@ -25,6 +25,11 @@ static const std::string registerNames[32] = {
     "t8", "t9", "k0", "k1", "gp", "sp", "fp", "ra"
 };
 
+const std::string* Disassembler::getRegisterNames()
+{
+    return registerNames;
+}
+
 static const std::unordered_map<PrimaryOpCode, InstructionData> primaryData = {
     {PrimaryOpCode::ADDI, InstructionData{"addi", arithmeticImmediateFormat}},
     {PrimaryOpCode::ADDIU, InstructionData{"addiu", arithmeticImmediateFormat}},

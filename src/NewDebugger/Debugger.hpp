@@ -13,8 +13,12 @@ class Debugger {
         ~Debugger();
 
         void update();
+        void registerTable();
+        void MemoryTable();
+        void InstructionTable();
     private:
         std::shared_ptr<CPU> m_cpu;
+        const std::string* registerNames;
         GLFWwindow* window;
 };
 
