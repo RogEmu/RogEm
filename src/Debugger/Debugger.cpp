@@ -6,7 +6,7 @@
 */
 
 #include "Debugger.hpp"
-#include <ncurses.h>
+#include <ncurses/ncurses.h>
 #include <fmt/format.h>
 #include <memory>
 
@@ -127,6 +127,7 @@ void Debugger::beginCurses()
     keypad(stdscr, TRUE);  // Enable arrow keys
     curs_set(0);           // Hide the cursor
     nodelay(stdscr, true);
+
     start_color();
     initColors();
 

@@ -44,7 +44,7 @@ void RegistersWindow::draw(WINDOW *window)
         for (int i = 0; i < 32; i++)
         {
             std::string line = fmt::format("{:>4}: 0x{:08X}", "$r" + std::to_string(i), m_gpr[i]);
-            mvwprintw(window, posY, posX, line.c_str());
+            mvwaddstr(window, posY, posX, line.c_str());
             posY++;
 
             if (posY >= m_size.y - 1)
@@ -55,9 +55,9 @@ void RegistersWindow::draw(WINDOW *window)
         }
     }
     if (m_pc)
-        mvwprintw(window, posY, posX, fmt::format("{:>4}: 0x{:08X}", "PC", *m_pc).c_str());
+        mvwaddstr(window, posY, posX, fmt::format("{:>4}: 0x{:08X}", "PC", *m_pc).c_str());
     if (m_hi)
-        mvwprintw(window, posY + 1, posX, fmt::format("{:>4}: 0x{:08X}", "HI", *m_hi).c_str());
+        mvwaddstr(window, posY + 1, posX, fmt::format("{:>4}: 0x{:08X}", "HI", *m_hi).c_str());
     if (m_lo)
-        mvwprintw(window, posY + 2, posX, fmt::format("{:>4}: 0x{:08X}", "LO", *m_lo).c_str());
+        mvwaddstr(window, posY + 2, posX, fmt::format("{:>4}: 0x{:08X}", "LO", *m_lo).c_str());
 }

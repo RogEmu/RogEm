@@ -8,7 +8,7 @@
 #ifndef WINDOW_HPP_
 #define WINDOW_HPP_
 
-#include <ncurses.h>
+#include <ncurses/ncurses.h>
 #include <string>
 
 #include "Widget.hpp"

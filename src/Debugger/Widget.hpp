@@ -8,7 +8,7 @@
 #ifndef WIDGET_HPP_
 #define WIDGET_HPP_
 
-#include <ncurses.h>
+#include <ncurses/ncurses.h>
 #include <memory>
 #include <list>
 #include <string>
