@@ -1,43 +1,33 @@
-/*
-** EPITECH PROJECT, 2025
-** rogem
-** File description:
-** Debugger
-*/
-
 #ifndef DEBUGGER_HPP_
 #define DEBUGGER_HPP_
 
 #include <list>
 #include <memory>
+#include <GLFW/glfw3.h>
 
 class CPU;
-class Widget;
-class MemoryWindow;
 
-class Debugger {
+class Debugger
+{
     public:
         Debugger(const std::shared_ptr<CPU> &cpu);
         ~Debugger();
 
-        void addWidget(const std::shared_ptr<Widget> &window);
         void update();
+        void registerTable();
+        void MemoryTable();
+        void InstructionTable();
 
-        bool isPaused() const;
+        bool isRunning() const;
 
-        private:
-        void beginCurses();
-        void endCurses();
-        void drawWindows();
-        void initColors();
+    private:
+        int initGFLW();
+        int initImGUi();
 
     private:
         std::shared_ptr<CPU> m_cpu;
-        std::shared_ptr<Widget> m_rootWidget;
-
-        std::shared_ptr<MemoryWindow> m_memWindow;
-
-        bool m_paused;
+        GLFWwindow* window;
+        bool m_running;
 };
 
 #endif /* !DEBUGGER_HPP_ */

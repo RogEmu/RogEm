@@ -1,140 +1,201 @@
-/*
-** EPITECH PROJECT, 2025
-** rogem
-** File description:
-** Debugger
-*/
+#include <iostream>
+
+#include <GL/gl.h>
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
 
 #include "Debugger.hpp"
-#include <ncurses/ncurses.h>
-#include <fmt/format.h>
-#include <memory>
-
 #include "CPU.h"
-#include "HBoxLayout.hpp"
-#include "VBoxLayout.hpp"
-#include "RegistersWindow.hpp"
-#include "InstructionsWindow.hpp"
-#include "MemoryWindow.hpp"
-
-#define COLOR_BRIGHT_BLACK 8
-#define COLOR_BRIGHT_RED 9
-#define COLOR_BRIGHT_GREEN 10
-#define COLOR_BRIGHT_YELLOW 11
-#define COLOR_BRIGHT_BLUE 12
-#define COLOR_BRIGHT_MAGENTA 13
-#define COLOR_BRIGHT_CYAN 14
-#define COLOR_BRIGHT_WHITE 15
+#include "Disassembler.h"
 
 Debugger::Debugger(const std::shared_ptr<CPU> &cpu) :
-    m_cpu(cpu)
+    m_cpu(cpu),
+    m_running(true)
 {
-    beginCurses();
-
-    auto vLayout = std::make_shared<VBoxLayout>();
-    auto hLayout = std::make_shared<HBoxLayout>();
-
-    m_rootWidget = hLayout;
-
-    m_memWindow = std::make_shared<MemoryWindow>();
-    m_memWindow->setTitle("Memory Viewer");
-    m_memWindow->setBus(m_cpu->m_bus);
-
-    auto registers = std::make_shared<RegistersWindow>(0, 0, 0, 0);
-    registers->setTitle("Registers");
-    registers->setGPR(cpu->m_registers);
-    registers->setSpecialRegisters(&m_cpu->m_pc, &m_cpu->m_hi, &m_cpu->m_lo);
-
-    auto instructionWindow = std::make_shared<InstructionsWindow>(0, 0, 0, 0);
-    instructionWindow->setTitle("Instructions");
-    instructionWindow->setBus(m_cpu->m_bus);
-    instructionWindow->setPc(&m_cpu->m_pc);
-
-    // vLayout->addWidget(hLayout);
-    hLayout->addWidget(instructionWindow);
-    hLayout->addWidget(registers);
-    hLayout->addWidget(m_memWindow);
-
-    // auto label = std::make_shared<Label>(0, 0, COLS, 1);
-    // label->setText("PSX DEBUGGER v0.0.1");
-    // label->setSpan(3);
-    // m_layout[0]->addWidget(label);
+    if (initGFLW() != 0)
+        return;
+    initImGUi();
 }
 
 Debugger::~Debugger()
 {
-    endCurses();
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+    glfwDestroyWindow(window);
+    glfwTerminate();
 }
 
-void Debugger::addWidget(const std::shared_ptr<Widget> &window)
+void Debugger::registerTable()
 {
-    (void)window;
-    // m_widgets.push_back(window);
-}
-
-void Debugger::update(void)
-{
-    int c = getch();
-
-    if (c == 'p')
-        m_paused = !m_paused;
-    if (c == KEY_RESIZE)
-    {
-        m_rootWidget->resize(COLS, LINES);
+    auto tableFlags = ImGuiTableFlags_Borders;
+    ImGui::Begin("Registers");
+    ImGui::BeginTable("Registers", 2, tableFlags);
+    ImGui::TableSetupColumn("Register");
+    ImGui::TableSetupColumn("Value");
+    ImGui::TableHeadersRow();
+    for (int i = 0; i < NB_GPR; i++) {
+        ImGui::TableNextRow();
+        ImGui::TableNextColumn();
+        ImGui::Text("%s", Disassembler::getRegisterName(i).c_str());
+        ImGui::TableNextColumn();
+        ImGui::Text("%08x", m_cpu->m_registers[i]);
     }
-    if (c == 'p')
-    {
-        m_memWindow->addressUp();
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn();
+    ImGui::Text("PC");
+    ImGui::TableNextColumn();
+    ImGui::Text("%08x", m_cpu->m_pc);
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn();
+    ImGui::Text("HI");
+    ImGui::TableNextColumn();
+    ImGui::Text("%08x", m_cpu->m_hi);
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn();
+    ImGui::Text("LO");
+    ImGui::TableNextColumn();
+    ImGui::Text("%08x", m_cpu->m_lo);
+
+    ImGui::EndTable();
+    ImGui::End();
+}
+
+void Debugger::MemoryTable()
+{
+    auto tableFlags = ImGuiTableFlags_RowBg
+                    | ImGuiTableFlags_BordersH
+                    | ImGuiTableFlags_SizingFixedFit;
+    ImGui::Begin("Memory");
+    if (ImGui::BeginTable("Memory", 18, tableFlags)) {
+        ImGui::TableSetupColumn("Address");
+        ImGui::TableSetupColumn("00");
+        ImGui::TableSetupColumn("01");
+        ImGui::TableSetupColumn("02");
+        ImGui::TableSetupColumn("03");
+        ImGui::TableSetupColumn("04");
+        ImGui::TableSetupColumn("05");
+        ImGui::TableSetupColumn("06");
+        ImGui::TableSetupColumn("07");
+        ImGui::TableSetupColumn("08");
+        ImGui::TableSetupColumn("09");
+        ImGui::TableSetupColumn("0A");
+        ImGui::TableSetupColumn("0B");
+        ImGui::TableSetupColumn("0C");
+        ImGui::TableSetupColumn("0D");
+        ImGui::TableSetupColumn("0E");
+        ImGui::TableSetupColumn("0F");
+        ImGui::TableSetupColumn("ASCII");
+        ImGui::TableHeadersRow();
+
+        for (int i = 0; i < 100; i++) {
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn();
+            ImGui::Text("%08x", i * 16);
+            for (int j = 0; j < 16; j++) {
+                ImGui::TableNextColumn();
+                ImGui::Text("%02x", m_cpu->m_bus->loadByte(i * 16 + j));
+            }
+            ImGui::TableNextColumn();
+            // for (int j = 0; j < 16; j++) {
+            //     char c = m_cpu->m_bus->loadByte(i * 16 + j);
+            //     if (c < 32 || c > 126) c = '.';
+
+            // }
+            // ImGui::Text("%c", c);
+        }
+
+        ImGui::EndTable();
     }
-    if (c == 'm')
-    {
-        m_memWindow->addressDown();
+    ImGui::End();
+}
+
+void Debugger::InstructionTable()
+{
+    ImGui::Begin("Instructions");
+
+    for (int i = 0; i < 100; i++) {
+        uint32_t pc = m_cpu->m_pc + i * 4;
+        Instruction instr = {.raw = m_cpu->m_bus->loadWord(pc)};
+        auto str = Disassembler::disassemble(pc, instr);
+        ImGui::Text("%s", str.c_str());
     }
-    drawWindows();
+    ImGui::End();
 }
 
-bool Debugger::isPaused() const
+bool Debugger::isRunning() const
 {
-    return m_paused;
+    return m_running;
 }
 
-void Debugger::drawWindows(void)
+static void glfw_error_callback(int error, const char* description)
 {
-    werase(stdscr);
-    m_rootWidget->draw(stdscr);
-    wrefresh(stdscr);
+    fprintf(stderr, "GLFW Error %d: %s\n", error, description);
 }
 
-void Debugger::initColors()
+int Debugger::initGFLW()
 {
-    init_pair(1, COLOR_YELLOW, COLOR_BLACK);
-    init_pair(3, COLOR_WHITE, COLOR_BLACK);
-    init_pair(2, COLOR_BRIGHT_WHITE, COLOR_BRIGHT_BLACK);
+    glfwSetErrorCallback(glfw_error_callback);
+    if (!glfwInit())
+        return -1;
 
-    init_pair(20, COLOR_WHITE, COLOR_GREEN);
-    init_pair(21, COLOR_WHITE, COLOR_BLUE);
-    init_pair(22, COLOR_WHITE, COLOR_RED);
-    init_pair(23, COLOR_WHITE, COLOR_YELLOW);
-    init_pair(24, COLOR_WHITE, COLOR_MAGENTA);
-    init_pair(25, COLOR_WHITE, COLOR_CYAN);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+
+    // Create a window
+    window = glfwCreateWindow(1280, 720, "RogEm Debugger v0.0.1", nullptr, nullptr);
+    if (!window)
+        return -1;
+    glfwMakeContextCurrent(window);
+    glfwSwapInterval(1); // VSync
+    return 0;
 }
 
-void Debugger::beginCurses()
+int Debugger::initImGUi()
 {
-    initscr();             // Start ncurses mode
-    cbreak();              // Disable line buffering
-    noecho();              // Don't echo user input
-    keypad(stdscr, TRUE);  // Enable arrow keys
-    curs_set(0);           // Hide the cursor
-    nodelay(stdscr, true);
+    const char *glsl_version = "#version 130";
 
-    start_color();
-    initColors();
-
-    refresh();
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    ImGui::StyleColorsDark();
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init(glsl_version);
+    return 0;
 }
 
-void Debugger::endCurses()
+void Debugger::update()
 {
-    endwin();
+    glfwPollEvents();
+
+    if (glfwGetWindowAttrib(window, GLFW_ICONIFIED) != 0)
+    {
+        ImGui_ImplGlfw_Sleep(10);
+        return;
+    }
+    if (glfwWindowShouldClose(window))
+    {
+        m_running = false;
+        return;
+    }
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+
+    registerTable();
+    MemoryTable();
+    InstructionTable();
+
+    ImGui::ShowDemoWindow();
+    ImGui::Render();
+
+    int display_w, display_h;
+    glfwGetFramebufferSize(window, &display_w, &display_h);
+    glViewport(0, 0, display_w, display_h);
+    glClear(GL_COLOR_BUFFER_BIT);
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+    glfwSwapBuffers(window);
 }

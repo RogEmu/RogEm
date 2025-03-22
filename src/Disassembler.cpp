@@ -25,9 +25,11 @@ static const std::string registerNames[32] = {
     "t8", "t9", "k0", "k1", "gp", "sp", "fp", "ra"
 };
 
-const std::string* Disassembler::getRegisterNames()
+std::string Disassembler::getRegisterName(uint8_t reg)
 {
-    return registerNames;
+    if (reg >= 32)
+        return std::string();
+    return registerNames[reg];
 }
 
 static const std::unordered_map<PrimaryOpCode, InstructionData> primaryData = {

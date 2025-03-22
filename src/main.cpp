@@ -26,11 +26,10 @@ int main(int ac, char **av)
     auto cpu = std::make_shared<CPU>(bus);
     auto dbg = std::make_shared<Debugger>(cpu);
 
-    while (true)
+    while (dbg->isRunning())
     {
         cpu->step();
         dbg->update();
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
     return 0;
 }
