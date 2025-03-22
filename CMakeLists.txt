@@ -15,9 +15,8 @@ else()
     add_compile_options(-Wall -Wextra -Wpedantic -Werror)
 endif()
 
+add_subdirectory(deps)
 add_subdirectory(src)
-
-add_subdirectory(imgui)
 
 option(ENABLE_TESTING "Compile Unit Tests" ON)
 

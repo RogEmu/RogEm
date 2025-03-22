@@ -30,20 +30,20 @@ set(SRC_FILES
 add_executable(${BINARY_NAME} ${SRC_FILES})
 
 # Set the correct path for imgui_impl_glfw.cpp and imgui_impl_opengl3.cpp
-set(IMGUI_BACKENDS
-    ${CMAKE_SOURCE_DIR}/imgui/backends/imgui_impl_glfw.cpp
-    ${CMAKE_SOURCE_DIR}/imgui/backends/imgui_impl_opengl3.cpp
-)
+# set(IMGUI_BACKENDS
+#     ${CMAKE_SOURCE_DIR}/imgui/backends/imgui_impl_glfw.cpp
+#     ${CMAKE_SOURCE_DIR}/imgui/backends/imgui_impl_opengl3.cpp
+# )
 
 # Add them to your executable target (not linking as libraries)
-target_sources(${BINARY_NAME} PRIVATE ${IMGUI_BACKENDS})
+# target_sources(${BINARY_NAME} PRIVATE ${IMGUI_BACKENDS})
 
 # Include directories for imgui and backends
 include_directories(
-    ${CMAKE_SOURCE_DIR}/imgui
-    ${CMAKE_SOURCE_DIR}/imgui/backends
     ./
     NewDebugger/
+    ${CMAKE_SOURCE_DIR}/deps/imgui
+    ${CMAKE_SOURCE_DIR}/deps/imgui/backends
 )
 
 # Link the required libraries to the executable
