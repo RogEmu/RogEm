@@ -17,6 +17,8 @@ endif()
 
 add_subdirectory(src)
 
+add_subdirectory(imgui)
+
 option(ENABLE_TESTING "Compile Unit Tests" ON)
 
 if(${ENABLE_TESTING})

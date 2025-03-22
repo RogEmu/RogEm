@@ -2,6 +2,7 @@
   "dependencies": [
     "fmt",
     "gtest",
-    "ncurses"
+    "glfw3",
+    "opengl"
   ]
 }
