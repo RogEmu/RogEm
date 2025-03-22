@@ -4,6 +4,7 @@
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
+#include <fmt/format.h>
 
 #include "Debugger.hpp"
 #include "CPU.h"
@@ -29,7 +30,8 @@ Debugger::~Debugger()
 
 void Debugger::registerTable()
 {
-    auto tableFlags = ImGuiTableFlags_Borders;
+    auto tableFlags = ImGuiTableFlags_Borders
+                    | ImGuiTableFlags_RowBg;
     ImGui::Begin("Registers");
     ImGui::BeginTable("Registers", 2, tableFlags);
     ImGui::TableSetupColumn("Register");
@@ -70,22 +72,10 @@ void Debugger::MemoryTable()
     ImGui::Begin("Memory");
     if (ImGui::BeginTable("Memory", 18, tableFlags)) {
         ImGui::TableSetupColumn("Address");
-        ImGui::TableSetupColumn("00");
-        ImGui::TableSetupColumn("01");
-        ImGui::TableSetupColumn("02");
-        ImGui::TableSetupColumn("03");
-        ImGui::TableSetupColumn("04");
-        ImGui::TableSetupColumn("05");
-        ImGui::TableSetupColumn("06");
-        ImGui::TableSetupColumn("07");
-        ImGui::TableSetupColumn("08");
-        ImGui::TableSetupColumn("09");
-        ImGui::TableSetupColumn("0A");
-        ImGui::TableSetupColumn("0B");
-        ImGui::TableSetupColumn("0C");
-        ImGui::TableSetupColumn("0D");
-        ImGui::TableSetupColumn("0E");
-        ImGui::TableSetupColumn("0F");
+        for (int i = 0; i < 16; i++)
+        {
+            ImGui::TableSetupColumn(fmt::format("{:02X}", i).c_str());
+        }
         ImGui::TableSetupColumn("ASCII");
         ImGui::TableHeadersRow();
 
@@ -93,17 +83,18 @@ void Debugger::MemoryTable()
             ImGui::TableNextRow();
             ImGui::TableNextColumn();
             ImGui::Text("%08x", i * 16);
+
+            std::string asciiStr;
             for (int j = 0; j < 16; j++) {
+                uint8_t byte = m_cpu->m_bus->loadByte(i * 16 + j);
                 ImGui::TableNextColumn();
-                ImGui::Text("%02x", m_cpu->m_bus->loadByte(i * 16 + j));
+                ImGui::Text("%02x", byte);
+
+                char c = byte > 126 || byte < 32 ? '.' : byte;
+                asciiStr += c;
             }
             ImGui::TableNextColumn();
-            // for (int j = 0; j < 16; j++) {
-            //     char c = m_cpu->m_bus->loadByte(i * 16 + j);
-            //     if (c < 32 || c > 126) c = '.';
-
-            // }
-            // ImGui::Text("%c", c);
+            ImGui::Text("%s", asciiStr.c_str());
         }
 
         ImGui::EndTable();
