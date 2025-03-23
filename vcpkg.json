@@ -3,6 +3,13 @@
     "fmt",
     "gtest",
     "glfw3",
-    "opengl"
+    "opengl",
+    {
+      "name": "imgui",
+      "features": [
+        "glfw-binding",
+        "opengl3-binding"
+      ]
+    }
   ]
 }

@@ -193,7 +193,7 @@ void Debugger::update()
 
     if (glfwGetWindowAttrib(window, GLFW_ICONIFIED) != 0)
     {
-        ImGui_ImplGlfw_Sleep(10);
+        // ImGui_ImplGlfw_Sleep(10);
         return;
     }
     if (glfwWindowShouldClose(window))

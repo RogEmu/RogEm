@@ -2,8 +2,9 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CURSES_NEED_NCURSES TRUE)
 
 find_package(fmt CONFIG REQUIRED)
-find_package(glfw3 REQUIRED)
+find_package(glfw3 CONFIG REQUIRED)
 find_package(OpenGL REQUIRED)
+find_package(imgui CONFIG REQUIRED)
 
 set(SRC_FILES
     main.cpp
@@ -28,5 +29,5 @@ target_link_libraries(${BINARY_NAME} PRIVATE
     fmt::fmt
     glfw
     OpenGL::GL
-    imgui
+    imgui::imgui
 )
