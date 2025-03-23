@@ -42,23 +42,23 @@ void Debugger::registerTable()
         ImGui::TableNextColumn();
         ImGui::Text("%s", Disassembler::getRegisterName(i).c_str());
         ImGui::TableNextColumn();
-        ImGui::Text("%08x", m_cpu->m_registers[i]);
+        ImGui::Text("%08X", m_cpu->m_registers[i]);
     }
     ImGui::TableNextRow();
     ImGui::TableNextColumn();
     ImGui::Text("PC");
     ImGui::TableNextColumn();
-    ImGui::Text("%08x", m_cpu->m_pc);
+    ImGui::Text("%08X", m_cpu->m_pc);
     ImGui::TableNextRow();
     ImGui::TableNextColumn();
     ImGui::Text("HI");
     ImGui::TableNextColumn();
-    ImGui::Text("%08x", m_cpu->m_hi);
+    ImGui::Text("%08X", m_cpu->m_hi);
     ImGui::TableNextRow();
     ImGui::TableNextColumn();
     ImGui::Text("LO");
     ImGui::TableNextColumn();
-    ImGui::Text("%08x", m_cpu->m_lo);
+    ImGui::Text("%08X", m_cpu->m_lo);
 
     ImGui::EndTable();
     ImGui::End();
@@ -69,7 +69,7 @@ void Debugger::MemoryTable()
     auto tableFlags = ImGuiTableFlags_RowBg
                     | ImGuiTableFlags_BordersH
                     | ImGuiTableFlags_SizingFixedFit;
-    ImGui::Begin("Memory");
+    ImGui::Begin("Memory", nullptr);
     if (ImGui::BeginTable("Memory", 18, tableFlags)) {
         ImGui::TableSetupColumn("Address");
         for (int i = 0; i < 16; i++)
@@ -79,16 +79,17 @@ void Debugger::MemoryTable()
         ImGui::TableSetupColumn("ASCII");
         ImGui::TableHeadersRow();
 
-        for (int i = 0; i < 100; i++) {
+        uint32_t startAddr = 0x1000;
+        for (uint32_t i = startAddr; i < startAddr + 1024; i++) {
             ImGui::TableNextRow();
             ImGui::TableNextColumn();
-            ImGui::Text("%08x", i * 16);
+            ImGui::Text("%08X", i * 16);
 
             std::string asciiStr;
             for (int j = 0; j < 16; j++) {
                 uint8_t byte = m_cpu->m_bus->loadByte(i * 16 + j);
                 ImGui::TableNextColumn();
-                ImGui::Text("%02x", byte);
+                ImGui::Text("%02X", byte);
 
                 char c = byte > 126 || byte < 32 ? '.' : byte;
                 asciiStr += c;
@@ -106,12 +107,31 @@ void Debugger::InstructionTable()
 {
     ImGui::Begin("Instructions");
 
-    for (int i = 0; i < 100; i++) {
+    auto tableFlags = ImGuiTableFlags_RowBg
+                    | ImGuiTableFlags_Borders;
+    ImGui::BeginTable("Instructions", 1, tableFlags);
+    ImGui::TableSetupColumn("Instructions");
+    ImGui::TableHeadersRow();
+
+    int nbInstructions = 32;
+    int half = nbInstructions / 2;
+
+    for (int i = -half; i < half; i++) {
+        ImGui::TableNextColumn();
         uint32_t pc = m_cpu->m_pc + i * 4;
         Instruction instr = {.raw = m_cpu->m_bus->loadWord(pc)};
         auto str = Disassembler::disassemble(pc, instr);
-        ImGui::Text("%s", str.c_str());
+        if (pc == m_cpu->m_pc)
+        {
+            ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 200, 0, 255));
+            ImGui::Text("%s", str.c_str());
+            ImGui::PopStyleColor();
+        } else
+        {
+            ImGui::Text("%s", str.c_str());
+        }
     }
+    ImGui::EndTable();
     ImGui::End();
 }
 
@@ -180,8 +200,6 @@ void Debugger::update()
     registerTable();
     MemoryTable();
     InstructionTable();
-
-    ImGui::ShowDemoWindow();
     ImGui::Render();
 
     int display_w, display_h;
