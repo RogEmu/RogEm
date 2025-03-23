@@ -39,18 +39,28 @@ int main(int ac, char **av)
     auto startTime = std::chrono::steady_clock::now();
     float uiFps = 1/60.0f;
     float uiTimer = 0.0f;
+    float dt = 0;
+    float simluationTimer = 0.0f;
 
     while (dbg->isRunning())
     {
         if (!dbg->isPaused())
-            cpu->step();
+        {
+            if (simluationTimer > (dbg->getSimSpeed()))
+            {
+                cpu->step();
+                simluationTimer = 0;
+            }
+        }
 
         if (uiTimer > uiFps)
         {
             dbg->update();
             uiTimer = 0;
         }
-        uiTimer += deltaTime(startTime);
+        dt = deltaTime(startTime);
+        uiTimer += dt;
+        simluationTimer += dt;
     }
     return 0;
 }

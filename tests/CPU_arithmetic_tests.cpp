@@ -234,6 +234,25 @@ TEST(CpuTest, ADDIU_No_Underflow_2)
     EXPECT_EQ(cpu.m_registers[i.i.rt], value + imm);
 }
 
+TEST(CpuTest, ADDIU_3)
+{
+    auto bios = std::make_shared<BIOS>();
+    auto bus = std::make_shared<Bus>(bios, nullptr);
+    CPU cpu(bus);
+    Instruction i;
+
+    uint32_t value = 0;
+    int16_t imm = 12322;
+
+    loadImmediate(cpu, 0, value);
+    i.i.rs = 0;
+    i.i.rt = 8;
+    i.i.immediate = imm;
+    cpu.addImmediateUnsigned(i);
+
+    EXPECT_EQ(cpu.m_registers[i.i.rt], value + imm);
+}
+
 TEST(CpuTest, SUB_1)
 {
     auto bios = std::make_shared<BIOS>();

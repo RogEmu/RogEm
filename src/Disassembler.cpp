@@ -53,7 +53,7 @@ static const std::unordered_map<PrimaryOpCode, InstructionData> primaryData = {
     {PrimaryOpCode::LWR, InstructionData{"lwr", loadStoreFormat}},
     {PrimaryOpCode::ORI, InstructionData{"ori", arithmeticImmediateFormat}},
     {PrimaryOpCode::SB, InstructionData{"sb", loadStoreFormat}},
-    {PrimaryOpCode::SH, InstructionData{"lh", loadStoreFormat}},
+    {PrimaryOpCode::SH, InstructionData{"sh", loadStoreFormat}},
     {PrimaryOpCode::SLTI, InstructionData{"slti", arithmeticImmediateFormat}},
     {PrimaryOpCode::SLTIU, InstructionData{"sltiu", arithmeticImmediateFormat}},
     {PrimaryOpCode::SW, InstructionData{"sw", loadStoreFormat}},

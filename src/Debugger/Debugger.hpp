@@ -20,6 +20,7 @@ class Debugger
 
         bool isRunning() const;
         bool isPaused() const;
+        float getSimSpeed() const;
 
     private:
         int initGFLW();
@@ -31,6 +32,7 @@ class Debugger
         bool m_running;
 
         bool m_systemPaused;
+        float m_simSpeed;
 };
 
 #endif /* !DEBUGGER_HPP_ */

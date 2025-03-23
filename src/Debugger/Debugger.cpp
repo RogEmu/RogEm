@@ -13,7 +13,8 @@
 Debugger::Debugger(const std::shared_ptr<CPU> &cpu) :
     m_cpu(cpu),
     m_running(true),
-    m_systemPaused(false)
+    m_systemPaused(false),
+    m_simSpeed(1.0f)
 {
     if (initGFLW() != 0)
         return;
@@ -61,6 +62,16 @@ void Debugger::registerTable()
     ImGui::TableNextColumn();
     ImGui::Text("%08X", m_cpu->m_lo);
 
+    //COP0 Registers
+    ImGui::TableNextColumn();
+    ImGui::Text("COP0-SR");
+    ImGui::TableNextColumn();
+    ImGui::Text("%08X", m_cpu->m_cop0Reg[12]);
+    ImGui::TableNextColumn();
+    ImGui::Text("COP0-CAUSE");
+    ImGui::TableNextColumn();
+    ImGui::Text("%08X", m_cpu->m_cop0Reg[13]);
+
     ImGui::EndTable();
     ImGui::End();
 }
@@ -71,6 +82,8 @@ void Debugger::MemoryTable()
                     | ImGuiTableFlags_BordersH
                     | ImGuiTableFlags_SizingFixedFit;
     ImGui::Begin("Memory", nullptr);
+    char startAddrStr[16] = "";
+    ImGui::InputText("Start Address", startAddrStr, 16, ImGuiInputTextFlags_CharsHexadecimal);
     if (ImGui::BeginTable("Memory", 18, tableFlags)) {
         ImGui::TableSetupColumn("Address");
         for (int i = 0; i < 16; i++)
@@ -80,9 +93,14 @@ void Debugger::MemoryTable()
         ImGui::TableSetupColumn("ASCII");
         ImGui::TableHeadersRow();
 
+
         uint32_t startAddr = 0;
-        uint32_t offset = 0xFF;
-        for (uint32_t i = startAddr; i < startAddr + offset; i++) {
+        if (strlen(startAddrStr) > 0)
+        {
+            startAddr = std::stoul(startAddrStr, 0, 16);
+        }
+        uint32_t size = 0x1fe;
+        for (uint32_t i = startAddr; i < startAddr + size; i += 16) {
             ImGui::TableNextRow();
             ImGui::TableNextColumn();
             ImGui::Text("%08X", i);
@@ -109,9 +127,19 @@ void Debugger::InstructionTable()
 {
     ImGui::Begin("Instructions");
 
+    ImGui::BeginGroup();
+    ImGui::Checkbox("Pause", &m_systemPaused);
+    ImGui::SameLine();
+    if (ImGui::ArrowButton("##CPU_Step_Fw", ImGuiDir_Right) && m_systemPaused)
+    {
+        m_cpu->step();
+    }
+    ImGui::EndGroup();
+    ImGui::SliderFloat("Simulation Speed", &m_simSpeed, 0.00001f, 1.0f, "%.5f");
+
     auto tableFlags = ImGuiTableFlags_RowBg
                     | ImGuiTableFlags_Borders;
-    ImGui::Checkbox("Pause", &m_systemPaused);
+
     ImGui::BeginTable("Instructions", 1, tableFlags);
     ImGui::TableSetupColumn("Instructions");
     ImGui::TableHeadersRow();
@@ -146,6 +174,11 @@ bool Debugger::isRunning() const
 bool Debugger::isPaused() const
 {
     return m_systemPaused;
+}
+
+float Debugger::getSimSpeed() const
+{
+    return m_simSpeed;
 }
 
 static void glfw_error_callback(int error, const char* description)

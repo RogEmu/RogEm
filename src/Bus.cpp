@@ -13,7 +13,7 @@
 // When adding address spaces, use physical addresses
 const MemRange BIOS_RANGE = {0x1FC00000, 512 * 1024};
 const MemRange RAM_RANGE = {0x0, 2 * 1024 * 1024};
-const MemRange HW_REGISTERS = {0x1F801000, 4096};
+const MemRange MEMORY_CONTROL_RANGE = {0x1F801000, 36};
 
 const MemorySegments AddressSegments[] = {
     MemorySegments::KUSEG,
@@ -71,9 +71,9 @@ void Bus::storeWord(uint32_t addr, uint32_t value)
     {
         m_ram->storeWord(pAddress, value);
     }
-    else if (HW_REGISTERS.contains(pAddress))
+    else if (MEMORY_CONTROL_RANGE.contains(pAddress))
     {
-        fprintf(stderr, "Trying to write word 0x%08x into Hardware Registers: Not supported yet\n", value);
+        fprintf(stderr, "Trying to write word 0x%08x into Memory Control: Not supported yet\n", value);
     }
     else
     {
@@ -115,9 +115,9 @@ void Bus::storeHalfWord(uint32_t addr, uint16_t value)
     {
         m_ram->storeHalfWord(pAddress, value);
     }
-    else if (HW_REGISTERS.contains(pAddress))
+    else if (MEMORY_CONTROL_RANGE.contains(pAddress))
     {
-        fprintf(stderr, "Trying to write halfword 0x%04x into Hardware Registers: Not supported yet\n", value);
+        fprintf(stderr, "Trying to write halfword 0x%04x into Memory Control: Not supported yet\n", value);
     }
     else
     {
@@ -148,9 +148,9 @@ void Bus::storeByte(uint32_t addr, uint8_t value)
     {
         m_ram->storeByte(pAddress, value);
     }
-    else if (HW_REGISTERS.contains(pAddress))
+    else if (MEMORY_CONTROL_RANGE.contains(pAddress))
     {
-        fprintf(stderr, "Trying to write byte 0x%02x into Hardware Registers: Not supported yet\n", value);
+        fprintf(stderr, "Trying to write byte 0x%02x into Memory Control: Not supported yet\n", value);
     }
     else
     {
