@@ -19,6 +19,7 @@ class Debugger
         void InstructionTable();
 
         bool isRunning() const;
+        bool isPaused() const;
 
     private:
         int initGFLW();
@@ -28,6 +29,8 @@ class Debugger
         std::shared_ptr<CPU> m_cpu;
         GLFWwindow* window;
         bool m_running;
+
+        bool m_systemPaused;
 };
 
 #endif /* !DEBUGGER_HPP_ */

@@ -12,7 +12,8 @@
 
 Debugger::Debugger(const std::shared_ptr<CPU> &cpu) :
     m_cpu(cpu),
-    m_running(true)
+    m_running(true),
+    m_systemPaused(false)
 {
     if (initGFLW() != 0)
         return;
@@ -79,15 +80,16 @@ void Debugger::MemoryTable()
         ImGui::TableSetupColumn("ASCII");
         ImGui::TableHeadersRow();
 
-        uint32_t startAddr = 0x1000;
-        for (uint32_t i = startAddr; i < startAddr + 1024; i++) {
+        uint32_t startAddr = 0;
+        uint32_t offset = 0xFF;
+        for (uint32_t i = startAddr; i < startAddr + offset; i++) {
             ImGui::TableNextRow();
             ImGui::TableNextColumn();
-            ImGui::Text("%08X", i * 16);
+            ImGui::Text("%08X", i);
 
             std::string asciiStr;
             for (int j = 0; j < 16; j++) {
-                uint8_t byte = m_cpu->m_bus->loadByte(i * 16 + j);
+                uint8_t byte = m_cpu->m_bus->loadByte(i + j);
                 ImGui::TableNextColumn();
                 ImGui::Text("%02X", byte);
 
@@ -109,6 +111,7 @@ void Debugger::InstructionTable()
 
     auto tableFlags = ImGuiTableFlags_RowBg
                     | ImGuiTableFlags_Borders;
+    ImGui::Checkbox("Pause", &m_systemPaused);
     ImGui::BeginTable("Instructions", 1, tableFlags);
     ImGui::TableSetupColumn("Instructions");
     ImGui::TableHeadersRow();
@@ -138,6 +141,11 @@ void Debugger::InstructionTable()
 bool Debugger::isRunning() const
 {
     return m_running;
+}
+
+bool Debugger::isPaused() const
+{
+    return m_systemPaused;
 }
 
 static void glfw_error_callback(int error, const char* description)
