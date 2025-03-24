@@ -165,10 +165,12 @@ static std::string disassembleCop0(uint32_t pc, Instruction i)
     {
     case CoprocessorOpcodes::MTC:
         return formatAssembly(pc, i, InstructionData{"mtc0", "$%rt, $%rd"});
+    case CoprocessorOpcodes::MFC:
+        return formatAssembly(pc, i, InstructionData{"mfc0", "$%rt, $%rd"});
     default:
         break;
     }
-    return std::string();
+    return std::string("MIPS Disassembler: Illegal instruction");
 }
 
 std::string Disassembler::disassemble(uint32_t pc, Instruction i)

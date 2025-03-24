@@ -138,6 +138,11 @@ void Debugger::InstructionTable()
     {
         m_cpu->step();
     }
+    ImGui::SameLine();
+    if (ImGui::Button("Reset"))
+    {
+        m_cpu->reset();
+    }
     ImGui::EndGroup();
     ImGui::SliderFloat("Simulation Speed", &m_simSpeed, 0.00001f, 1.0f, "%.5f");
 

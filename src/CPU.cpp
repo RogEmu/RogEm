@@ -7,6 +7,8 @@
 
 #include "CPU.h"
 #include <iostream>
+#include <cstring>
+#include <fmt/format.h>
 
 #include "Disassembler.h"
 
@@ -29,17 +31,14 @@ static bool subOverflow(int32_t a, int32_t b)
 }
 
 CPU::CPU(const std::shared_ptr<Bus> &bus) :
-    m_pc(RESET_VECTOR),
     m_bus(bus)
 {
-    m_registers[0] = 0;
-    m_inBranchDelay = false;
+    reset();
 }
 
 void CPU::step()
 {
     Instruction instruction = fetchInstruction();
-    // std::cout << Disassembler::disassemble(m_pc, instruction) << std::endl;
     auto nextPc = m_pc;
     if (m_inBranchDelay)
     {
@@ -51,8 +50,15 @@ void CPU::step()
         nextPc += 4;
     }
     executeInstruction(instruction);
-    // Disassembler::debugState(m_pc, m_registers);
     m_pc = nextPc;
+}
+
+void CPU::reset()
+{
+    m_inBranchDelay = false;
+    m_pc = RESET_VECTOR;
+    std::memset(m_registers, 0, NB_GPR * sizeof(m_registers[0]));
+    std::memset(m_cop0Reg, 0, COP0_NB_REG * sizeof(m_cop0Reg[0]));
 }
 
 Instruction CPU::fetchInstruction()
@@ -125,12 +131,12 @@ void CPU::executeInstruction(const Instruction &instruction)
     case PrimaryOpCode::LWL:
         loadWordLeft(instruction);
         break;
-    case PrimaryOpCode::SLTI:
-        setOnLessThanImmediate(instruction);
-        break;
-    case PrimaryOpCode::SLTIU:
-        setOnLessThanImmediateUnsigned(instruction);
-        break;
+    // case PrimaryOpCode::SLTI:
+    //     setOnLessThanImmediate(instruction);
+    //     break;
+    // case PrimaryOpCode::SLTIU:
+    //     setOnLessThanImmediateUnsigned(instruction);
+    //     break;
     case PrimaryOpCode::SPECIAL:
         specialInstruction(instruction);
         break;
@@ -232,24 +238,24 @@ void CPU::specialInstruction(const Instruction &instruction)
     case SecondaryOpCode::MULTU:
         multiplyUnsigned(instruction);
         break;
-    case SecondaryOpCode::DIV:
-        divide(instruction);
-        break;
-    case SecondaryOpCode::DIVU:
-        divideUnsigned(instruction);
-        break;
-    case SecondaryOpCode::MFHI:
-        moveFromHi(instruction);
-        break;
-    case SecondaryOpCode::MFLO:
-        moveFromLo(instruction);
-        break;
-    case SecondaryOpCode::MTHI:
-        moveToHi(instruction);
-        break;
-    case SecondaryOpCode::MTLO:
-        moveToLo(instruction);
-        break;
+    // case SecondaryOpCode::DIV:
+    //     divide(instruction);
+    //     break;
+    // case SecondaryOpCode::DIVU:
+    //     divideUnsigned(instruction);
+    //     break;
+    // case SecondaryOpCode::MFHI:
+    //     moveFromHi(instruction);
+    //     break;
+    // case SecondaryOpCode::MFLO:
+    //     moveFromLo(instruction);
+    //     break;
+    // case SecondaryOpCode::MTHI:
+    //     moveToHi(instruction);
+    //     break;
+    // case SecondaryOpCode::MTLO:
+    //     moveToLo(instruction);
+    //     break;
     case SecondaryOpCode::JR:
         jumpRegister(instruction);
         break;
@@ -820,11 +826,15 @@ void CPU::executeCop0(const Instruction &instruction)
 
     switch (code)
     {
-        case CoprocessorOpcodes::MTC:
-            mtc0(instruction);
-            break;
-        default:
-            break;
+    case CoprocessorOpcodes::MTC:
+        mtc0(instruction);
+        break;
+    case CoprocessorOpcodes::MFC:
+        mfc0(instruction);
+        break;
+    default:
+        illegalInstruction(instruction);
+        break;
     }
 }
 
@@ -837,10 +847,19 @@ void CPU::mtc0(const Instruction &instruction)
     m_cop0Reg[regn] = data;
 }
 
+void CPU::mfc0(const Instruction &instruction)
+{
+    uint8_t regn = instruction.r.rd;
+    uint32_t data = m_cop0Reg[instruction.r.rt];
+
+    m_registers[regn] = data;
+}
+
 void CPU::illegalInstruction(const Instruction &instruction)
 {
     fprintf(stderr, "Illegal instruction: ");
-    std::cerr << Disassembler::disassemble(m_pc, instruction) << std::endl;
+    fmt::println(stderr, "at 0x{:08x}: 0x{:08x}", m_pc, (uint32_t)instruction.raw);
+    // std::cerr << Disassembler::disassemble(m_pc, instruction) << std::endl;
 
     // Temporary exit until exception handling is properly implemented
     exit(1);

@@ -24,6 +24,7 @@ struct CPU
     void step();
     Instruction fetchInstruction();
     void executeInstruction(const Instruction &instruction);
+    void reset();
 
     uint32_t getReg(uint8_t reg) const;
     void setReg(uint8_t reg, uint32_t val);
@@ -112,6 +113,7 @@ struct CPU
     //COP0 Instructions
     void executeCop0(const Instruction &instruction);
     void mtc0(const Instruction &instruction);
+    void mfc0(const Instruction &instruction);
 
     void illegalInstruction(const Instruction &instruction);
     void specialInstruction(const Instruction &instruction);
