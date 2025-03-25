@@ -70,16 +70,16 @@ void System::run()
     float uiFps = 1/60.0f;
     float uiTimer = 0.0f;
     float dt = 0;
-    float simluationTimer = 0.0f;
+    float simulationTimer = 0.0f;
 
     while (is_running)
     {
         if (!m_debug->isPaused())
         {
-            if (simluationTimer > (m_debug->getSimSpeed()))
+            if (simulationTimer > (m_debug->getSimSpeed()))
             {
                 m_cpu->step();
-                simluationTimer = 0;
+                simulationTimer = 0;
             }
         }
         if (uiTimer > uiFps)
@@ -102,6 +102,7 @@ void System::run()
         }
         dt = deltaTime(startTime);
         uiTimer += dt;
+        simulationTimer += dt;
     }
 }
 
