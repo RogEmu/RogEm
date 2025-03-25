@@ -18,18 +18,11 @@ class Debugger
         void MemoryTable();
         void InstructionTable();
 
-        bool isRunning() const;
         bool isPaused() const;
         float getSimSpeed() const;
 
     private:
-        int initGFLW();
-        int initImGUi();
-
-    private:
         std::shared_ptr<CPU> m_cpu;
-        GLFWwindow* window;
-        bool m_running;
 
         bool m_systemPaused;
         float m_simSpeed;

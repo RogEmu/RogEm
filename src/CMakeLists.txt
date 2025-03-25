@@ -13,6 +13,7 @@ set(SRC_FILES
     Bus.cpp
     CPU.cpp
     Disassembler.cpp
+    System.cpp
     Debugger/Debugger.cpp
 )
 
