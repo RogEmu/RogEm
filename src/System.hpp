@@ -1,6 +1,8 @@
 #ifndef SYSTEM_HPP_
 #define SYSTEM_HPP_
 
+#include <GLFW/glfw3.h>
+
 #include "Debugger.hpp"
 
 #include "CPU.h"

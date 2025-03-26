@@ -15,6 +15,9 @@ set(SRC_FILES
     Disassembler.cpp
     System.cpp
     Debugger/Debugger.cpp
+    Debugger/InstructionWindow.cpp
+    Debugger/RegisterWindow.cpp
+    Debugger/MemoryWindow.cpp
 )
 
 add_executable(${BINARY_NAME} ${SRC_FILES})
