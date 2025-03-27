@@ -5,6 +5,7 @@
 
 #include <memory>
 #include <vector>
+#include <string>
 
 class CPU;
 
@@ -15,12 +16,18 @@ class RegisterWindow : public IWindow
         ~RegisterWindow();
 
         void update() override;
+        void AddEditButton(const char* regName, int regIndex);
+        void DisplayPopup();
 
     private:
         std::shared_ptr<CPU> m_cpu;
         std::vector<uint32_t> previousRegisters;
         std::vector<uint32_t> previousExtraRegisters;
         std::vector<uint32_t> previousCopRegisters;
+
+        bool m_editorOpen;
+        std::string m_registerNameToChange;
+        int m_registerIndex;
 };
 
 #endif /* !REGISTERWINDOW_HPP_ */
