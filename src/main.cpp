@@ -14,10 +14,10 @@
 #include "RAM.h"
 #include "Debugger.hpp"
 
-float deltaTime(std::chrono::steady_clock::time_point &lastTime)
+double deltaTime(std::chrono::steady_clock::time_point &lastTime)
 {
     auto now = std::chrono::steady_clock::now();
-    float deltaTime = std::chrono::duration<double>(now - lastTime).count();
+    double deltaTime = std::chrono::duration<double>(now - lastTime).count();
     lastTime = now;
 
     return deltaTime;
@@ -37,10 +37,10 @@ int main(int ac, char **av)
     auto dbg = std::make_shared<Debugger>(cpu);
 
     auto startTime = std::chrono::steady_clock::now();
-    float uiFps = 1/60.0f;
-    float uiTimer = 0.0f;
-    float dt = 0;
-    float simluationTimer = 0.0f;
+    double uiFps = 1/60.0f;
+    double uiTimer = 0.0f;
+    double dt = 0;
+    double simluationTimer = 0.0f;
 
     while (dbg->isRunning())
     {

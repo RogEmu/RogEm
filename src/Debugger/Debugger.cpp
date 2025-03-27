@@ -1,5 +1,9 @@
 #include <iostream>
 
+#ifdef _WIN32
+    #include <Windows.h>
+#endif // _WIN32
+
 #include <GL/gl.h>
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
@@ -39,7 +43,7 @@ void Debugger::registerTable()
     ImGui::TableSetupColumn("Register");
     ImGui::TableSetupColumn("Value");
     ImGui::TableHeadersRow();
-    for (int i = 0; i < NB_GPR; i++) {
+    for (uint8_t i = 0; i < NB_GPR; i++) {
         ImGui::TableNextRow();
         ImGui::TableNextColumn();
         ImGui::Text("%s", Disassembler::getRegisterName(i).c_str());

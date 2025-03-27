@@ -5,7 +5,7 @@
 #include <memory>
 #include <GLFW/glfw3.h>
 
-class CPU;
+struct CPU;
 
 class Debugger
 {

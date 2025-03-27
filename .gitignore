@@ -3,3 +3,4 @@ build/
 .vs/
 *.bin
 imgui.ini
+/CMakeSettings.json
