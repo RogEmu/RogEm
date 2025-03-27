@@ -4,10 +4,10 @@
 #include "imgui_impl_opengl3.h"
 #include <fmt/format.h>
 
-#include "CPU.h"
+#include "Debugger.hpp"
 
-MemoryWindow::MemoryWindow(const std::shared_ptr<CPU> &cpu) :
-    m_cpu(cpu)
+MemoryWindow::MemoryWindow(Debugger *debugger) :
+    m_debugger(debugger)
 {
 }
 

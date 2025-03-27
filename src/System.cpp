@@ -1,7 +1,6 @@
 #include <iostream>
 #include <memory>
 #include <string>
-#include <chrono>
 #include <GLFW/glfw3.h>
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
@@ -13,13 +12,16 @@
 #include "BIOS.h"
 #include "Bus.h"
 
-System::System(const std::shared_ptr<BIOS> &bios)
+System::System(const std::string &biosPath) :
+    m_lastTime(0.0)
 {
-    auto ram = std::make_shared<RAM>();
-    auto bus = std::make_shared<Bus>(bios, ram);
-    auto cpu = std::make_shared<CPU>(bus);
-    m_cpu = cpu;
-    m_debug = std::make_shared<Debugger>(cpu);
+    m_bios = std::make_unique<BIOS>(biosPath);
+    m_ram = std::make_unique<RAM>();
+    m_bus = std::make_unique<Bus>(m_bios.get(), m_ram.get());
+    m_cpu = std::make_unique<CPU>(m_bus.get());
+
+    m_debug = std::make_unique<Debugger>(this);
+
     m_isRunning = true;
     if (initGFLW() != 0)
         m_isRunning = false;
@@ -36,18 +38,14 @@ System::~System()
     glfwTerminate();
 }
 
-float deltaTime(std::chrono::steady_clock::time_point &lastTime)
-{
-    auto now = std::chrono::steady_clock::now();
-    float deltaTime = std::chrono::duration<double>(now - lastTime).count();
-    lastTime = now;
-
-    return deltaTime;
-}
-
 bool System::isRunning() const
 {
     return m_isRunning;
+}
+
+CPU *System::getCPU()
+{
+    return m_cpu.get();
 }
 
 void newFrame()
@@ -70,11 +68,10 @@ void renderFrame()
 
 void System::run()
 {
-    auto startTime = std::chrono::steady_clock::now();
     float uiFps = 1/60.0f;
     float uiTimer = 0.0f;
-    float dt = 0;
     float simulationTimer = 0.0f;
+    double dt = deltaTime();
 
     while (m_isRunning)
     {
@@ -104,7 +101,6 @@ void System::run()
             uiTimer = 0;
             renderFrame();
         }
-        dt = deltaTime(startTime);
         uiTimer += dt;
         simulationTimer += dt;
     }
@@ -148,4 +144,13 @@ int System::initImGUi()
     ImGui_ImplGlfw_InitForOpenGL(m_window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
     return 0;
+}
+
+double System::deltaTime()
+{
+    double currentTime = glfwGetTime();
+    double dt = currentTime - m_lastTime;
+
+    m_lastTime = currentTime;
+    return dt;
 }

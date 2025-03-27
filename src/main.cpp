@@ -8,7 +8,6 @@
 #include <iostream>
 #include <thread>
 
-#include "Debugger.hpp"
 #include "System.hpp"
 
 int main(int ac, char **av)
@@ -18,12 +17,8 @@ int main(int ac, char **av)
         std::cout << "Missing BIOS filepath" << std::endl;
         return -1;
     }
-    auto bios = std::make_shared<BIOS>(av[1]);
-    auto system = std::make_shared<System>(bios);
+    auto system = std::make_unique<System>(av[1]);
 
-    while (system->isRunning())
-    {
-        system->run();
-    }
+    system->run();
     return 0;
 }

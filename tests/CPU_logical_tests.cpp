@@ -6,9 +6,9 @@
 
 TEST(CpuTest, ORI_1)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
 
     // Or immediate value 0x1F1F with $0 into $5
     Instruction i;
@@ -18,14 +18,14 @@ TEST(CpuTest, ORI_1)
 
     cpu.orImmediateWord(i);
 
-    EXPECT_EQ(cpu.m_registers[i.i.rt], i.i.immediate);
+    EXPECT_EQ(cpu.gpr[i.i.rt], i.i.immediate);
 }
 
 TEST(CpuTest, ORI_2)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
 
     // Or immediate value 0x1F1F with $0 into $1
     Instruction i;
@@ -34,28 +34,28 @@ TEST(CpuTest, ORI_2)
     i.i.immediate = 0x1F1F;
 
     cpu.orImmediateWord(i);
-    EXPECT_EQ(cpu.m_registers[i.i.rt], i.i.immediate);
+    EXPECT_EQ(cpu.gpr[i.i.rt], i.i.immediate);
 
     // Or immediate value 0x1234 with $0 into $2
     i.i.rt = 0x02;
     i.i.immediate = 0x1234;
     cpu.orImmediateWord(i);
-    EXPECT_EQ(cpu.m_registers[i.i.rt], i.i.immediate);
+    EXPECT_EQ(cpu.gpr[i.i.rt], i.i.immediate);
 
     // Or immediate value 0x1234 with $1 into $2
     i.i.rt = 0x02;
     i.i.rs = 0x01;
     i.i.immediate = 0x1F3F;
     cpu.orImmediateWord(i);
-    EXPECT_EQ(cpu.m_registers[i.i.rt], i.i.immediate);
+    EXPECT_EQ(cpu.gpr[i.i.rt], i.i.immediate);
 
 }
 
 TEST(CpuTest, ANDI_1)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     loadImmediate(cpu, 8, 0x42424242);
@@ -64,14 +64,14 @@ TEST(CpuTest, ANDI_1)
     i.i.immediate = 0xBEEF;
     cpu.andImmediateWord(i);
 
-    EXPECT_EQ(cpu.m_registers[i.i.rt], 0x42424242 & 0xBEEF);
+    EXPECT_EQ(cpu.gpr[i.i.rt], 0x42424242 & 0xBEEF);
 }
 
 TEST(CpuTest, ANDI_2)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t value = 0x89FD3EAB;
@@ -83,14 +83,14 @@ TEST(CpuTest, ANDI_2)
     i.i.immediate = imm;
     cpu.andImmediateWord(i);
 
-    EXPECT_EQ(cpu.m_registers[i.i.rt], value & imm);
+    EXPECT_EQ(cpu.gpr[i.i.rt], value & imm);
 }
 
 TEST(CpuTest, ANDI_3)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t value = 0x89FD3EAB;
@@ -102,14 +102,14 @@ TEST(CpuTest, ANDI_3)
     i.i.immediate = imm;
     cpu.andImmediateWord(i);
 
-    EXPECT_EQ(cpu.m_registers[i.i.rt], value & imm);
+    EXPECT_EQ(cpu.gpr[i.i.rt], value & imm);
 }
 
 TEST(CpuTest, XORI_1)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t value = 0x89FD3EAB;
@@ -121,14 +121,14 @@ TEST(CpuTest, XORI_1)
     i.i.immediate = imm;
     cpu.xorImmediateWord(i);
 
-    EXPECT_EQ(cpu.m_registers[i.i.rt], value ^ imm);
+    EXPECT_EQ(cpu.gpr[i.i.rt], value ^ imm);
 }
 
 TEST(CpuTest, AND_1)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t rsVal = 0x12345678;
@@ -141,15 +141,15 @@ TEST(CpuTest, AND_1)
     i.r.rd = 10;
     cpu.andWord(i);
 
-    EXPECT_EQ(cpu.m_registers[i.r.rd], rsVal & rtVal);
+    EXPECT_EQ(cpu.gpr[i.r.rd], rsVal & rtVal);
 }
 
 
 TEST(CpuTest, AND_2)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t rsVal = 0xFFFFFFFF;
@@ -162,14 +162,14 @@ TEST(CpuTest, AND_2)
     i.r.rd = 10;
     cpu.andWord(i);
 
-    EXPECT_EQ(cpu.m_registers[i.r.rd], rsVal & rtVal);
+    EXPECT_EQ(cpu.gpr[i.r.rd], rsVal & rtVal);
 }
 
 TEST(CpuTest, AND_3)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t rsVal = 0x11111111;
@@ -182,14 +182,14 @@ TEST(CpuTest, AND_3)
     i.r.rd = 8;
     cpu.andWord(i);
 
-    EXPECT_EQ(cpu.m_registers[i.r.rd], rsVal & rtVal);
+    EXPECT_EQ(cpu.gpr[i.r.rd], rsVal & rtVal);
 }
 
 TEST(CpuTest, OR_1)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t rsVal = 0xFFFF0000;
@@ -202,14 +202,14 @@ TEST(CpuTest, OR_1)
     i.r.rd = 10;
     cpu.orWord(i);
 
-    EXPECT_EQ(cpu.m_registers[i.r.rd], rsVal | rtVal);
+    EXPECT_EQ(cpu.gpr[i.r.rd], rsVal | rtVal);
 }
 
 TEST(CpuTest, OR_2)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t rsVal = 0x0;
@@ -222,15 +222,15 @@ TEST(CpuTest, OR_2)
     i.r.rd = 8;
     cpu.orWord(i);
 
-    EXPECT_EQ(cpu.m_registers[i.r.rd], rsVal | rtVal);
+    EXPECT_EQ(cpu.gpr[i.r.rd], rsVal | rtVal);
 }
 
 
 TEST(CpuTest, OR_3)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t rsVal = 0x78492B32;
@@ -243,14 +243,14 @@ TEST(CpuTest, OR_3)
     i.r.rd = 15;
     cpu.orWord(i);
 
-    EXPECT_EQ(cpu.m_registers[i.r.rd], rsVal | rtVal);
+    EXPECT_EQ(cpu.gpr[i.r.rd], rsVal | rtVal);
 }
 
 TEST(CpuTest, XOR_1)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t rsVal = 0xFFA43EBC;
@@ -263,14 +263,14 @@ TEST(CpuTest, XOR_1)
     i.r.rd = 8;
     cpu.xorWord(i);
 
-    EXPECT_EQ(cpu.m_registers[i.r.rd], rsVal ^ rtVal);
+    EXPECT_EQ(cpu.gpr[i.r.rd], rsVal ^ rtVal);
 }
 
 TEST(CpuTest, XOR_2)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t rsVal = 0x0;
@@ -283,14 +283,14 @@ TEST(CpuTest, XOR_2)
     i.r.rd = 8;
     cpu.xorWord(i);
 
-    EXPECT_EQ(cpu.m_registers[i.r.rd], rsVal ^ rtVal);
+    EXPECT_EQ(cpu.gpr[i.r.rd], rsVal ^ rtVal);
 }
 
 TEST(CpuTest, NOR_1)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint8_t rs = 11;
@@ -306,14 +306,14 @@ TEST(CpuTest, NOR_1)
     i.r.rd = rd;
     cpu.norWord(i);
 
-    EXPECT_EQ(cpu.m_registers[rd], ~(rsVal | rtVal));
+    EXPECT_EQ(cpu.gpr[rd], ~(rsVal | rtVal));
 }
 
 TEST(CpuTest, NOR_2)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint8_t rs = 11;
@@ -329,5 +329,5 @@ TEST(CpuTest, NOR_2)
     i.r.rd = rd;
     cpu.norWord(i);
 
-    EXPECT_EQ(cpu.m_registers[rd], ~(rsVal | rtVal));
+    EXPECT_EQ(cpu.gpr[rd], ~(rsVal | rtVal));
 }

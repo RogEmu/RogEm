@@ -5,20 +5,22 @@
 #include <memory>
 
 struct CPU;
+class Debugger;
 
 class InstructionWindow : public IWindow
 {
     public:
-        InstructionWindow(const std::shared_ptr<CPU> &cpu, bool &systemPaused, float &simSpeed);
+        InstructionWindow(Debugger *debugger);
         ~InstructionWindow();
 
         void update() override;
 
     private:
-        std::shared_ptr<CPU> m_cpu;
+        void drawTopBar();
+        void drawAssembly();
 
-        bool &m_systemPaused;
-        float &m_simSpeed;
+    private:
+        Debugger *m_debugger;
 };
 
 #endif /* !INSTRUCTIONWINDOW_HPP_ */

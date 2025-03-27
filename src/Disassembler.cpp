@@ -197,6 +197,13 @@ std::string Disassembler::disassemble(uint32_t pc, Instruction i)
     return std::string("MIPS Disassembler: Illegal instruction");
 }
 
+std::string Disassembler::disassemble(uint32_t pc, uint32_t word)
+{
+    Instruction i = {.raw = word};
+
+    return disassemble(pc, i);
+}
+
 void Disassembler::debugState(uint32_t pc, const uint32_t *registers)
 {
     std::cout << "CPU Register State:\n";

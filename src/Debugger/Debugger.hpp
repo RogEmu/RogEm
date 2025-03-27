@@ -3,14 +3,16 @@
 
 #include <list>
 #include <memory>
+#include <cstdint>
 
 class IWindow;
 struct CPU;
+class System;
 
 class Debugger
 {
     public:
-        Debugger(const std::shared_ptr<CPU> &cpu);
+        Debugger(System *system);
         ~Debugger();
 
         void update();
@@ -21,8 +23,13 @@ class Debugger
         float getSimulationSpeed() const;
         void setSimulationSpeed(float speed);
 
+        void stepOver();
+
+        uint32_t getPc() const;
+
     private:
-        std::shared_ptr<CPU> m_cpu;
+        System *m_system;
+
         std::list<std::shared_ptr<IWindow>> m_windows;
 
         bool m_paused;

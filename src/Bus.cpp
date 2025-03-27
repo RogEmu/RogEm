@@ -32,7 +32,7 @@ const MemorySegments AddressSegments[] = {
     MemorySegments::KSEG2,
 };
 
-Bus::Bus(const std::shared_ptr<BIOS> &bios, const std::shared_ptr<RAM> &ram) :
+Bus::Bus(BIOS* bios, RAM *ram) :
     m_bios(bios),
     m_ram(ram)
 {

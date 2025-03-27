@@ -6,9 +6,9 @@
 
 TEST(CpuTest, SLLV_1)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t value = 0x9F0DE23B;
@@ -20,14 +20,14 @@ TEST(CpuTest, SLLV_1)
     i.r.rd = 8;
     cpu.shiftLeftLogicalVariable(i);
 
-    EXPECT_EQ(cpu.m_registers[i.r.rd], value << (shiftAmount & 0x1F));
+    EXPECT_EQ(cpu.gpr[i.r.rd], value << (shiftAmount & 0x1F));
 }
 
 TEST(CpuTest, SLLV_2)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t value = 0x9F0DE23B;
@@ -39,14 +39,14 @@ TEST(CpuTest, SLLV_2)
     i.r.rd = 8;
     cpu.shiftLeftLogicalVariable(i);
 
-    EXPECT_EQ(cpu.m_registers[i.r.rd], value << (shiftAmount & 0x1F));
+    EXPECT_EQ(cpu.gpr[i.r.rd], value << (shiftAmount & 0x1F));
 }
 
 TEST(CpuTest, SLLV_No_Shift)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t value = 0x9F0DE23B;
@@ -58,14 +58,14 @@ TEST(CpuTest, SLLV_No_Shift)
     i.r.rd = 8;
     cpu.shiftLeftLogicalVariable(i);
 
-    EXPECT_EQ(cpu.m_registers[i.r.rd], value);
+    EXPECT_EQ(cpu.gpr[i.r.rd], value);
 }
 
 TEST(CpuTest, SLL_1)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     // sll  rd,rt,imm         rd = rt SHL (00h..1Fh)
@@ -77,14 +77,14 @@ TEST(CpuTest, SLL_1)
     i.r.shamt = shiftAmount;
     cpu.shiftLeftLogical(i);
 
-    EXPECT_EQ(cpu.m_registers[i.r.rd], value << shiftAmount);
+    EXPECT_EQ(cpu.gpr[i.r.rd], value << shiftAmount);
 }
 
 TEST(CpuTest, SLL_Large_Shift)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     // sll  rd,rt,imm         rd = rt SHL (00h..1Fh)
@@ -96,14 +96,14 @@ TEST(CpuTest, SLL_Large_Shift)
     i.r.shamt = shiftAmount;
     cpu.shiftLeftLogical(i);
 
-    EXPECT_EQ(cpu.m_registers[i.r.rd], value << (shiftAmount & 0x1F));
+    EXPECT_EQ(cpu.gpr[i.r.rd], value << (shiftAmount & 0x1F));
 }
 
 TEST(CpuTest, SRL_1)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t value = 0xFFFFAAAA;
@@ -114,14 +114,14 @@ TEST(CpuTest, SRL_1)
     i.r.shamt = shiftAmount;
     cpu.shiftRightLogical(i);
 
-    EXPECT_EQ(cpu.m_registers[i.r.rd], value >> (shiftAmount & 0x1F));
+    EXPECT_EQ(cpu.gpr[i.r.rd], value >> (shiftAmount & 0x1F));
 }
 
 TEST(CpuTest, SRL_Large_Shift)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t value = 0xFFFFAAAA;
@@ -132,14 +132,14 @@ TEST(CpuTest, SRL_Large_Shift)
     i.r.shamt = shiftAmount;
     cpu.shiftRightLogical(i);
 
-    EXPECT_EQ(cpu.m_registers[i.r.rd], value >> (shiftAmount & 0x1F));
+    EXPECT_EQ(cpu.gpr[i.r.rd], value >> (shiftAmount & 0x1F));
 }
 
 TEST(CpuTest, SRLV_1)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t value = 0x9F0DE23B;
@@ -151,14 +151,14 @@ TEST(CpuTest, SRLV_1)
     i.r.rd = 8;
     cpu.shiftRightLogicalVariable(i);
 
-    EXPECT_EQ(cpu.m_registers[i.r.rd], value >> (shiftAmount & 0x1F));
+    EXPECT_EQ(cpu.gpr[i.r.rd], value >> (shiftAmount & 0x1F));
 }
 
 TEST(CpuTest, SRLV_Large_Shift)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t value = 0x9F0DE23B;
@@ -170,14 +170,14 @@ TEST(CpuTest, SRLV_Large_Shift)
     i.r.rd = 8;
     cpu.shiftRightLogicalVariable(i);
 
-    EXPECT_EQ(cpu.m_registers[i.r.rd], value >> (shiftAmount & 0x1F));
+    EXPECT_EQ(cpu.gpr[i.r.rd], value >> (shiftAmount & 0x1F));
 }
 
 TEST(CpuTest, SRLV_No_Shift)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t value = 0x9F0DE23B;
@@ -189,14 +189,14 @@ TEST(CpuTest, SRLV_No_Shift)
     i.r.rd = 8;
     cpu.shiftRightLogicalVariable(i);
 
-    EXPECT_EQ(cpu.m_registers[i.r.rd], value);
+    EXPECT_EQ(cpu.gpr[i.r.rd], value);
 }
 
 TEST(CpuTest, SRA_MSB_Negative)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t value = 0x80000000;
@@ -207,15 +207,15 @@ TEST(CpuTest, SRA_MSB_Negative)
     i.r.shamt = shiftAmount;
     cpu.shiftRightArithmetic(i);
 
-    EXPECT_EQ(cpu.m_registers[i.r.rd], (uint32_t)(((int32_t)value) >> shiftAmount));
+    EXPECT_EQ(cpu.gpr[i.r.rd], (uint32_t)(((int32_t)value) >> shiftAmount));
 }
 
 
 TEST(CpuTest, SRA_MSB_Positive)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t value = 0x40000000;
@@ -226,14 +226,14 @@ TEST(CpuTest, SRA_MSB_Positive)
     i.r.shamt = shiftAmount;
     cpu.shiftRightArithmetic(i);
 
-    EXPECT_EQ(cpu.m_registers[i.r.rd], 0);
+    EXPECT_EQ(cpu.gpr[i.r.rd], 0);
 }
 
 TEST(CpuTest, SRA_MSB_Positive_2)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t value = 0x40000000;
@@ -244,14 +244,14 @@ TEST(CpuTest, SRA_MSB_Positive_2)
     i.r.shamt = shiftAmount;
     cpu.shiftRightArithmetic(i);
 
-    EXPECT_EQ(cpu.m_registers[i.r.rd], 1);
+    EXPECT_EQ(cpu.gpr[i.r.rd], 1);
 }
 
 TEST(CpuTest, SRAV_MSB_Negative)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t value = 0x80000000;
@@ -263,14 +263,14 @@ TEST(CpuTest, SRAV_MSB_Negative)
     i.r.rd = 8;
     cpu.shiftRightArithmeticVariable(i);
 
-    EXPECT_EQ(cpu.m_registers[i.r.rd], 0xFFFFFFFF);
+    EXPECT_EQ(cpu.gpr[i.r.rd], 0xFFFFFFFF);
 }
 
 TEST(CpuTest, SRAV_MSB_Positive)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t value = 0x40000000;
@@ -282,5 +282,5 @@ TEST(CpuTest, SRAV_MSB_Positive)
     i.r.rd = 8;
     cpu.shiftRightArithmeticVariable(i);
 
-    EXPECT_EQ(cpu.m_registers[i.r.rd], 1);
+    EXPECT_EQ(cpu.gpr[i.r.rd], 1);
 }

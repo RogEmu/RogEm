@@ -30,16 +30,19 @@ static bool subOverflow(int32_t a, int32_t b)
     return false;
 }
 
-CPU::CPU(const std::shared_ptr<Bus> &bus) :
+CPU::CPU(Bus *bus) :
+    pc(RESET_VECTOR),
     m_bus(bus)
 {
-    reset();
+    gpr[0] = 0;
+    m_inBranchDelay = false;
 }
 
 void CPU::step()
 {
     Instruction instruction = fetchInstruction();
-    auto nextPc = m_pc;
+    // std::cout << Disassembler::disassemble(pc, instruction) << std::endl;
+    auto nextPc = pc;
     if (m_inBranchDelay)
     {
         nextPc = m_branchSlotAddr;
@@ -50,7 +53,8 @@ void CPU::step()
         nextPc += 4;
     }
     executeInstruction(instruction);
-    m_pc = nextPc;
+    // Disassembler::debugState(pc, gpr);
+    pc = nextPc;
 }
 
 void CPU::reset()
@@ -63,7 +67,7 @@ void CPU::reset()
 
 Instruction CPU::fetchInstruction()
 {
-    uint32_t instruction = m_bus->loadWord(m_pc);
+    uint32_t instruction = m_bus->loadWord(pc);
     return Instruction{.raw=instruction};
 }
 
@@ -270,13 +274,13 @@ void CPU::specialInstruction(const Instruction &instruction)
 
 uint32_t CPU::getReg(uint8_t reg) const
 {
-    return m_registers[reg];
+    return gpr[reg];
 }
 
 void CPU::setReg(uint8_t reg, uint32_t val)
 {
-    m_registers[reg] = val;
-    m_registers[0] = 0;
+    gpr[reg] = val;
+    gpr[0] = 0;
 }
 
 void CPU::loadUpperImmediate(const Instruction &instruction)
@@ -650,8 +654,8 @@ void CPU::multiply(const Instruction &instruction)
 
     int64_t res = static_cast<int64_t>(left) * static_cast<int64_t>(right);
 
-    m_lo = static_cast<int32_t>(res & 0xFFFFFFFF);
-    m_hi = static_cast<int32_t>(res >> 32);
+    lo = static_cast<int32_t>(res & 0xFFFFFFFF);
+    hi = static_cast<int32_t>(res >> 32);
 }
 
 void CPU::multiplyUnsigned(const Instruction &instruction)
@@ -661,8 +665,8 @@ void CPU::multiplyUnsigned(const Instruction &instruction)
 
     uint64_t res = static_cast<uint64_t>(left) * static_cast<uint64_t>(right);
 
-    m_lo = static_cast<uint32_t>(res & 0xFFFFFFFF);
-    m_hi = static_cast<uint32_t>(res >> 32);
+    lo = static_cast<uint32_t>(res & 0xFFFFFFFF);
+    hi = static_cast<uint32_t>(res >> 32);
 }
 
 void CPU::divide(const Instruction &instruction)
@@ -672,13 +676,13 @@ void CPU::divide(const Instruction &instruction)
 
     if (right == 0)
     {
-        m_lo = 0;
-        m_hi = left;
+        lo = 0;
+        hi = left;
     }
     else
     {
-        m_lo = left / right;
-        m_hi = left % right;
+        lo = left / right;
+        hi = left % right;
     }
 }
 
@@ -689,46 +693,46 @@ void CPU::divideUnsigned(const Instruction &instruction)
 
     if (right == 0)
     {
-        m_lo = 0;
-        m_hi = left;
+        lo = 0;
+        hi = left;
     }
     else
     {
-        m_lo = left / right;
-        m_hi = left % right;
+        lo = left / right;
+        hi = left % right;
     }
 }
 
 void CPU::moveFromHi(const Instruction &instruction)
 {
-    setReg(instruction.r.rd, m_hi);
+    setReg(instruction.r.rd, hi);
 }
 
 void CPU::moveFromLo(const Instruction &instruction)
 {
-    setReg(instruction.r.rd, m_lo);
+    setReg(instruction.r.rd, lo);
 }
 
 void CPU::moveToHi(const Instruction &instruction)
 {
-    m_hi = getReg(instruction.r.rs);
+    hi = getReg(instruction.r.rs);
 }
 
 void CPU::moveToLo(const Instruction &instruction)
 {
-    m_lo = getReg(instruction.r.rs);
+    lo = getReg(instruction.r.rs);
 }
 
 void CPU::jump(const Instruction &instruction)
 {
-    m_branchSlotAddr = (m_pc & 0xF0000000) | (((uint32_t)instruction.j.address) << 2);
+    m_branchSlotAddr = (pc & 0xF0000000) | (((uint32_t)instruction.j.address) << 2);
     m_inBranchDelay = true;
 }
 
 void CPU::jumpAndLink(const Instruction &instruction)
 {
-    setReg(31, m_pc + 8);
-    m_branchSlotAddr = (m_pc & 0xF0000000) | (((uint32_t)instruction.j.address) << 2);
+    setReg(31, pc + 8);
+    m_branchSlotAddr = (pc & 0xF0000000) | (((uint32_t)instruction.j.address) << 2);
     m_inBranchDelay = true;
 }
 
@@ -740,23 +744,23 @@ void CPU::jumpRegister(const Instruction &instruction)
 
 void CPU::jumpAndLinkRegister(const Instruction &instruction)
 {
-    setReg(instruction.r.rd, m_pc + 8);
+    setReg(instruction.r.rd, pc + 8);
     m_branchSlotAddr = getReg(instruction.r.rs);
     m_inBranchDelay = true;
 }
 
 void CPU::executeBranch(const Instruction &instruction)
 {
-    m_branchSlotAddr = m_pc + 4 + ((int16_t)instruction.i.immediate << 2);
+    m_branchSlotAddr = pc + 4 + ((int16_t)instruction.i.immediate << 2);
     m_inBranchDelay = true;
 }
 
 void CPU::branchOnEqual(const Instruction &instruction)
 {
     if (getReg(instruction.i.rs) == getReg(instruction.i.rt))
-        m_pc += 4 + ((int16_t)instruction.i.immediate << 2);
+        pc += 4 + ((int16_t)instruction.i.immediate << 2);
     else
-        m_pc += 4;
+        pc += 4;
 }
 
 void CPU::branchOnNotEqual(const Instruction &instruction)
@@ -787,7 +791,7 @@ void CPU::branchOnGreaterThanZeroAndLink(const Instruction &instruction)
 {
     if (static_cast<int32_t>(getReg(instruction.i.rs)) > 0)
     {
-        setReg(31, m_pc + 8);
+        setReg(31, pc + 8);
         executeBranch(instruction);
     }
 }
@@ -802,22 +806,22 @@ void CPU::branchOnLessThanZeroAndLink(const Instruction &instruction)
 {
     if (static_cast<int32_t>(getReg(instruction.i.rs)) < 0)
     {
-        setReg(31, m_pc + 8);
-        m_pc += 4 + ((int16_t)instruction.i.immediate << 2);
+        setReg(31, pc + 8);
+        pc += 4 + ((int16_t)instruction.i.immediate << 2);
     }
     else
-        m_pc += 4;
+        pc += 4;
 }
 
 void CPU::branchOnGreaterThanOrEqualToZeroAndLink(const Instruction &instruction)
 {
     if (static_cast<int32_t>(getReg(instruction.i.rs)) >= 0)
     {
-        setReg(31, m_pc + 8);
-        m_pc += 4 + ((int16_t)instruction.i.immediate << 2);
+        setReg(31, pc + 8);
+        pc += 4 + ((int16_t)instruction.i.immediate << 2);
     }
     else
-        m_pc += 4;
+        pc += 4;
 }
 
 void CPU::executeCop0(const Instruction &instruction)
@@ -842,7 +846,7 @@ void CPU::mtc0(const Instruction &instruction)
 {
     // mtc# rt,rd       ;cop#datRd = rt ;data regs
     uint8_t regn = instruction.r.rd;
-    uint32_t data = m_registers[instruction.r.rt];
+    uint32_t data = gpr[instruction.r.rt];
 
     m_cop0Reg[regn] = data;
 }
@@ -858,8 +862,7 @@ void CPU::mfc0(const Instruction &instruction)
 void CPU::illegalInstruction(const Instruction &instruction)
 {
     fprintf(stderr, "Illegal instruction: ");
-    fmt::println(stderr, "at 0x{:08x}: 0x{:08x}", m_pc, (uint32_t)instruction.raw);
-    // std::cerr << Disassembler::disassemble(m_pc, instruction) << std::endl;
+    std::cerr << Disassembler::disassemble(pc, instruction) << std::endl;
 
     // Temporary exit until exception handling is properly implemented
     exit(1);

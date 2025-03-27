@@ -6,11 +6,10 @@
 
 #include "CPU.h"
 #include "Disassembler.h"
+#include "Debugger.hpp"
 
-InstructionWindow::InstructionWindow(const std::shared_ptr<CPU> &cpu, bool &systemPaused, float &simSpeed) :
-    m_cpu(cpu),
-    m_systemPaused(systemPaused),
-    m_simSpeed(simSpeed)
+InstructionWindow::InstructionWindow(Debugger *debugger) :
+    m_debugger(debugger)
 {
 }
 
@@ -20,44 +19,68 @@ InstructionWindow::~InstructionWindow()
 
 void InstructionWindow::update()
 {
-    ImGui::Begin("Instructions");
+    ImGui::Begin("Assembly");
+
+    drawTopBar();
+    drawAssembly();
+}
+
+void InstructionWindow::drawTopBar()
+{
+    bool paused = m_debugger->isPaused();
+    float simSpeed = m_debugger->getSimulationSpeed();
 
     ImGui::BeginGroup();
-    ImGui::Checkbox("Pause", &m_systemPaused);
+    ImGui::Checkbox("Pause", &paused);
     ImGui::SameLine();
-    if (ImGui::ArrowButton("##CPU_Step_Fw", ImGuiDir_Right) && m_systemPaused)
+    if (ImGui::ArrowButton("##CPU_Step_Fw", ImGuiDir_Right) && paused)
     {
-        m_cpu->step();
+        m_debugger->stepOver();
     }
     ImGui::EndGroup();
-    ImGui::SliderFloat("Simulation Speed", &m_simSpeed, 0.00001f, 1.0f, "%.5f");
+    ImGui::SliderFloat("Simulation Speed", &simSpeed, 0.00001f, 1.0f, "%.5f");
 
+    m_debugger->pause(paused);
+    m_debugger->setSimulationSpeed(simSpeed);
+}
+
+void InstructionWindow::drawAssembly()
+{
     auto tableFlags = ImGuiTableFlags_RowBg
-                    | ImGuiTableFlags_Borders;
+                    | ImGuiTableFlags_Borders
+                    | ImGuiTableFlags_ScrollY
+                    | ImGuiTableFlags_Resizable;
 
-    if (ImGui::BeginTable("Instructions", 1, tableFlags)) {
-        ImGui::TableSetupColumn("Instructions");
-        ImGui::TableHeadersRow();
+    if (!ImGui::BeginTable("Assembly", 3, tableFlags))
+        return;
 
-        int nbInstructions = 32;
-        int half = nbInstructions / 2;
+    ImGui::TableSetupScrollFreeze(0, 1);
+    ImGui::TableSetupColumn("Address", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoResize);
+    ImGui::TableSetupColumn("Bytecode", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoResize);
+    ImGui::TableSetupColumn("Assembly");
+    ImGui::TableHeadersRow();
 
-        for (int i = -half; i < half; i++) {
+    uint32_t startAddr = 0xBFC00000;
+    uint32_t size = 0x7FFFF;
+    uint32_t pc = m_debugger->getPc();
+
+    ImGuiListClipper clipper;
+    clipper.Begin(size / 4 + 1);
+    while (clipper.Step())
+    {
+        for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++)
+        {
             ImGui::TableNextColumn();
-            uint32_t pc = m_cpu->m_pc + i * 4;
-            Instruction instr = {.raw = m_cpu->m_bus->loadWord(pc)};
-            auto str = Disassembler::disassemble(pc, instr);
-            if (pc == m_cpu->m_pc)
-            {
-                ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 200, 0, 255));
-                ImGui::Text("%s", str.c_str());
-                ImGui::PopStyleColor();
-            } else
-            {
-                ImGui::Text("%s", str.c_str());
-            }
+            uint32_t currentAddr = startAddr + i * 4;
+
+            if (currentAddr == pc)
+                ImGui::TextColored(ImVec4(255, 200, 0, 255), "0x%08x", currentAddr);
+            else
+                ImGui::Text("0x%08x", currentAddr);
+            ImGui::TableNextColumn();
+            ImGui::TableNextColumn();
         }
-        ImGui::EndTable();
     }
+    ImGui::EndTable();
     ImGui::End();
 }

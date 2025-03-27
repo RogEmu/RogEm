@@ -6,9 +6,9 @@
 
 TEST(CpuTest, ADDI_1)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t value = 0xB16B00B5;
@@ -20,14 +20,14 @@ TEST(CpuTest, ADDI_1)
     i.i.immediate = imm;
     cpu.addImmediate(i);
 
-    EXPECT_EQ(cpu.m_registers[i.i.rt], 0xB16B00B4);
+    EXPECT_EQ(cpu.gpr[i.i.rt], 0xB16B00B4);
 }
 
 TEST(CpuTest, ADDI_2)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t value = 123;
@@ -39,14 +39,14 @@ TEST(CpuTest, ADDI_2)
     i.i.immediate = imm;
     cpu.addImmediate(i);
 
-    EXPECT_EQ(cpu.m_registers[i.i.rt], value + imm);
+    EXPECT_EQ(cpu.gpr[i.i.rt], value + imm);
 }
 
 TEST(CpuTest, ADDI_Negative_1)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t value = 0x1;
@@ -58,14 +58,14 @@ TEST(CpuTest, ADDI_Negative_1)
     i.i.immediate = imm;
     cpu.addImmediate(i);
 
-    EXPECT_EQ(cpu.m_registers[i.i.rt], 0);
+    EXPECT_EQ(cpu.gpr[i.i.rt], 0);
 }
 
 TEST(CpuTest, ADDI_Negative_Overflow)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t value = INT32_MAX;
@@ -78,14 +78,14 @@ TEST(CpuTest, ADDI_Negative_Overflow)
     uint32_t oldRtValue = cpu.getReg(i.i.rt);
     cpu.addImmediate(i);
 
-    EXPECT_EQ(cpu.m_registers[i.i.rt], oldRtValue);
+    EXPECT_EQ(cpu.gpr[i.i.rt], oldRtValue);
 }
 
 TEST(CpuTest, ADDI_Negative_No_Overflow)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t value = UINT32_MAX; // <-- Treated as signed (-1)
@@ -97,14 +97,14 @@ TEST(CpuTest, ADDI_Negative_No_Overflow)
     i.i.immediate = imm;
     cpu.addImmediate(i);
 
-    EXPECT_EQ(cpu.m_registers[i.i.rt], 0);
+    EXPECT_EQ(cpu.gpr[i.i.rt], 0);
 }
 
 TEST(CpuTest, ADDI_Negative_No_Underflow)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t value = 0;
@@ -116,14 +116,14 @@ TEST(CpuTest, ADDI_Negative_No_Underflow)
     i.i.immediate = imm;
     cpu.addImmediate(i);
 
-    EXPECT_EQ(cpu.m_registers[i.i.rt], -1);
+    EXPECT_EQ(cpu.gpr[i.i.rt], -1);
 }
 
 TEST(CpuTest, ADDI_Negative_Underflow)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t value = (uint32_t)INT32_MIN;
@@ -136,14 +136,14 @@ TEST(CpuTest, ADDI_Negative_Underflow)
     uint32_t oldRtValue = cpu.getReg(i.i.rt);
     cpu.addImmediate(i);
 
-    EXPECT_EQ(cpu.m_registers[i.i.rt], oldRtValue);
+    EXPECT_EQ(cpu.gpr[i.i.rt], oldRtValue);
 }
 
 TEST(CpuTest, ADDIU_1)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t value = 0xC0FFEE;
@@ -155,14 +155,14 @@ TEST(CpuTest, ADDIU_1)
     i.i.immediate = imm;
     cpu.addImmediateUnsigned(i);
 
-    EXPECT_EQ(cpu.m_registers[i.i.rt], value + imm);
+    EXPECT_EQ(cpu.gpr[i.i.rt], value + imm);
 }
 
 TEST(CpuTest, ADDIU_2)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t value = 0xBADBABE;
@@ -174,14 +174,14 @@ TEST(CpuTest, ADDIU_2)
     i.i.immediate = imm;
     cpu.addImmediateUnsigned(i);
 
-    EXPECT_EQ(cpu.m_registers[i.i.rt], value + imm);
+    EXPECT_EQ(cpu.gpr[i.i.rt], value + imm);
 }
 
 TEST(CpuTest, ADDIU_No_Overflow)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t value = INT32_MAX;
@@ -193,14 +193,14 @@ TEST(CpuTest, ADDIU_No_Overflow)
     i.i.immediate = imm;
     cpu.addImmediateUnsigned(i);
 
-    EXPECT_EQ(cpu.m_registers[i.i.rt], value + imm);
+    EXPECT_EQ(cpu.gpr[i.i.rt], value + imm);
 }
 
 TEST(CpuTest, ADDIU_No_Underflow)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t value = 0;
@@ -212,14 +212,14 @@ TEST(CpuTest, ADDIU_No_Underflow)
     i.i.immediate = imm;
     cpu.addImmediateUnsigned(i);
 
-    EXPECT_EQ(cpu.m_registers[i.i.rt], value + imm);
+    EXPECT_EQ(cpu.gpr[i.i.rt], value + imm);
 }
 
 TEST(CpuTest, ADDIU_No_Underflow_2)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t value = (uint32_t)INT32_MIN;
@@ -231,14 +231,14 @@ TEST(CpuTest, ADDIU_No_Underflow_2)
     i.i.immediate = imm;
     cpu.addImmediateUnsigned(i);
 
-    EXPECT_EQ(cpu.m_registers[i.i.rt], value + imm);
+    EXPECT_EQ(cpu.gpr[i.i.rt], value + imm);
 }
 
 TEST(CpuTest, ADDIU_3)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t value = 0;
@@ -250,14 +250,14 @@ TEST(CpuTest, ADDIU_3)
     i.i.immediate = imm;
     cpu.addImmediateUnsigned(i);
 
-    EXPECT_EQ(cpu.m_registers[i.i.rt], value + imm);
+    EXPECT_EQ(cpu.gpr[i.i.rt], value + imm);
 }
 
 TEST(CpuTest, SUB_1)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t left = 36178;
@@ -271,14 +271,14 @@ TEST(CpuTest, SUB_1)
     i.r.rt = 9;
     cpu.substractWord(i);
 
-    EXPECT_EQ(cpu.m_registers[i.r.rd], left - right);
+    EXPECT_EQ(cpu.gpr[i.r.rd], left - right);
 }
 
 TEST(CpuTest, SUB_Overflow)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     // Should overflow into negative integers
@@ -294,14 +294,14 @@ TEST(CpuTest, SUB_Overflow)
     i.r.rt = 9;
     cpu.substractWord(i);
 
-    EXPECT_EQ(cpu.m_registers[i.r.rd], oldRd);
+    EXPECT_EQ(cpu.gpr[i.r.rd], oldRd);
 }
 
 TEST(CpuTest, SUB_Overflow_2)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     // Should overflow into negative integers
@@ -317,14 +317,14 @@ TEST(CpuTest, SUB_Overflow_2)
     i.r.rt = 9;
     cpu.substractWord(i);
 
-    EXPECT_EQ(cpu.m_registers[i.r.rd], oldRd);
+    EXPECT_EQ(cpu.gpr[i.r.rd], oldRd);
 }
 
 TEST(CpuTest, SUB_Underflow)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     // Should overflow into negative integers
@@ -340,14 +340,14 @@ TEST(CpuTest, SUB_Underflow)
     i.r.rt = 9;
     cpu.substractWord(i);
 
-    EXPECT_EQ(cpu.m_registers[i.r.rd], oldRd);
+    EXPECT_EQ(cpu.gpr[i.r.rd], oldRd);
 }
 
 TEST(CpuTest, SUB_Underflow_2)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     // Should overflow into negative integers
@@ -363,14 +363,14 @@ TEST(CpuTest, SUB_Underflow_2)
     i.r.rt = 9;
     cpu.substractWord(i);
 
-    EXPECT_EQ(cpu.m_registers[i.r.rd], oldRd);
+    EXPECT_EQ(cpu.gpr[i.r.rd], oldRd);
 }
 
 TEST(CpuTest, SUB_No_Overflow)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     // Should overflow into negative integers
@@ -385,14 +385,14 @@ TEST(CpuTest, SUB_No_Overflow)
     i.r.rt = 9;
     cpu.substractWord(i);
 
-    EXPECT_EQ(cpu.m_registers[i.r.rd], left - right);
+    EXPECT_EQ(cpu.gpr[i.r.rd], left - right);
 }
 
 TEST(CpuTest, SUB_No_Overflow_2)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     // Should overflow into negative integers
@@ -407,14 +407,14 @@ TEST(CpuTest, SUB_No_Overflow_2)
     i.r.rt = 9;
     cpu.substractWord(i);
 
-    EXPECT_EQ(cpu.m_registers[i.r.rd], left - right);
+    EXPECT_EQ(cpu.gpr[i.r.rd], left - right);
 }
 
 TEST(CpuTest, SUBU_1)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t left = 986648768;
@@ -428,14 +428,14 @@ TEST(CpuTest, SUBU_1)
     i.r.rt = 9;
     cpu.substractWordUnsigned(i);
 
-    EXPECT_EQ(cpu.m_registers[i.r.rd], left - right);
+    EXPECT_EQ(cpu.gpr[i.r.rd], left - right);
 }
 
 TEST(CpuTest, SUBU_2)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t left = (uint32_t)-891840298;
@@ -449,14 +449,14 @@ TEST(CpuTest, SUBU_2)
     i.r.rt = 9;
     cpu.substractWordUnsigned(i);
 
-    EXPECT_EQ(cpu.m_registers[i.r.rd], left - right);
+    EXPECT_EQ(cpu.gpr[i.r.rd], left - right);
 }
 
 TEST(CpuTest, SUBU_3)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t left = (uint32_t)-891840298;
@@ -470,14 +470,14 @@ TEST(CpuTest, SUBU_3)
     i.r.rt = 9;
     cpu.substractWordUnsigned(i);
 
-    EXPECT_EQ(cpu.m_registers[i.r.rd], left - right);
+    EXPECT_EQ(cpu.gpr[i.r.rd], left - right);
 }
 
 TEST(CpuTest, SUBU_4)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t left = (uint32_t)-891840298;
@@ -491,14 +491,14 @@ TEST(CpuTest, SUBU_4)
     i.r.rt = 9;
     cpu.substractWordUnsigned(i);
 
-    EXPECT_EQ(cpu.m_registers[i.r.rd], left - right);
+    EXPECT_EQ(cpu.gpr[i.r.rd], left - right);
 }
 
 TEST(CpuTest, SUBU_No_Overflow)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t left = INT32_MAX;
@@ -512,14 +512,14 @@ TEST(CpuTest, SUBU_No_Overflow)
     i.r.rt = 9;
     cpu.substractWordUnsigned(i);
 
-    EXPECT_EQ(cpu.m_registers[i.r.rd], left - right);
+    EXPECT_EQ(cpu.gpr[i.r.rd], left - right);
 }
 
 TEST(CpuTest, SUBU_No_Overflow_2)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t left = (uint32_t)INT32_MIN;
@@ -533,5 +533,5 @@ TEST(CpuTest, SUBU_No_Overflow_2)
     i.r.rt = 9;
     cpu.substractWordUnsigned(i);
 
-    EXPECT_EQ(cpu.m_registers[i.r.rd], left - right);
+    EXPECT_EQ(cpu.gpr[i.r.rd], left - right);
 }

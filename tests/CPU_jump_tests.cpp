@@ -4,42 +4,43 @@
 #include "Bus.h"
 #include "CPU.h"
 
-TEST(CpuTest, JUMP) {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+TEST(CpuTest, JUMP)
+{
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
-    cpu.m_pc = 0x80010000;
+    cpu.pc = 0x80010000;
     i.j.address = 0x123456;
     cpu.jump(i);
-    uint32_t expected_pc = (cpu.m_pc & 0xF0000000) | (i.j.address << 2);
+    uint32_t expected_pc = (cpu.pc & 0xF0000000) | (i.j.address << 2);
 
     EXPECT_EQ(cpu.m_branchSlotAddr, expected_pc);
 }
 
 TEST(CpuTest, JUMP_AND_LINK)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
-    cpu.m_pc = 0x80010000;
+    cpu.pc = 0x80010000;
     i.j.address = 0x123456;
-    uint32_t expected_pc = (cpu.m_pc & 0xF0000000) | (i.j.address << 2);
-    uint32_t expected_return = cpu.m_pc + 8;
+    uint32_t expected_pc = (cpu.pc & 0xF0000000) | (i.j.address << 2);
+    uint32_t expected_return = cpu.pc + 8;
     cpu.jumpAndLink(i);
 
     EXPECT_EQ(cpu.m_branchSlotAddr, expected_pc);
-    EXPECT_EQ(cpu.m_registers[31], expected_return);
+    EXPECT_EQ(cpu.gpr[31], expected_return);
 }
 
 TEST(CpuTest, JUMP_REGISTER)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t address = 0x12345678;
@@ -52,12 +53,12 @@ TEST(CpuTest, JUMP_REGISTER)
 
 TEST(CpuTest, JUMP_AND_LINK_REGISTER)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
-    cpu.m_pc = 0x80010000;
+    cpu.pc = 0x80010000;
 
     uint32_t jump_target = 0x80020000;
     cpu.setReg(5, jump_target);
@@ -65,23 +66,23 @@ TEST(CpuTest, JUMP_AND_LINK_REGISTER)
     i.r.rs = 5;
     i.r.rd = 12;
 
-    uint32_t expected_return = cpu.m_pc + 8; // JALR stores PC + 8 in $ra
+    uint32_t expected_return = cpu.pc + 8; // JALR stores PC + 8 in $ra
     uint32_t expected_pc = jump_target;
 
     cpu.jumpAndLinkRegister(i);
 
-    EXPECT_EQ(cpu.m_registers[12], expected_return);
+    EXPECT_EQ(cpu.gpr[12], expected_return);
     EXPECT_EQ(cpu.m_branchSlotAddr, expected_pc);
 }
 
 TEST(CpuTest, JUMP_AND_LINK_REGISTER_2)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
-    cpu.m_pc = 0x80010000;
+    cpu.pc = 0x80010000;
 
     uint32_t jump_target = 0x80020000;
     cpu.setReg(5, jump_target);
@@ -89,23 +90,23 @@ TEST(CpuTest, JUMP_AND_LINK_REGISTER_2)
     i.r.rs = 5;
     i.r.rd = 24;
 
-    uint32_t expected_return = cpu.m_pc + 8; // JALR stores PC + 8 in $ra
+    uint32_t expected_return = cpu.pc + 8; // JALR stores PC + 8 in $ra
     uint32_t expected_pc = jump_target;
 
     cpu.jumpAndLinkRegister(i);
 
-    EXPECT_EQ(cpu.m_registers[24], expected_return);
+    EXPECT_EQ(cpu.gpr[24], expected_return);
     EXPECT_EQ(cpu.m_branchSlotAddr, expected_pc);
 }
 
 TEST(CpuTest, JUMP_AND_LINK_REGISTER_3)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
-    cpu.m_pc = 0x80010000;
+    cpu.pc = 0x80010000;
 
     uint32_t jump_target = 0x80020000;
     cpu.setReg(5, jump_target);
@@ -113,11 +114,11 @@ TEST(CpuTest, JUMP_AND_LINK_REGISTER_3)
     i.r.rs = 5;
     i.r.rd = 31;
 
-    uint32_t expected_return = cpu.m_pc + 8; // JALR stores PC + 8 in $ra
+    uint32_t expected_return = cpu.pc + 8; // JALR stores PC + 8 in $ra
     uint32_t expected_pc = jump_target;
 
     cpu.jumpAndLinkRegister(i);
 
-    EXPECT_EQ(cpu.m_registers[31], expected_return);
+    EXPECT_EQ(cpu.gpr[31], expected_return);
     EXPECT_EQ(cpu.m_branchSlotAddr, expected_pc);
 }

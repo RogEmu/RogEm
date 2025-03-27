@@ -19,7 +19,7 @@
 
 struct CPU
 {
-    CPU(const std::shared_ptr<Bus> &bus);
+    CPU(Bus *bus);
 
     void step();
     Instruction fetchInstruction();
@@ -120,20 +120,21 @@ struct CPU
     void branchOnConditionZero(const Instruction &instruction);
 
     // General purpose registers
-    uint32_t m_registers[NB_GPR];
+    uint32_t gpr[NB_GPR];
 
     // Reserved registers
-    uint32_t m_pc;
-    uint32_t m_hi;
-    uint32_t m_lo;
-
-    std::shared_ptr<Bus> m_bus;
+    uint32_t pc;
+    uint32_t hi;
+    uint32_t lo;
 
     uint32_t m_branchSlotAddr;
     bool m_inBranchDelay;
 
     // COP0 registers
     uint32_t m_cop0Reg[COP0_NB_REG];
+
+    // Bus connection
+    Bus *m_bus;
 };
 
 #endif /* !CPU_H_ */

@@ -5,17 +5,18 @@
 #include <memory>
 
 struct CPU;
+class Debugger;
 
 class MemoryWindow : public IWindow
 {
     public:
-        MemoryWindow(const std::shared_ptr<CPU> &cpu);
+        MemoryWindow(Debugger *debugger);
         ~MemoryWindow();
 
         void update() override;
 
     private:
-        std::shared_ptr<CPU> m_cpu;
+        Debugger *m_debugger;
 };
 
 #endif /* !MEMORYWINDOW_HPP_ */

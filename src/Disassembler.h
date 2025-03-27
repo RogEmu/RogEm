@@ -22,6 +22,7 @@ struct InstructionData
     std::string asmFormat;
 };
 
+std::string disassemble(uint32_t pc, uint32_t word);
 std::string disassemble(uint32_t pc, Instruction i);
 void debugState(uint32_t pc, const uint32_t *registers);
 

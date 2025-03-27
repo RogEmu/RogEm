@@ -6,9 +6,9 @@
 
 TEST(CpuTest, MULT_NEGATIVE)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     int32_t left = -1612441061;
@@ -21,15 +21,15 @@ TEST(CpuTest, MULT_NEGATIVE)
     i.r.rt = 9;
     cpu.multiply(i);
 
-    EXPECT_EQ(cpu.m_lo, static_cast<uint32_t>(res & 0xFFFFFFFF));
-    EXPECT_EQ(cpu.m_hi, static_cast<uint32_t>(res >> 32));
+    EXPECT_EQ(cpu.lo, static_cast<uint32_t>(res & 0xFFFFFFFF));
+    EXPECT_EQ(cpu.hi, static_cast<uint32_t>(res >> 32));
 }
 
 TEST(CpuTest, MULT_MAXIMUM)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     int32_t left = 0x7FFFFFFF;
@@ -42,15 +42,15 @@ TEST(CpuTest, MULT_MAXIMUM)
     i.r.rt = 9;
     cpu.multiply(i);
 
-    EXPECT_EQ(cpu.m_lo, static_cast<uint32_t>(res & 0xFFFFFFFF));
-    EXPECT_EQ(cpu.m_hi, static_cast<uint32_t>(res >> 32));
+    EXPECT_EQ(cpu.lo, static_cast<uint32_t>(res & 0xFFFFFFFF));
+    EXPECT_EQ(cpu.hi, static_cast<uint32_t>(res >> 32));
 }
 
 TEST(CpuTest, MULT_MAXIMUM_NEGATIVE)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     int32_t left = 0x80000000;
@@ -63,15 +63,15 @@ TEST(CpuTest, MULT_MAXIMUM_NEGATIVE)
     i.r.rt = 9;
     cpu.multiply(i);
 
-    EXPECT_EQ(cpu.m_lo, static_cast<uint32_t>(res & 0xFFFFFFFF));
-    EXPECT_EQ(cpu.m_hi, static_cast<uint32_t>(res >> 32));
+    EXPECT_EQ(cpu.lo, static_cast<uint32_t>(res & 0xFFFFFFFF));
+    EXPECT_EQ(cpu.hi, static_cast<uint32_t>(res >> 32));
 }
 
 TEST(CpuTest, MULT_NULL)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     int32_t left = 0;
@@ -84,15 +84,15 @@ TEST(CpuTest, MULT_NULL)
     i.r.rt = 9;
     cpu.multiply(i);
 
-    EXPECT_EQ(cpu.m_lo, static_cast<uint32_t>(res & 0xFFFFFFFF));
-    EXPECT_EQ(cpu.m_hi, static_cast<uint32_t>(res >> 32));
+    EXPECT_EQ(cpu.lo, static_cast<uint32_t>(res & 0xFFFFFFFF));
+    EXPECT_EQ(cpu.hi, static_cast<uint32_t>(res >> 32));
 }
 
 TEST(CpuTest, MULTU_NEGATIVE)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t left = (uint32_t)-1612441061;
@@ -105,15 +105,15 @@ TEST(CpuTest, MULTU_NEGATIVE)
     i.r.rt = 9;
     cpu.multiplyUnsigned(i);
 
-    EXPECT_EQ(cpu.m_lo, static_cast<uint32_t>(res & 0xFFFFFFFF));
-    EXPECT_EQ(cpu.m_hi, static_cast<uint32_t>(res >> 32));
+    EXPECT_EQ(cpu.lo, static_cast<uint32_t>(res & 0xFFFFFFFF));
+    EXPECT_EQ(cpu.hi, static_cast<uint32_t>(res >> 32));
 }
 
 TEST(CpuTest, MULTU_NULL)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t left = 0;
@@ -126,15 +126,15 @@ TEST(CpuTest, MULTU_NULL)
     i.r.rt = 9;
     cpu.multiplyUnsigned(i);
 
-    EXPECT_EQ(cpu.m_lo, static_cast<uint32_t>(res & 0xFFFFFFFF));
-    EXPECT_EQ(cpu.m_hi, static_cast<uint32_t>(res >> 32));
+    EXPECT_EQ(cpu.lo, static_cast<uint32_t>(res & 0xFFFFFFFF));
+    EXPECT_EQ(cpu.hi, static_cast<uint32_t>(res >> 32));
 }
 
 TEST(CpuTest, DIV_NEGATIVE)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     int32_t left = -1612441061;
@@ -146,15 +146,15 @@ TEST(CpuTest, DIV_NEGATIVE)
     i.r.rt = 9;
     cpu.divide(i);
 
-    EXPECT_EQ(cpu.m_lo, left / right);
-    EXPECT_EQ(cpu.m_hi, left % right);
+    EXPECT_EQ(cpu.lo, left / right);
+    EXPECT_EQ(cpu.hi, left % right);
 }
 
 TEST(CpuTest, DIV_MAXIMUM)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     int32_t left = 0x7FFFFFFF;
@@ -166,15 +166,15 @@ TEST(CpuTest, DIV_MAXIMUM)
     i.r.rt = 9;
     cpu.divide(i);
 
-    EXPECT_EQ(cpu.m_lo, left / right);
-    EXPECT_EQ(cpu.m_hi, left % right);
+    EXPECT_EQ(cpu.lo, left / right);
+    EXPECT_EQ(cpu.hi, left % right);
 }
 
 TEST(CpuTest, DIVU_NEGATIVE)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t left = (uint32_t)-1612441061;
@@ -186,20 +186,20 @@ TEST(CpuTest, DIVU_NEGATIVE)
     i.r.rt = 9;
     cpu.divideUnsigned(i);
 
-    EXPECT_EQ(cpu.m_lo, left / right);
-    EXPECT_EQ(cpu.m_hi, left % right);
+    EXPECT_EQ(cpu.lo, left / right);
+    EXPECT_EQ(cpu.hi, left % right);
 }
 
 TEST(CpuTest, MFHI)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t value = 0x12345678;
     loadImmediate(cpu, 8, value);
-    cpu.m_hi = value;
+    cpu.hi = value;
 
     i.r.rd = 9;
     cpu.moveFromHi(i);
@@ -209,14 +209,14 @@ TEST(CpuTest, MFHI)
 
 TEST(CpuTest, MFLO)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t value = 0x12345678;
     loadImmediate(cpu, 8, value);
-    cpu.m_lo = value;
+    cpu.lo = value;
 
     i.r.rd = 9;
     cpu.moveFromLo(i);
@@ -226,9 +226,9 @@ TEST(CpuTest, MFLO)
 
 TEST(CpuTest, MTHI)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t value = 0x12345678;
@@ -237,14 +237,14 @@ TEST(CpuTest, MTHI)
     i.r.rs = 8;
     cpu.moveToHi(i);
 
-    EXPECT_EQ(cpu.m_hi, value);
+    EXPECT_EQ(cpu.hi, value);
 }
 
 TEST(CpuTest, MTLO)
 {
-    auto bios = std::make_shared<BIOS>();
-    auto bus = std::make_shared<Bus>(bios, nullptr);
-    CPU cpu(bus);
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
     Instruction i;
 
     uint32_t value = 0x12345678;
@@ -253,5 +253,5 @@ TEST(CpuTest, MTLO)
     i.r.rs = 8;
     cpu.moveToLo(i);
 
-    EXPECT_EQ(cpu.m_lo, value);
+    EXPECT_EQ(cpu.lo, value);
 }

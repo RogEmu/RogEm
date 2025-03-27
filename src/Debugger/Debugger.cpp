@@ -12,15 +12,16 @@
 #include "InstructionWindow.hpp"
 #include "MemoryWindow.hpp"
 #include "CPU.h"
+#include "System.hpp"
 
-Debugger::Debugger(const std::shared_ptr<CPU> &cpu) :
-    m_cpu(cpu),
+Debugger::Debugger(System *system) :
+    m_system(system),
     m_paused(false),
     m_simSpeed(1.0f)
 {
-    m_windows.push_front(std::make_shared<RegisterWindow>(cpu));
-    m_windows.push_front(std::make_shared<MemoryWindow>(cpu));
-    m_windows.push_front(std::make_shared<InstructionWindow>(cpu, m_paused, m_simSpeed));
+    // m_windows.push_back(std::make_unique<RegisterWindow>(cpu));
+    // m_windows.emplace_back(std::make_unique<MemoryWindow>(this));
+    m_windows.emplace_back(std::make_unique<InstructionWindow>(this));
 }
 
 Debugger::~Debugger()
@@ -40,6 +41,16 @@ float Debugger::getSimulationSpeed() const
 void Debugger::setSimulationSpeed(float speed)
 {
     m_simSpeed = std::max(speed, 0.0f);
+}
+
+void Debugger::stepOver()
+{
+    m_system->getCPU()->step();
+}
+
+uint32_t Debugger::getPc() const
+{
+    return m_system->getCPU()->pc;
 }
 
 void Debugger::update()
