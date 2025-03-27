@@ -4,7 +4,7 @@
 #include "IWindow.hpp"
 #include <memory>
 
-class CPU;
+struct CPU;
 
 class MemoryWindow : public IWindow
 {

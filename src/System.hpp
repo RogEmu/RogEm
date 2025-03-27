@@ -1,13 +1,13 @@
 #ifndef SYSTEM_HPP_
 #define SYSTEM_HPP_
 
-#include <GLFW/glfw3.h>
+#include <memory>
 
 #include "Debugger.hpp"
 
-#include "CPU.h"
-#include "BIOS.h"
-#include "RAM.h"
+class BIOS;
+struct CPU;
+struct GLFWwindow;
 
 class System
 {
@@ -25,8 +25,8 @@ class System
     private:
         std::shared_ptr<Debugger> m_debug;
         std::shared_ptr<CPU> m_cpu;
-        GLFWwindow* window;
-        bool is_running;
+        GLFWwindow* m_window;
+        bool m_isRunning;
 };
 
 #endif /* !SYSTEM_HPP_ */

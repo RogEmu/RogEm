@@ -8,6 +8,10 @@
 #include <imgui_impl_opengl3.h>
 
 #include "System.hpp"
+#include "RAM.h"
+#include "CPU.h"
+#include "BIOS.h"
+#include "Bus.h"
 
 System::System(const std::shared_ptr<BIOS> &bios)
 {
@@ -16,11 +20,11 @@ System::System(const std::shared_ptr<BIOS> &bios)
     auto cpu = std::make_shared<CPU>(bus);
     m_cpu = cpu;
     m_debug = std::make_shared<Debugger>(cpu);
-    is_running = true;
+    m_isRunning = true;
     if (initGFLW() != 0)
-        is_running = false;
+        m_isRunning = false;
     if (initImGUi() != 0)
-        is_running = false;
+        m_isRunning = false;
 }
 
 System::~System()
@@ -28,7 +32,7 @@ System::~System()
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
-    glfwDestroyWindow(window);
+    glfwDestroyWindow(m_window);
     glfwTerminate();
 }
 
@@ -43,7 +47,7 @@ float deltaTime(std::chrono::steady_clock::time_point &lastTime)
 
 bool System::isRunning() const
 {
-    return is_running;
+    return m_isRunning;
 }
 
 void newFrame()
@@ -72,11 +76,11 @@ void System::run()
     float dt = 0;
     float simulationTimer = 0.0f;
 
-    while (is_running)
+    while (m_isRunning)
     {
         if (!m_debug->isPaused())
         {
-            if (simulationTimer > (m_debug->getSimSpeed()))
+            if (simulationTimer > (m_debug->getSimulationSpeed()))
             {
                 m_cpu->step();
                 simulationTimer = 0;
@@ -86,12 +90,12 @@ void System::run()
         {
             glfwPollEvents();
 
-            if (glfwGetWindowAttrib(window, GLFW_ICONIFIED) != 0) {
+            if (glfwGetWindowAttrib(m_window, GLFW_ICONIFIED) != 0) {
                 // ImGui_ImplGlfw_Sleep(10);
                 return;
             }
-            if (glfwWindowShouldClose(window)) {
-                is_running = false;
+            if (glfwWindowShouldClose(m_window)) {
+                m_isRunning = false;
                 return;
             }
             newFrame();
@@ -121,10 +125,10 @@ int System::initGFLW()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 
     // Create a window
-    window = glfwCreateWindow(1280, 720, "RogEm v0.0.1", nullptr, nullptr);
-    if (!window)
+    m_window = glfwCreateWindow(1280, 720, "RogEm v0.0.1", nullptr, nullptr);
+    if (!m_window)
         return -1;
-    glfwMakeContextCurrent(window);
+    glfwMakeContextCurrent(m_window);
     glfwSwapInterval(1); // VSync
     return 0;
 }
@@ -141,7 +145,7 @@ int System::initImGUi()
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;        // Enable Gamepad Controls
     io.Fonts->AddFontFromFileTTF("assets/fonts/JetBrainsMono/JetBrainsMono-Regular.ttf", 16);
     ImGui::StyleColorsDark();
-    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplGlfw_InitForOpenGL(m_window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
     return 0;
 }

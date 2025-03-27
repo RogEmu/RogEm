@@ -2,11 +2,9 @@
 #define DEBUGGER_HPP_
 
 #include <list>
+#include <memory>
 
-#include "RegisterWindow.hpp"
-#include "MemoryWindow.hpp"
-#include "InstructionWindow.hpp"
-
+class IWindow;
 struct CPU;
 
 class Debugger
@@ -17,14 +15,17 @@ class Debugger
 
         void update();
 
+        void pause(bool pause);
         bool isPaused() const;
-        float getSimSpeed() const { return m_simSpeed; }
+
+        float getSimulationSpeed() const;
+        void setSimulationSpeed(float speed);
 
     private:
         std::shared_ptr<CPU> m_cpu;
         std::list<std::shared_ptr<IWindow>> m_windows;
 
-        bool m_systemPaused;
+        bool m_paused;
         float m_simSpeed;
 };
 

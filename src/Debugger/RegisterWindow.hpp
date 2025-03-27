@@ -7,7 +7,7 @@
 #include <vector>
 #include <string>
 
-class CPU;
+struct CPU;
 
 class RegisterWindow : public IWindow
 {

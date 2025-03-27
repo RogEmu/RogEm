@@ -4,7 +4,7 @@
 #include "IWindow.hpp"
 #include <memory>
 
-class CPU;
+struct CPU;
 
 class InstructionWindow : public IWindow
 {
@@ -17,8 +17,8 @@ class InstructionWindow : public IWindow
     private:
         std::shared_ptr<CPU> m_cpu;
 
-        bool m_systemPaused;
-        float m_simSpeed;
+        bool &m_systemPaused;
+        float &m_simSpeed;
 };
 
 #endif /* !INSTRUCTIONWINDOW_HPP_ */
