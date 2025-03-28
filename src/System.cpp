@@ -78,10 +78,10 @@ void renderFrame()
 
 void System::run()
 {
-    float uiFps = 1/60.0f;
-    float uiTimer = 0.0f;
+    double uiFps = 1/60.0;
+    double uiTimer = 0.0;
     double simulationTimer = 0.0;
-    double dt = 0;
+    double dt = 0.0;
 
     while (m_isRunning)
     {
