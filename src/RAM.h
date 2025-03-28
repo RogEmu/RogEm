@@ -14,19 +14,21 @@
 
 #define RAM_SIZE (512 * 1024 * 1024)
 
-struct RAM
+class RAM
 {
-    RAM();
+    public:
+        RAM();
 
-    uint32_t loadWord(uint32_t addr) const;
-    uint16_t loadHalfWord(uint32_t addr) const;
-    uint8_t loadByte(uint32_t addr) const;
+        uint32_t loadWord(uint32_t addr) const;
+        uint16_t loadHalfWord(uint32_t addr) const;
+        uint8_t loadByte(uint32_t addr) const;
 
-    void storeWord(uint32_t addr, uint32_t val);
-    void storeHalfWord(uint32_t addr, uint16_t val);
-    void storeByte(uint32_t addr, uint8_t val);
+        void storeWord(uint32_t addr, uint32_t val);
+        void storeHalfWord(uint32_t addr, uint16_t val);
+        void storeByte(uint32_t addr, uint8_t val);
 
-    std::vector<uint8_t> m_data;
+    private:
+        std::vector<uint8_t> m_data;
 };
 
 #endif /* !RAM_H_ */
