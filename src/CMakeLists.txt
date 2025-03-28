@@ -24,8 +24,7 @@ add_executable(${BINARY_NAME} ${SRC_FILES})
 include_directories(
     ${CMAKE_SOURCE_DIR}/src
     ${CMAKE_SOURCE_DIR}/src/Debugger
-    ${CMAKE_SOURCE_DIR}/deps/imgui
-    ${CMAKE_SOURCE_DIR}/deps/imgui/backends
+    ${CMAKE_SOURCE_DIR}/third_party/
 )
 
 target_link_libraries(${BINARY_NAME} PRIVATE
