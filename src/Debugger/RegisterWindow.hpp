@@ -3,7 +3,6 @@
 
 #include "IWindow.hpp"
 
-#include <vector>
 #include <string>
 #include <cstdint>
 
@@ -16,14 +15,19 @@ class RegisterWindow : public IWindow
         ~RegisterWindow();
 
         void update() override;
-        void AddEditButton(const char* regName, int regIndex);
-        void DisplayPopup();
+
+    private:
+        void addEditButton(const char* regName, int regIndex);
+        void displayPopup();
+        void drawGpr();
+        void drawSpecialRegs();
+        void drawCop0Regs();
 
     private:
         Debugger *m_debugger;
-        std::vector<uint32_t> previousRegisters;
-        std::vector<uint32_t> previousExtraRegisters;
-        std::vector<uint32_t> previousCopRegisters;
+        uint32_t m_prevGPR[32];
+        uint32_t m_prevSpecialRegs[3];
+        uint32_t m_prevCop0Regs[16];
 
         bool m_editorOpen;
         std::string m_registerNameToChange;

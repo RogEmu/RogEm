@@ -12,21 +12,6 @@ RegisterWindow::RegisterWindow(Debugger *debugger) :
     m_editorOpen(false),
     m_registerNameToChange("")
 {
-    previousRegisters.resize(NB_GPR);
-    while (previousRegisters.size() < NB_GPR)
-    {
-        previousRegisters.push_back(0);
-    }
-    previousExtraRegisters.resize(3);
-    while (previousExtraRegisters.size() < 3)
-    {
-        previousExtraRegisters.push_back(0);
-    }
-    previousCopRegisters.resize(2);
-    while (previousCopRegisters.size() < 2)
-    {
-        previousCopRegisters.push_back(0);
-    }
 }
 
 void PushColorText(bool condition)
@@ -37,7 +22,7 @@ void PushColorText(bool condition)
         ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(150, 150, 150, 255));
 }
 
-void RegisterWindow::AddEditButton(const char* regName, int regIndex)
+void RegisterWindow::addEditButton(const char* regName, int regIndex)
 {
     ImGui::SameLine();
     std::string label = fmt::format("Edit##{}", regName);
@@ -52,7 +37,7 @@ RegisterWindow::~RegisterWindow()
 {
 }
 
-void RegisterWindow::DisplayPopup()
+void RegisterWindow::displayPopup()
 {
     ImGui::OpenPopup("Edit Registers");
     if(ImGui::BeginPopupModal("Edit Registers", NULL, ImGuiWindowFlags_AlwaysAutoResize))
@@ -82,69 +67,81 @@ void RegisterWindow::DisplayPopup()
     }
 }
 
+void RegisterWindow::drawGpr()
+{
+    for (int i = 0; i < NB_GPR; i++) {
+        ImGui::TableNextRow();
+        ImGui::TableNextColumn();
+        const char* regName = Disassembler::getRegisterName((uint8_t)i).c_str();
+        ImGui::Text("%s", regName);
+        ImGui::TableNextColumn();
+        ImGui::Text("%08X", m_debugger->getGPR((uint8_t)i));
+        addEditButton(regName, i);
+        m_prevGPR[i] = m_debugger->getGPR((uint8_t)i);
+    }
+}
+
+void RegisterWindow::drawSpecialRegs()
+{
+    const char* extraRegisters[] = {"PC", "HI", "LO"};
+    uint32_t extraValues[] = {
+        m_debugger->getSpecialReg((uint8_t)SpecialRegIndex::PC),
+        m_debugger->getSpecialReg((uint8_t)SpecialRegIndex::HI),
+        m_debugger->getSpecialReg((uint8_t)SpecialRegIndex::LO)
+    };
+    for (int i = 0; i < 3; i++)
+    {
+        ImGui::TableNextRow();
+        ImGui::TableNextColumn();
+        ImGui::Text("%s", extraRegisters[i]);
+        ImGui::TableNextColumn();
+        m_prevSpecialRegs[i] = extraValues[i];
+        ImGui::Text("%08X", extraValues[i]);
+    }
+}
+
+void RegisterWindow::drawCop0Regs()
+{
+    //COP0 Registers
+    ImGui::TableNextColumn();
+    PushColorText(m_prevCop0Regs[0] != m_debugger->getCop0Reg(12));
+    m_prevCop0Regs[0] = m_debugger->getCop0Reg(12);
+    ImGui::Text("COP0-SR");
+    ImGui::TableNextColumn();
+    ImGui::Text("%08X", m_debugger->getCop0Reg(12));
+    ImGui::PopStyleColor();
+
+    ImGui::TableNextColumn();
+    PushColorText(m_prevCop0Regs[1] != m_debugger->getCop0Reg(13));
+    ImGui::Text("COP0-CAUSE");
+    ImGui::TableNextColumn();
+    m_prevCop0Regs[1] = m_debugger->getCop0Reg(13);
+    ImGui::Text("%08X", m_debugger->getCop0Reg(13));
+    ImGui::PopStyleColor();
+}
+
 void RegisterWindow::update()
 {
-    auto tableFlags = ImGuiTableFlags_Borders
-                    | ImGuiTableFlags_RowBg;
+    auto tableFlags = ImGuiTableFlags_BordersOuter
+                    | ImGuiTableFlags_RowBg
+                    | ImGuiTableFlags_ScrollY;
+
     ImGui::Begin("Registers");
     if(ImGui::BeginTable("Registers", 2, tableFlags))
     {
-        ImGui::TableSetupColumn("Register");
+        ImGui::TableSetupScrollFreeze(0, 1);
+        ImGui::TableSetupColumn("Register", ImGuiTableColumnFlags_NoResize | ImGuiTableColumnFlags_WidthFixed);
         ImGui::TableSetupColumn("Value");
         ImGui::TableHeadersRow();
 
-        for (int i = 0; i < NB_GPR; i++) {
-            ImGui::TableNextRow();
-            ImGui::TableNextColumn();
-            const char* regName = Disassembler::getRegisterName((uint8_t)i).c_str();
-            PushColorText(previousRegisters[i] != m_debugger->getGPR((uint8_t)i));
-            ImGui::Text("%s", regName);
-            ImGui::TableNextColumn();
-            previousRegisters[i] = m_debugger->getGPR((uint8_t)i);
-            ImGui::Text("%08X", m_debugger->getGPR((uint8_t)i));
-            ImGui::PopStyleColor();
-            AddEditButton(regName, i);
-        }
-
-        const char* extraRegisters[] = {"PC", "HI", "LO"};
-        uint32_t extraValues[] = {
-            m_debugger->getSpecialReg((uint8_t)SpecialRegIndex::PC),
-            m_debugger->getSpecialReg((uint8_t)SpecialRegIndex::HI),
-            m_debugger->getSpecialReg((uint8_t)SpecialRegIndex::LO)
-        };
-        for (int i = 0; i < 3; i++)
-        {
-            ImGui::TableNextRow();
-            ImGui::TableNextColumn();
-            // PushColorText(previousExtraRegisters[i] != extraValues[i]);
-            ImGui::Text("%s", extraRegisters[i]);
-            ImGui::TableNextColumn();
-            previousExtraRegisters[i] = extraValues[i];
-            ImGui::Text("%08X", extraValues[i]);
-            // ImGui::PopStyleColor();
-        }
-
-        //COP0 Registers
-        ImGui::TableNextColumn();
-        PushColorText(previousCopRegisters[0] != m_debugger->getCop0Reg(12));
-        previousCopRegisters[0] = m_debugger->getCop0Reg(12);
-        ImGui::Text("COP0-SR");
-        ImGui::TableNextColumn();
-        ImGui::Text("%08X", m_debugger->getCop0Reg(12));
-        ImGui::PopStyleColor();
-
-        ImGui::TableNextColumn();
-        PushColorText(previousCopRegisters[1] != m_debugger->getCop0Reg(13));
-        ImGui::Text("COP0-CAUSE");
-        ImGui::TableNextColumn();
-        previousCopRegisters[1] = m_debugger->getCop0Reg(13);
-        ImGui::Text("%08X", m_debugger->getCop0Reg(13));
-        ImGui::PopStyleColor();
+        drawGpr();
+        drawSpecialRegs();
+        drawCop0Regs();
 
         ImGui::EndTable();
         if (m_editorOpen == true)
         {
-            DisplayPopup();
+            displayPopup();
         }
     }
     ImGui::End();
