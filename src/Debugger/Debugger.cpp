@@ -9,7 +9,7 @@
 
 #include "Debugger.hpp"
 #include "RegisterWindow.hpp"
-#include "InstructionWindow.hpp"
+#include "AssemblyWindow.hpp"
 #include "MemoryWindow.hpp"
 #include "CPU.h"
 #include "System.hpp"
@@ -21,7 +21,7 @@ Debugger::Debugger(System *system) :
 {
     m_windows.emplace_back(std::make_unique<RegisterWindow>(this));
     m_windows.emplace_back(std::make_unique<MemoryWindow>(this));
-    m_windows.emplace_back(std::make_unique<InstructionWindow>(this));
+    m_windows.emplace_back(std::make_unique<AssemblyWindow>(this));
 }
 
 Debugger::~Debugger()

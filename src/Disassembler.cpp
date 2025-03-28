@@ -25,6 +25,12 @@ static const std::string registerNames[32] = {
     "t8", "t9", "k0", "k1", "gp", "sp", "fp", "ra"
 };
 
+struct InstructionData
+{
+    std::string name;
+    std::string asmFormat;
+};
+
 std::string Disassembler::getRegisterName(uint8_t reg)
 {
     if (reg >= 32)
@@ -91,14 +97,6 @@ static const std::unordered_map<SecondaryOpCode, InstructionData> secondaryData 
     {SecondaryOpCode::JALR, InstructionData{"jalr", "$%rd, $%rs"}},
 };
 
-static std::string formatAsHexBytes(uint32_t value) {
-    return fmt::format("{:02x} {:02x} {:02x} {:02x}",
-                        (value >> 24) & 0xFF,  // Most significant byte
-                        (value >> 16) & 0xFF,
-                        (value >> 8) & 0xFF,
-                        value & 0xFF);         // Least significant byte
-}
-
 static int16_t computeBranchOffset(Instruction i)
 {
     return (int16_t)i.i.immediate << 2;
@@ -122,7 +120,7 @@ static std::string formatAssembly(uint32_t pc, Instruction i, const InstructionD
 
     result = std::regex_replace(result, std::regex("%imm"), fmt::format("0x{:x}", immediateValue));
 
-    result = fmt::format("0x{:08x}:  {}  {}", pc, formatAsHexBytes(i.raw), result);
+    // result = fmt::format("0x{:08x}:  {}  {}", pc, formatAsHexBytes(i.raw), result);
     return result;
 }
 
@@ -173,6 +171,15 @@ static std::string disassembleCop0(uint32_t pc, Instruction i)
     return std::string("MIPS Disassembler: Illegal instruction");
 }
 
+std::string Disassembler::formatAsHexBytes(uint32_t value)
+{
+    return fmt::format("{:02x} {:02x} {:02x} {:02x}",
+                        (value >> 24) & 0xFF,  // Most significant byte
+                        (value >> 16) & 0xFF,
+                        (value >> 8) & 0xFF,
+                        value & 0xFF);         // Least significant byte
+}
+
 std::string Disassembler::disassemble(uint32_t pc, Instruction i)
 {
     auto primary = static_cast<PrimaryOpCode>(i.r.opcode);
@@ -202,15 +209,4 @@ std::string Disassembler::disassemble(uint32_t pc, uint32_t word)
     Instruction i = {.raw = word};
 
     return disassemble(pc, i);
-}
-
-void Disassembler::debugState(uint32_t pc, const uint32_t *registers)
-{
-    std::cout << "CPU Register State:\n";
-    std::cout << fmt::format("PC: 0x{:08x}\n", pc);
-    for (int i = 0; i < 32; i++) {
-        std::cout << fmt::format("{:>5}: 0x{:08x}", registerNames[i], registers[i]);
-        if (i % 4 == 3) std::cout << "\n";
-        else std::cout << "    ";
-    }
 }

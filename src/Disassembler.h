@@ -15,17 +15,9 @@
 
 namespace Disassembler
 {
-
-struct InstructionData
-{
-    std::string name;
-    std::string asmFormat;
-};
-
 std::string disassemble(uint32_t pc, uint32_t word);
 std::string disassemble(uint32_t pc, Instruction i);
-void debugState(uint32_t pc, const uint32_t *registers);
-
+std::string formatAsHexBytes(uint32_t value);
 std::string getRegisterName(uint8_t reg);
 };
 

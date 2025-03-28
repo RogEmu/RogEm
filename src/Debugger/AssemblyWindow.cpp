@@ -1,4 +1,4 @@
-#include "InstructionWindow.hpp"
+#include "AssemblyWindow.hpp"
 #include "imgui.h"
 #include <fmt/format.h>
 
@@ -6,16 +6,16 @@
 #include "Disassembler.h"
 #include "Debugger.hpp"
 
-InstructionWindow::InstructionWindow(Debugger *debugger) :
+AssemblyWindow::AssemblyWindow(Debugger *debugger) :
     m_debugger(debugger)
 {
 }
 
-InstructionWindow::~InstructionWindow()
+AssemblyWindow::~AssemblyWindow()
 {
 }
 
-void InstructionWindow::update()
+void AssemblyWindow::update()
 {
     ImGui::Begin("Assembly");
 
@@ -23,7 +23,7 @@ void InstructionWindow::update()
     drawAssembly();
 }
 
-void InstructionWindow::drawTopBar()
+void AssemblyWindow::drawTopBar()
 {
     bool paused = m_debugger->isPaused();
     float simSpeed = m_debugger->getSimulationSpeed();
@@ -42,7 +42,7 @@ void InstructionWindow::drawTopBar()
     m_debugger->setSimulationSpeed(simSpeed);
 }
 
-void InstructionWindow::drawAssembly()
+void AssemblyWindow::drawAssembly()
 {
     auto tableFlags = ImGuiTableFlags_RowBg
                     | ImGuiTableFlags_Borders
@@ -60,7 +60,6 @@ void InstructionWindow::drawAssembly()
 
     uint32_t startAddr = 0xBFC00000;
     uint32_t size = 0x7FFFF;
-    uint32_t pc = m_debugger->getSpecialReg((uint8_t)SpecialRegIndex::PC);
 
     ImGuiListClipper clipper;
     clipper.Begin(size / 4 + 1);
@@ -70,15 +69,24 @@ void InstructionWindow::drawAssembly()
         {
             ImGui::TableNextColumn();
             uint32_t currentAddr = startAddr + i * 4;
-
-            if (currentAddr == pc)
-                ImGui::TextColored(ImVec4(255, 200, 0, 255), "0x%08x", currentAddr);
-            else
-                ImGui::Text("0x%08x", currentAddr);
-            ImGui::TableNextColumn();
-            ImGui::TableNextColumn();
+            drawAssemblyLine(currentAddr);
         }
     }
     ImGui::EndTable();
     ImGui::End();
+}
+
+void AssemblyWindow::drawAssemblyLine(uint32_t addr)
+{
+    uint32_t pc = m_debugger->getSpecialReg((uint8_t)SpecialRegIndex::PC);
+    ImColor lineColor(IM_COL32_WHITE);
+    uint32_t currenInstruction = m_debugger->readWord(addr);
+
+    if (addr == pc)
+        lineColor = ImColor(255, 209, 25);
+    ImGui::TextColored(lineColor, "0x%08x", addr);
+    ImGui::TableNextColumn();
+    ImGui::TextColored(lineColor, "%s", Disassembler::formatAsHexBytes(currenInstruction).c_str());
+    ImGui::TableNextColumn();
+    ImGui::TextColored(lineColor, "%s", Disassembler::disassemble(pc, currenInstruction).c_str());
 }
