@@ -66,7 +66,7 @@ void RegisterWindow::DisplayPopup()
             uint32_t value = std::strtoul(label, &end, 16);
             if (!*end) {
                 if (m_registerIndex < NB_GPR)
-                    m_debugger->setGPR(m_registerIndex, value);
+                    m_debugger->setGPR((uint8_t)m_registerIndex, value);
             }
             m_editorOpen = false;
             ImGui::CloseCurrentPopup();
@@ -96,12 +96,12 @@ void RegisterWindow::update()
         for (int i = 0; i < NB_GPR; i++) {
             ImGui::TableNextRow();
             ImGui::TableNextColumn();
-            const char* regName = Disassembler::getRegisterName(i).c_str();
-            PushColorText(previousRegisters[i] != m_debugger->getGPR(i));
+            const char* regName = Disassembler::getRegisterName((uint8_t)i).c_str();
+            PushColorText(previousRegisters[i] != m_debugger->getGPR((uint8_t)i));
             ImGui::Text("%s", regName);
             ImGui::TableNextColumn();
-            previousRegisters[i] = m_debugger->getGPR(i);
-            ImGui::Text("%08X", m_debugger->getGPR(i));
+            previousRegisters[i] = m_debugger->getGPR((uint8_t)i);
+            ImGui::Text("%08X", m_debugger->getGPR((uint8_t)i));
             ImGui::PopStyleColor();
             AddEditButton(regName, i);
         }

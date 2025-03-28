@@ -11,7 +11,7 @@
 #include <cstdint>
 
 class BIOS;
-struct RAM;
+class RAM;
 
 struct MemRange
 {
