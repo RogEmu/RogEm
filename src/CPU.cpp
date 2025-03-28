@@ -283,6 +283,51 @@ void CPU::setReg(uint8_t reg, uint32_t val)
     gpr[0] = 0;
 }
 
+uint32_t CPU::getSpecialReg(uint8_t reg) const
+{
+    switch (static_cast<SpecialRegIndex>(reg))
+    {
+    case SpecialRegIndex::PC: return pc;
+    case SpecialRegIndex::HI: return hi;
+    case SpecialRegIndex::LO: return lo;
+    default:
+        break;
+    }
+    return 0;
+}
+
+void CPU::setSpecialReg(uint8_t reg, uint32_t val)
+{
+    switch (static_cast<SpecialRegIndex>(reg))
+    {
+    case SpecialRegIndex::PC:
+        pc = val;
+        break;
+    case SpecialRegIndex::HI:
+        hi = val;
+        break;
+    case SpecialRegIndex::LO:
+        lo = val;
+        break;
+    default:
+        break;
+    }
+}
+
+uint32_t CPU::getCop0Reg(uint32_t reg) const
+{
+    if (reg >= COP0_NB_REG)
+        return 0;
+    return m_cop0Reg[reg];
+}
+
+void CPU::setCop0Reg(uint8_t reg, uint32_t val)
+{
+    if (reg >= COP0_NB_REG)
+        return;
+    m_cop0Reg[reg] = val;
+}
+
 void CPU::loadUpperImmediate(const Instruction &instruction)
 {
     uint32_t res = instruction.i.immediate;
@@ -845,10 +890,10 @@ void CPU::executeCop0(const Instruction &instruction)
 void CPU::mtc0(const Instruction &instruction)
 {
     // mtc# rt,rd       ;cop#datRd = rt ;data regs
-    uint8_t regn = instruction.r.rd;
-    uint32_t data = gpr[instruction.r.rt];
+    uint8_t reg = instruction.r.rd;
+    uint32_t data = getReg(instruction.r.rt);
 
-    m_cop0Reg[regn] = data;
+    setCop0Reg(reg, data);
 }
 
 void CPU::mfc0(const Instruction &instruction)

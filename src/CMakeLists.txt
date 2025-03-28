@@ -1,5 +1,4 @@
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-set(CURSES_NEED_NCURSES TRUE)
 
 find_package(fmt CONFIG REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
@@ -16,7 +15,7 @@ set(SRC_FILES
     System.cpp
     Debugger/Debugger.cpp
     Debugger/InstructionWindow.cpp
-    # Debugger/RegisterWindow.cpp
+    Debugger/RegisterWindow.cpp
     # Debugger/MemoryWindow.cpp
 )
 

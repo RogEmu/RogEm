@@ -13,9 +13,47 @@
 #include "Instruction.h"
 #include "Bus.h"
 
-#define RESET_VECTOR 0xBFC00000
+#define RESET_VECTOR (uint32_t)0xBFC00000
 #define NB_GPR 32
 #define COP0_NB_REG 16
+
+enum class GprIndex
+{
+    ZERO = 0,
+    AT,
+    V0, V1,
+    A0, A1, A2, A3,
+    T0, T1, T2, T3, T4, T5, T6, T7,
+    S0, S1, S2, S3, S4, S5, S6, S7,
+    T8, T9,
+    K0, K1,
+    GP,
+    SP,
+    FP,
+    RA
+};
+
+enum class SpecialRegIndex
+{
+    PC = 0,
+    HI,
+    LO
+};
+
+enum class CP0RegIndex
+{
+    BPC = 3,
+    BDA = 5,
+    JUMPDEST,
+    DCIC,
+    BadVaddr,
+    BDAM,
+    BPCM = 11,
+    SR,
+    CAUSE,
+    EPC,
+    PRID
+};
 
 struct CPU
 {
@@ -28,6 +66,12 @@ struct CPU
 
     uint32_t getReg(uint8_t reg) const;
     void setReg(uint8_t reg, uint32_t val);
+
+    uint32_t getSpecialReg(uint8_t reg) const;
+    void setSpecialReg(uint8_t reg, uint32_t val);
+
+    uint32_t getCop0Reg(uint32_t reg) const;
+    void setCop0Reg(uint8_t reg, uint32_t val);
 
     // Load instructions
     void loadWord(const Instruction &instruction);
