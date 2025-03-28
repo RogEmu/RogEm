@@ -60,8 +60,8 @@ void CPU::step()
 void CPU::reset()
 {
     m_inBranchDelay = false;
-    m_pc = RESET_VECTOR;
-    std::memset(m_registers, 0, NB_GPR * sizeof(m_registers[0]));
+    pc = RESET_VECTOR;
+    std::memset(gpr, 0, NB_GPR * sizeof(gpr[0]));
     std::memset(m_cop0Reg, 0, COP0_NB_REG * sizeof(m_cop0Reg[0]));
 }
 
@@ -314,7 +314,7 @@ void CPU::setSpecialReg(uint8_t reg, uint32_t val)
     }
 }
 
-uint32_t CPU::getCop0Reg(uint32_t reg) const
+uint32_t CPU::getCop0Reg(uint8_t reg) const
 {
     if (reg >= COP0_NB_REG)
         return 0;
@@ -898,10 +898,10 @@ void CPU::mtc0(const Instruction &instruction)
 
 void CPU::mfc0(const Instruction &instruction)
 {
-    uint8_t regn = instruction.r.rd;
-    uint32_t data = m_cop0Reg[instruction.r.rt];
+    uint8_t reg = instruction.r.rd;
+    uint32_t data = getReg(instruction.r.rt);
 
-    m_registers[regn] = data;
+    setReg(reg, data);
 }
 
 void CPU::illegalInstruction(const Instruction &instruction)

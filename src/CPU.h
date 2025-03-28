@@ -70,7 +70,7 @@ struct CPU
     uint32_t getSpecialReg(uint8_t reg) const;
     void setSpecialReg(uint8_t reg, uint32_t val);
 
-    uint32_t getCop0Reg(uint32_t reg) const;
+    uint32_t getCop0Reg(uint8_t reg) const;
     void setCop0Reg(uint8_t reg, uint32_t val);
 
     // Load instructions
