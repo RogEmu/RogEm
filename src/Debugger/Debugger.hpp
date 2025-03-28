@@ -32,6 +32,11 @@ class Debugger
         uint32_t getCop0Reg(uint8_t reg) const;
         void setCop0Reg(uint8_t reg, uint32_t val);
 
+        // Memory Controls
+        uint8_t readByte(uint32_t addr) const;
+        uint16_t readHalfWord(uint32_t addr) const;
+        uint32_t readWord(uint32_t addr) const;
+
     private:
         System *m_system;
 

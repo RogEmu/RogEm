@@ -1,7 +1,5 @@
 #include "MemoryWindow.hpp"
 #include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
 #include <fmt/format.h>
 
 #include "Debugger.hpp"
@@ -37,7 +35,7 @@ void MemoryWindow::update()
 
             std::string asciiStr;
             for (int j = 0; j < 16; j++) {
-                uint8_t byte = m_cpu->m_bus->loadByte(i + j);
+                uint8_t byte = m_debugger->readByte(i + j);
                 ImGui::TableNextColumn();
                 ImGui::Text("%02X", byte);
 

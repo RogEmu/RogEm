@@ -19,8 +19,8 @@ Debugger::Debugger(System *system) :
     m_paused(false),
     m_simSpeed(1.0f)
 {
-    m_windows.push_back(std::make_unique<RegisterWindow>(this));
-    // m_windows.emplace_back(std::make_unique<MemoryWindow>(this));
+    m_windows.emplace_back(std::make_unique<RegisterWindow>(this));
+    m_windows.emplace_back(std::make_unique<MemoryWindow>(this));
     m_windows.emplace_back(std::make_unique<InstructionWindow>(this));
 }
 
@@ -76,6 +76,21 @@ uint32_t Debugger::getCop0Reg(uint8_t reg) const
 void Debugger::setCop0Reg(uint8_t reg, uint32_t val)
 {
     m_system->getCPU()->setCop0Reg(reg, val);
+}
+
+uint8_t Debugger::readByte(uint32_t addr) const
+{
+    return m_system->getBus()->loadByte(addr);
+}
+
+uint16_t Debugger::readHalfWord(uint32_t addr) const
+{
+    return m_system->getBus()->loadHalfWord(addr);
+}
+
+uint32_t Debugger::readWord(uint32_t addr) const
+{
+    return m_system->getBus()->loadWord(addr);
 }
 
 void Debugger::update()

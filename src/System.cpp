@@ -48,6 +48,11 @@ CPU *System::getCPU()
     return m_cpu.get();
 }
 
+Bus *System::getBus()
+{
+    return m_bus.get();
+}
+
 void newFrame()
 {
     ImGui_ImplOpenGL3_NewFrame();

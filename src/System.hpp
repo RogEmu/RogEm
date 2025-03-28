@@ -22,6 +22,7 @@ class System
         bool isRunning() const;
 
         CPU *getCPU();
+        Bus *getBus();
 
     private:
         int initGFLW();
