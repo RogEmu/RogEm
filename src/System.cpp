@@ -70,8 +70,8 @@ void System::run()
 {
     float uiFps = 1/60.0f;
     float uiTimer = 0.0f;
-    float simulationTimer = 0.0f;
-    double dt = deltaTime();
+    double simulationTimer = 0.0;
+    double dt = 0;
 
     while (m_isRunning)
     {
@@ -101,6 +101,7 @@ void System::run()
             uiTimer = 0;
             renderFrame();
         }
+        dt = deltaTime();
         uiTimer += dt;
         simulationTimer += dt;
     }
