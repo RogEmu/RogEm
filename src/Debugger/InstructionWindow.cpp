@@ -1,7 +1,5 @@
 #include "InstructionWindow.hpp"
 #include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
 #include <fmt/format.h>
 
 #include "CPU.h"
@@ -62,7 +60,7 @@ void InstructionWindow::drawAssembly()
 
     uint32_t startAddr = 0xBFC00000;
     uint32_t size = 0x7FFFF;
-    uint32_t pc = m_debugger->getPc();
+    uint32_t pc = m_debugger->getSpecialReg((uint8_t)SpecialRegIndex::PC);
 
     ImGuiListClipper clipper;
     clipper.Begin(size / 4 + 1);

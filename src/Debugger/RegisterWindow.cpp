@@ -1,14 +1,14 @@
 #include "RegisterWindow.hpp"
-#include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
-#include "CPU.h"
-#include "Disassembler.h"
 
 #include <fmt/format.h>
 
-RegisterWindow::RegisterWindow(const std::shared_ptr<CPU> &cpu) :
-    m_cpu(cpu),
+#include "imgui.h"
+#include "Debugger.hpp"
+#include "Disassembler.h"
+#include "CPU.h"
+
+RegisterWindow::RegisterWindow(Debugger *debugger) :
+    m_debugger(debugger),
     m_editorOpen(false),
     m_registerNameToChange("")
 {
@@ -66,7 +66,7 @@ void RegisterWindow::DisplayPopup()
             uint32_t value = std::strtoul(label, &end, 16);
             if (!*end) {
                 if (m_registerIndex < NB_GPR)
-                    m_cpu->m_registers[m_registerIndex] = value;
+                    m_debugger->setGPR(m_registerIndex, value);
             }
             m_editorOpen = false;
             ImGui::CloseCurrentPopup();
@@ -97,43 +97,48 @@ void RegisterWindow::update()
             ImGui::TableNextRow();
             ImGui::TableNextColumn();
             const char* regName = Disassembler::getRegisterName(i).c_str();
-            PushColorText(previousRegisters[i] != m_cpu->m_registers[i]);
+            PushColorText(previousRegisters[i] != m_debugger->getGPR(i));
             ImGui::Text("%s", regName);
             ImGui::TableNextColumn();
-            previousRegisters[i] = m_cpu->m_registers[i];
-            ImGui::Text("%08X", m_cpu->m_registers[i]);
+            previousRegisters[i] = m_debugger->getGPR(i);
+            ImGui::Text("%08X", m_debugger->getGPR(i));
             ImGui::PopStyleColor();
             AddEditButton(regName, i);
         }
 
         const char* extraRegisters[] = {"PC", "HI", "LO"};
-        uint32_t extraValues[] = {m_cpu->m_pc, m_cpu->m_hi, m_cpu->m_lo};
-        for (int i = 0; i < 3; i++) {
+        uint32_t extraValues[] = {
+            m_debugger->getSpecialReg((uint8_t)SpecialRegIndex::PC),
+            m_debugger->getSpecialReg((uint8_t)SpecialRegIndex::HI),
+            m_debugger->getSpecialReg((uint8_t)SpecialRegIndex::LO)
+        };
+        for (int i = 0; i < 3; i++)
+        {
             ImGui::TableNextRow();
             ImGui::TableNextColumn();
-            PushColorText(previousExtraRegisters[i] != extraValues[i]);
+            // PushColorText(previousExtraRegisters[i] != extraValues[i]);
             ImGui::Text("%s", extraRegisters[i]);
             ImGui::TableNextColumn();
             previousExtraRegisters[i] = extraValues[i];
             ImGui::Text("%08X", extraValues[i]);
-            ImGui::PopStyleColor();
+            // ImGui::PopStyleColor();
         }
 
         //COP0 Registers
         ImGui::TableNextColumn();
-        PushColorText(previousCopRegisters[0] != m_cpu->m_cop0Reg[12]);
-        previousCopRegisters[0] = m_cpu->m_cop0Reg[12];
+        PushColorText(previousCopRegisters[0] != m_debugger->getCop0Reg(12));
+        previousCopRegisters[0] = m_debugger->getCop0Reg(12);
         ImGui::Text("COP0-SR");
         ImGui::TableNextColumn();
-        ImGui::Text("%08X", m_cpu->m_cop0Reg[12]);
+        ImGui::Text("%08X", m_debugger->getCop0Reg(12));
         ImGui::PopStyleColor();
 
         ImGui::TableNextColumn();
-        PushColorText(previousCopRegisters[1] != m_cpu->m_cop0Reg[13]);
+        PushColorText(previousCopRegisters[1] != m_debugger->getCop0Reg(13));
         ImGui::Text("COP0-CAUSE");
         ImGui::TableNextColumn();
-        previousCopRegisters[1] = m_cpu->m_cop0Reg[13];
-        ImGui::Text("%08X", m_cpu->m_cop0Reg[13]);
+        previousCopRegisters[1] = m_debugger->getCop0Reg(13);
+        ImGui::Text("%08X", m_debugger->getCop0Reg(13));
         ImGui::PopStyleColor();
 
         ImGui::EndTable();

@@ -3,16 +3,16 @@
 
 #include "IWindow.hpp"
 
-#include <memory>
 #include <vector>
 #include <string>
+#include <cstdint>
 
-struct CPU;
+class Debugger;
 
 class RegisterWindow : public IWindow
 {
     public:
-        RegisterWindow(const std::shared_ptr<CPU> &cpu);
+        RegisterWindow(Debugger *debugger);
         ~RegisterWindow();
 
         void update() override;
@@ -20,7 +20,7 @@ class RegisterWindow : public IWindow
         void DisplayPopup();
 
     private:
-        std::shared_ptr<CPU> m_cpu;
+        Debugger *m_debugger;
         std::vector<uint32_t> previousRegisters;
         std::vector<uint32_t> previousExtraRegisters;
         std::vector<uint32_t> previousCopRegisters;

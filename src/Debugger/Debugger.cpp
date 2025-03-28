@@ -19,7 +19,7 @@ Debugger::Debugger(System *system) :
     m_paused(false),
     m_simSpeed(1.0f)
 {
-    // m_windows.push_back(std::make_unique<RegisterWindow>(cpu));
+    m_windows.push_back(std::make_unique<RegisterWindow>(this));
     // m_windows.emplace_back(std::make_unique<MemoryWindow>(this));
     m_windows.emplace_back(std::make_unique<InstructionWindow>(this));
 }
@@ -48,9 +48,34 @@ void Debugger::stepOver()
     m_system->getCPU()->step();
 }
 
-uint32_t Debugger::getPc() const
+uint32_t Debugger::getGPR(uint8_t reg) const
 {
-    return m_system->getCPU()->pc;
+    return m_system->getCPU()->getReg(reg);
+}
+
+void Debugger::setGPR(uint8_t reg, uint32_t value)
+{
+    m_system->getCPU()->setReg(reg, value);
+}
+
+uint32_t Debugger::getSpecialReg(uint8_t reg) const
+{
+    return m_system->getCPU()->getSpecialReg(reg);
+}
+
+void Debugger::setSpecialReg(uint8_t reg, uint32_t val)
+{
+    m_system->getCPU()->setSpecialReg(reg, val);
+}
+
+uint32_t Debugger::getCop0Reg(uint8_t reg) const
+{
+    return m_system->getCPU()->getCop0Reg(reg);
+}
+
+void Debugger::setCop0Reg(uint8_t reg, uint32_t val)
+{
+    m_system->getCPU()->setCop0Reg(reg, val);
 }
 
 void Debugger::update()
