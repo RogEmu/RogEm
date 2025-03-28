@@ -14,14 +14,6 @@ RegisterWindow::RegisterWindow(Debugger *debugger) :
 {
 }
 
-void PushColorText(bool condition)
-{
-    if (condition)
-        ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 200, 0, 255));
-    else
-        ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(150, 150, 150, 255));
-}
-
 void RegisterWindow::addEditButton(const char* regName, int regIndex)
 {
     ImGui::SameLine();
@@ -69,15 +61,15 @@ void RegisterWindow::displayPopup()
 
 void RegisterWindow::drawGpr()
 {
-    for (int i = 0; i < NB_GPR; i++) {
+    for (uint8_t i = 0; i < NB_GPR; i++) {
         ImGui::TableNextRow();
         ImGui::TableNextColumn();
-        const char* regName = Disassembler::getRegisterName((uint8_t)i).c_str();
+        const char* regName = Disassembler::getRegisterName(i).c_str();
         ImGui::Text("%s", regName);
         ImGui::TableNextColumn();
-        ImGui::Text("%08X", m_debugger->getGPR((uint8_t)i));
+        ImGui::Text("%08X", m_debugger->getGPR(i));
         addEditButton(regName, i);
-        m_prevGPR[i] = m_debugger->getGPR((uint8_t)i);
+        m_prevGPR[i] = m_debugger->getGPR(i);
     }
 }
 
@@ -104,20 +96,16 @@ void RegisterWindow::drawCop0Regs()
 {
     //COP0 Registers
     ImGui::TableNextColumn();
-    PushColorText(m_prevCop0Regs[0] != m_debugger->getCop0Reg(12));
     m_prevCop0Regs[0] = m_debugger->getCop0Reg(12);
     ImGui::Text("COP0-SR");
     ImGui::TableNextColumn();
     ImGui::Text("%08X", m_debugger->getCop0Reg(12));
-    ImGui::PopStyleColor();
 
     ImGui::TableNextColumn();
-    PushColorText(m_prevCop0Regs[1] != m_debugger->getCop0Reg(13));
     ImGui::Text("COP0-CAUSE");
     ImGui::TableNextColumn();
     m_prevCop0Regs[1] = m_debugger->getCop0Reg(13);
     ImGui::Text("%08X", m_debugger->getCop0Reg(13));
-    ImGui::PopStyleColor();
 }
 
 void RegisterWindow::update()
