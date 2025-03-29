@@ -12,10 +12,11 @@
 
 BIOS::BIOS()
 {
-    m_data.fill(0);
+    m_data.resize(BIOS_SIZE);
 }
 
-BIOS::BIOS(const std::string &path)
+BIOS::BIOS(const std::string &path) :
+    BIOS()
 {
     loadFromFile(path);
 }
@@ -54,7 +55,7 @@ bool BIOS::loadFromFile(const std::string &path)
         std::cerr << "Cannot open \"" << path << "\"" << std::endl;
         return false;
     }
-    file.read((char *)m_data.data(), BIOS_SIZE);
+    file.read(reinterpret_cast<char*>(m_data.data()), BIOS_SIZE);
     if (file.fail())
     {
         std::cerr << "Cannot read BIOS file \"" << path << std::endl;
@@ -69,21 +70,12 @@ bool BIOS::loadFromFile(const std::string &path)
     return true;
 }
 
-void BIOS::dump(void) const
+std::vector<uint8_t> *BIOS::data()
 {
-    int count = 0;
-    for (const auto& byte : m_data) {
-        printf("%02X", byte);
-        count++;
+    return &m_data;
+}
 
-        if (count % 16 == 0) {
-            printf("\n");
-        } else
-        {
-            printf(" ");
-        }
-    }
-    if (count % 16 != 0) {
-        printf("\n");
-    }
+const std::vector<uint8_t> *BIOS::data() const
+{
+    return &m_data;
 }

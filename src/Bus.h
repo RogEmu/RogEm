@@ -9,6 +9,7 @@
 #define BUS_H_
 
 #include <cstdint>
+#include <vector>
 
 class BIOS;
 class RAM;
@@ -51,6 +52,9 @@ class Bus
         void storeByte(uint32_t addr, uint8_t value);
 
         uint32_t mapAddress(uint32_t addr) const;
+
+        std::vector<uint8_t> *getMemoryRange(uint32_t addr);
+        const std::vector<uint8_t> *getMemoryRange(uint32_t addr) const;
 
     private:
         BIOS *m_bios;

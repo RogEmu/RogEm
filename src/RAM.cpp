@@ -44,3 +44,13 @@ void RAM::storeByte(uint32_t addr, uint8_t val)
 {
     m_data[addr] = val;
 }
+
+std::vector<uint8_t> *RAM::data()
+{
+    return &m_data;
+}
+
+const std::vector<uint8_t> *RAM::data() const
+{
+    return &m_data;
+}

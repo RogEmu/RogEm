@@ -276,3 +276,25 @@ uint32_t Bus::mapAddress(uint32_t addr) const
     }
     return 0;
 }
+
+std::vector<uint8_t> *Bus::getMemoryRange(uint32_t addr)
+{
+    auto mappedAddress = mapAddress(addr);
+
+    if (BIOS_RANGE.contains(mappedAddress))
+        return m_bios->data();
+    if (RAM_RANGE.contains(mappedAddress))
+        return m_ram->data();
+    return nullptr;
+}
+
+const std::vector<uint8_t> *Bus::getMemoryRange(uint32_t addr) const
+{
+    auto mappedAddress = mapAddress(addr);
+
+    if (BIOS_RANGE.contains(mappedAddress))
+        return m_bios->data();
+    if (RAM_RANGE.contains(mappedAddress))
+        return m_ram->data();
+    return nullptr;
+}

@@ -8,9 +8,9 @@
 #ifndef BIOS_H_
 #define BIOS_H_
 
-#include <array>
 #include <string>
 #include <cstdint>
+#include <vector>
 
 #define BIOS_SIZE (512 * 1024)
 
@@ -26,10 +26,12 @@ class BIOS
         uint8_t loadByte(uint32_t off) const;
 
         bool loadFromFile(const std::string &path);
-        void dump(void) const;
+
+        std::vector<uint8_t> *data();
+        const std::vector<uint8_t> *data() const;
 
     private:
-        std::array<uint8_t, BIOS_SIZE> m_data;
+        std::vector<uint8_t> m_data;
 };
 
 #endif /* !BIOS_H_ */

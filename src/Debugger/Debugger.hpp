@@ -4,6 +4,7 @@
 #include <list>
 #include <memory>
 #include <cstdint>
+#include <vector>
 
 class IWindow;
 struct CPU;
@@ -36,6 +37,8 @@ class Debugger
         uint8_t readByte(uint32_t addr) const;
         uint16_t readHalfWord(uint32_t addr) const;
         uint32_t readWord(uint32_t addr) const;
+
+        std::vector<uint8_t> *memoryRange(uint32_t addr);
 
     private:
         System *m_system;

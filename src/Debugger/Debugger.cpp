@@ -20,8 +20,17 @@ Debugger::Debugger(System *system) :
     m_simSpeed(1.0f)
 {
     m_windows.emplace_back(std::make_unique<RegisterWindow>(this));
-    m_windows.emplace_back(std::make_unique<MemoryWindow>(this));
     m_windows.emplace_back(std::make_unique<AssemblyWindow>(this));
+    auto biosMemoryWindow = std::make_unique<MemoryWindow>(this);
+    biosMemoryWindow->setBaseAddr(0xBFC00000);
+    biosMemoryWindow->setTitle("BIOS");
+    biosMemoryWindow->setReadOnly(true);
+    m_windows.push_back(std::move(biosMemoryWindow));
+
+    auto ramMemoryWindow = std::make_unique<MemoryWindow>(this);
+    ramMemoryWindow->setBaseAddr(0);
+    ramMemoryWindow->setTitle("RAM");
+    m_windows.push_back(std::move(ramMemoryWindow));
 }
 
 Debugger::~Debugger()
@@ -91,6 +100,13 @@ uint16_t Debugger::readHalfWord(uint32_t addr) const
 uint32_t Debugger::readWord(uint32_t addr) const
 {
     return m_system->getBus()->loadWord(addr);
+}
+
+std::vector<uint8_t> *Debugger::memoryRange(uint32_t addr)
+{
+    auto slice = m_system->getBus()->getMemoryRange(addr);
+
+    return slice;
 }
 
 void Debugger::update()

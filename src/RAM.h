@@ -27,6 +27,9 @@ class RAM
         void storeHalfWord(uint32_t addr, uint16_t val);
         void storeByte(uint32_t addr, uint8_t val);
 
+        std::vector<uint8_t> *data();
+        const std::vector<uint8_t> *data() const;
+
     private:
         std::vector<uint8_t> m_data;
 };

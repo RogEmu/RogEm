@@ -1,12 +1,14 @@
 #include "MemoryWindow.hpp"
-#include "imgui.h"
 #include <fmt/format.h>
-#include "imgui/imgui_memory_editor.h"
 
+#include "BIOS.h"
 #include "Debugger.hpp"
 
+
 MemoryWindow::MemoryWindow(Debugger *debugger) :
-    m_debugger(debugger)
+    m_debugger(debugger),
+    m_title(""),
+    m_baseAddr(0)
 {
 }
 
@@ -16,8 +18,34 @@ MemoryWindow::~MemoryWindow()
 
 void MemoryWindow::update()
 {
-    static MemoryEditor mem_edit;
+    drawEditor(m_title, m_baseAddr);
+}
 
-    const char *data = "Hello guys! This is a test to see if the memory editor is working!";
-    mem_edit.DrawWindow("Memory Editor", (void*)data, 67, 0xFFFF);
+void MemoryWindow::setTitle(const char *title)
+{
+    m_title = title;
+}
+
+void MemoryWindow::setBaseAddr(uint32_t baseAddr)
+{
+    m_baseAddr = baseAddr;
+}
+
+void MemoryWindow::setReadOnly(bool readOnly)
+{
+    m_memEdit.ReadOnly = readOnly;
+}
+
+void MemoryWindow::drawEditor(const char *title, uint32_t baseAddr)
+{
+    size_t size = 0;
+    void *data = nullptr;
+    auto slice = m_debugger->memoryRange(baseAddr);
+
+    if (slice)
+    {
+        data = static_cast<void *>(slice->data());
+        size = slice->size();
+    }
+    m_memEdit.DrawWindow(title, data, size, baseAddr);
 }
