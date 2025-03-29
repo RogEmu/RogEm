@@ -106,7 +106,7 @@ void System::run()
                 return;
             }
             newFrame();
-
+            ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport());
             m_debug->update();
             uiTimer = 0;
             renderFrame();
