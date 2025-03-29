@@ -96,11 +96,11 @@ struct CPU
     // Arithmetic Instructions
     void addWord(const Instruction &instruction);
     void addWordUnsigned(const Instruction &instruction);
-    void addImmediate(const Instruction &instruction);
-    void addImmediateUnsigned(const Instruction &instruction);
+    void addImmediate(const Instruction &instruction); // Tested
+    void addImmediateUnsigned(const Instruction &instruction); // Tested
 
-    void substractWordUnsigned(const Instruction &instruction);
-    void substractWord(const Instruction &instruction);
+    void substractWordUnsigned(const Instruction &instruction); // Tested
+    void substractWord(const Instruction &instruction); // Tested
 
     // Comparison Instructions
     void setOnLessThan(const Instruction &instruction);
@@ -109,42 +109,42 @@ struct CPU
     void setOnLessThanImmediateUnsigned(const Instruction &instruction);
 
     // Logic Instructions
-    void andWord(const Instruction &instruction);
-    void orWord(const Instruction &instruction);
-    void xorWord(const Instruction &instruction);
-    void norWord(const Instruction &instruction);
-    void andImmediateWord(const Instruction &instruction);
-    void orImmediateWord(const Instruction &instruction);
-    void xorImmediateWord(const Instruction &instruction);
-    void loadUpperImmediate(const Instruction &instruction);
+    void andWord(const Instruction &instruction); // Tested
+    void orWord(const Instruction &instruction); // Tested
+    void xorWord(const Instruction &instruction); // Tested
+    void norWord(const Instruction &instruction); // Tested
+    void andImmediateWord(const Instruction &instruction); // Tested
+    void orImmediateWord(const Instruction &instruction); // Tested
+    void xorImmediateWord(const Instruction &instruction); // Tested
+    void loadUpperImmediate(const Instruction &instruction); // Tested
 
     // Shift Instructions
-    void shiftLeftLogical(const Instruction &instruction);
-    void shiftLeftLogicalVariable(const Instruction &instruction);
-    void shiftRightLogical(const Instruction &instruction);
-    void shiftRightArithmetic(const Instruction &instruction);
-    void shiftRightArithmeticVariable(const Instruction &instruction);
+    void shiftLeftLogical(const Instruction &instruction); // Tested
+    void shiftLeftLogicalVariable(const Instruction &instruction); // Tested
+    void shiftRightLogical(const Instruction &instruction); // Tested
+    void shiftRightArithmetic(const Instruction &instruction); // Tested
+    void shiftRightArithmeticVariable(const Instruction &instruction); // Tested
     void shiftRightLogicalVariable(const Instruction &instruction);
 
     // Multiplication and division Instructions
-    void multiply(const Instruction &instruction);
-    void multiplyUnsigned(const Instruction &instruction);
-    void divide(const Instruction &instruction);
-    void divideUnsigned(const Instruction &instruction);
-    void moveFromHi(const Instruction &instruction);
-    void moveFromLo(const Instruction &instruction);
-    void moveToHi(const Instruction &instruction);
-    void moveToLo(const Instruction &instruction);
+    void multiply(const Instruction &instruction); // Tested - needs checking
+    void multiplyUnsigned(const Instruction &instruction); // Tested - needs checking
+    void divide(const Instruction &instruction); // Tested - needs checking
+    void divideUnsigned(const Instruction &instruction); // Tested - needs checking
+    void moveFromHi(const Instruction &instruction); // Tested
+    void moveFromLo(const Instruction &instruction); // Tested
+    void moveToHi(const Instruction &instruction); // Tested
+    void moveToLo(const Instruction &instruction); // Tested
 
     // Jump Instructions
-    void jump(const Instruction &instruction);
-    void jumpAndLink(const Instruction &instruction);
-    void jumpRegister(const Instruction &instruction);
-    void jumpAndLinkRegister(const Instruction &instruction);
+    void jump(const Instruction &instruction); // Tested
+    void jumpAndLink(const Instruction &instruction); // Tested
+    void jumpRegister(const Instruction &instruction); // Tested
+    void jumpAndLinkRegister(const Instruction &instruction); // Tested
 
     // Branch instructions
     void executeBranch(const Instruction &instruction);
-    void branchOnEqual(const Instruction &instruction);
+    void branchOnEqual(const Instruction &instruction); // Tested
     void branchOnNotEqual(const Instruction &instruction);
     void branchOnLessThanZero(const Instruction &instruction);
     void branchOnLessThanZeroAndLink(const Instruction &instruction);
@@ -156,8 +156,8 @@ struct CPU
 
     //COP0 Instructions
     void executeCop0(const Instruction &instruction);
-    void mtc0(const Instruction &instruction);
-    void mfc0(const Instruction &instruction);
+    void mtc0(const Instruction &instruction); // Tested
+    void mfc0(const Instruction &instruction); // Tested
 
     void illegalInstruction(const Instruction &instruction);
     void specialInstruction(const Instruction &instruction);
