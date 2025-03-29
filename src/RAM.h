@@ -12,7 +12,7 @@
 #include <cstdint>
 #include <string>
 
-#define RAM_SIZE (512 * 1024 * 1024)
+#define RAM_SIZE (2048 * 1024)
 
 class RAM
 {
