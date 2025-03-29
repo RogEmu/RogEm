@@ -192,3 +192,108 @@ TEST(CpuTest, SLT_No_Set_Equal)
 
     EXPECT_EQ(cpu.getReg(destReg), false);
 }
+
+TEST(CpuTest, SLTU_Set_1)
+{
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
+    Instruction i;
+
+    uint8_t srcReg = static_cast<uint8_t>(GprIndex::T0);
+    uint8_t targetReg = static_cast<uint8_t>(GprIndex::T1);
+    uint8_t destReg = static_cast<uint8_t>(GprIndex::AT);
+
+    cpu.setReg(srcReg, 2480);
+    cpu.setReg(targetReg, 28409);
+    i.r.rs = srcReg;
+    i.r.rt = targetReg;
+    i.r.rd = destReg;
+    cpu.setOnLessThanUnsigned(i);
+
+    EXPECT_EQ(cpu.getReg(destReg), true);
+}
+
+TEST(CpuTest, SLTU_Set_From_Int_2)
+{
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
+    Instruction i;
+
+    uint8_t srcReg = static_cast<uint8_t>(GprIndex::T0);
+    uint8_t targetReg = static_cast<uint8_t>(GprIndex::T1);
+    uint8_t destReg = static_cast<uint8_t>(GprIndex::AT);
+
+    cpu.setReg(srcReg, INT32_MIN); // equal to 80000000
+    cpu.setReg(targetReg, UINT32_MAX); // equal to FFFFFFFF
+    i.r.rs = srcReg;
+    i.r.rt = targetReg;
+    i.r.rd = destReg;
+    cpu.setOnLessThanUnsigned(i);
+
+    EXPECT_EQ(cpu.getReg(destReg), true);
+}
+
+TEST(CpuTest, SLTU_Set_From_Int_3)
+{
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
+    Instruction i;
+
+    uint8_t srcReg = static_cast<uint8_t>(GprIndex::T0);
+    uint8_t targetReg = static_cast<uint8_t>(GprIndex::T1);
+    uint8_t destReg = static_cast<uint8_t>(GprIndex::AT);
+
+    cpu.setReg(srcReg, 1);
+    cpu.setReg(targetReg, -2); // equal to FFFFFFFE
+    i.r.rs = srcReg;
+    i.r.rt = targetReg;
+    i.r.rd = destReg;
+    cpu.setOnLessThanUnsigned(i);
+
+    EXPECT_EQ(cpu.getReg(destReg), true);
+}
+
+TEST(CpuTest, SLTU_No_Set_Equal)
+{
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
+    Instruction i;
+
+    uint8_t srcReg = static_cast<uint8_t>(GprIndex::T0);
+    uint8_t targetReg = static_cast<uint8_t>(GprIndex::T1);
+    uint8_t destReg = static_cast<uint8_t>(GprIndex::AT);
+
+    cpu.setReg(srcReg, UINT32_MAX);
+    cpu.setReg(targetReg, UINT32_MAX);
+    i.r.rs = srcReg;
+    i.r.rt = targetReg;
+    i.r.rd = destReg;
+    cpu.setOnLessThanUnsigned(i);
+
+    EXPECT_EQ(cpu.getReg(destReg), false);
+}
+
+TEST(CpuTest, SLTU_No_Set_From_Int)
+{
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
+    Instruction i;
+
+    uint8_t srcReg = static_cast<uint8_t>(GprIndex::T0);
+    uint8_t targetReg = static_cast<uint8_t>(GprIndex::T1);
+    uint8_t destReg = static_cast<uint8_t>(GprIndex::AT);
+
+    cpu.setReg(srcReg, -1); // equal to FFFFFFFF
+    cpu.setReg(targetReg, -2); // equal to FFFFFFFE
+    i.r.rs = srcReg;
+    i.r.rt = targetReg;
+    i.r.rd = destReg;
+    cpu.setOnLessThanUnsigned(i);
+
+    EXPECT_EQ(cpu.getReg(destReg), false);
+}
