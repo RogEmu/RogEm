@@ -297,3 +297,223 @@ TEST(CpuTest, SLTU_No_Set_From_Int)
 
     EXPECT_EQ(cpu.getReg(destReg), false);
 }
+
+TEST(CpuTest, SLTI_Set_1)
+{
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
+    Instruction i;
+
+    uint8_t srcReg = static_cast<uint8_t>(GprIndex::T0);
+    uint8_t targetReg = static_cast<uint8_t>(GprIndex::T1);
+    int16_t imm = 4820;
+
+    cpu.setReg(srcReg, (int32_t)139);
+    i.i.rs = srcReg;
+    i.i.rt = targetReg;
+    i.i.immediate = imm;
+    cpu.setOnLessThanImmediate(i);
+
+    EXPECT_EQ(cpu.getReg(targetReg), true);
+}
+
+TEST(CpuTest, SLTI_Set_2)
+{
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
+    Instruction i;
+
+    uint8_t srcReg = static_cast<uint8_t>(GprIndex::T0);
+    uint8_t targetReg = static_cast<uint8_t>(GprIndex::T1);
+    int16_t imm = 4820;
+
+    cpu.setReg(srcReg, (int32_t)-139);
+    i.i.rs = srcReg;
+    i.i.rt = targetReg;
+    i.i.immediate = imm;
+    cpu.setOnLessThanImmediate(i);
+
+    EXPECT_EQ(cpu.getReg(targetReg), true);
+}
+
+TEST(CpuTest, SLTI_Set_3)
+{
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
+    Instruction i;
+
+    uint8_t srcReg = static_cast<uint8_t>(GprIndex::T0);
+    uint8_t targetReg = static_cast<uint8_t>(GprIndex::T1);
+    int16_t imm = -4820;
+
+    cpu.setReg(srcReg, -879482);
+    i.i.rs = srcReg;
+    i.i.rt = targetReg;
+    i.i.immediate = imm;
+    cpu.setOnLessThanImmediate(i);
+
+    EXPECT_EQ(cpu.getReg(targetReg), true);
+}
+
+TEST(CpuTest, SLTI_Set_Bounds_1)
+{
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
+    Instruction i;
+
+    uint8_t srcReg = static_cast<uint8_t>(GprIndex::T0);
+    uint8_t targetReg = static_cast<uint8_t>(GprIndex::T1);
+    int16_t imm = INT16_MIN;
+
+    cpu.setReg(srcReg, INT32_MIN);
+    i.i.rs = srcReg;
+    i.i.rt = targetReg;
+    i.i.immediate = imm;
+    cpu.setOnLessThanImmediate(i);
+
+    EXPECT_EQ(cpu.getReg(targetReg), true);
+}
+
+TEST(CpuTest, SLTI_Set_Bounds_2)
+{
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
+    Instruction i;
+
+    uint8_t srcReg = static_cast<uint8_t>(GprIndex::T0);
+    uint8_t targetReg = static_cast<uint8_t>(GprIndex::T1);
+    int16_t imm = INT16_MAX;
+
+    cpu.setReg(srcReg, INT32_MIN);
+    i.i.rs = srcReg;
+    i.i.rt = targetReg;
+    i.i.immediate = imm;
+    cpu.setOnLessThanImmediate(i);
+
+    EXPECT_EQ(cpu.getReg(targetReg), true);
+}
+
+TEST(CpuTest, SLTI_No_Set_Bounds_1)
+{
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
+    Instruction i;
+
+    uint8_t srcReg = static_cast<uint8_t>(GprIndex::T0);
+    uint8_t targetReg = static_cast<uint8_t>(GprIndex::T1);
+    int16_t imm = INT16_MAX;
+
+    cpu.setReg(srcReg, INT32_MAX);
+    i.i.rs = srcReg;
+    i.i.rt = targetReg;
+    i.i.immediate = imm;
+    cpu.setOnLessThanImmediate(i);
+
+    EXPECT_EQ(cpu.getReg(targetReg), false);
+}
+
+TEST(CpuTest, SLTI_No_Set_Bounds_2)
+{
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
+    Instruction i;
+
+    uint8_t srcReg = static_cast<uint8_t>(GprIndex::T0);
+    uint8_t targetReg = static_cast<uint8_t>(GprIndex::T1);
+    int16_t imm = INT16_MIN;
+
+    cpu.setReg(srcReg, INT32_MAX);
+    i.i.rs = srcReg;
+    i.i.rt = targetReg;
+    i.i.immediate = imm;
+    cpu.setOnLessThanImmediate(i);
+
+    EXPECT_EQ(cpu.getReg(targetReg), false);
+}
+
+TEST(CpuTest, SLTI_No_Set_1)
+{
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
+    Instruction i;
+
+    uint8_t srcReg = static_cast<uint8_t>(GprIndex::T0);
+    uint8_t targetReg = static_cast<uint8_t>(GprIndex::T1);
+    int16_t imm = -4820;
+
+    cpu.setReg(srcReg, 1789);
+    i.i.rs = srcReg;
+    i.i.rt = targetReg;
+    i.i.immediate = imm;
+    cpu.setOnLessThanImmediate(i);
+
+    EXPECT_EQ(cpu.getReg(targetReg), false);
+}
+
+TEST(CpuTest, SLTI_No_Set_Equal)
+{
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
+    Instruction i;
+
+    uint8_t srcReg = static_cast<uint8_t>(GprIndex::T0);
+    uint8_t targetReg = static_cast<uint8_t>(GprIndex::T1);
+    int16_t imm = 0;
+
+    cpu.setReg(srcReg, (int32_t)0);
+    i.i.rs = srcReg;
+    i.i.rt = targetReg;
+    i.i.immediate = imm;
+    cpu.setOnLessThanImmediate(i);
+
+    EXPECT_EQ(cpu.getReg(targetReg), false);
+}
+
+TEST(CpuTest, SLTI_Set_Unsigned)
+{
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
+    Instruction i;
+
+    uint8_t srcReg = static_cast<uint8_t>(GprIndex::T0);
+    uint8_t targetReg = static_cast<uint8_t>(GprIndex::T1);
+    int16_t imm = 10;
+
+    cpu.setReg(srcReg, UINT32_MAX);
+    i.i.rs = srcReg;
+    i.i.rt = targetReg;
+    i.i.immediate = imm;
+    cpu.setOnLessThanImmediate(i);
+
+    EXPECT_EQ(cpu.getReg(targetReg), true);
+}
+
+TEST(CpuTest, SLTI_No_Set_Unsigned)
+{
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
+    Instruction i;
+
+    uint8_t srcReg = static_cast<uint8_t>(GprIndex::T0);
+    uint8_t targetReg = static_cast<uint8_t>(GprIndex::T1);
+    int16_t imm = (int16_t)UINT16_MAX;
+
+    cpu.setReg(srcReg, 10);
+    i.i.rs = srcReg;
+    i.i.rt = targetReg;
+    i.i.immediate = imm;
+    cpu.setOnLessThanImmediate(i);
+
+    EXPECT_EQ(cpu.getReg(targetReg), false);
+}
