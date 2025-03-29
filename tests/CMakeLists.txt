@@ -23,6 +23,7 @@ add_executable(
     CPU_multiply_tests.cpp
     CPU_shift_tests.cpp
     CPU_jump_tests.cpp
+    CPU_cop0_tests.cpp
     Bus_tests.cpp
 )
 

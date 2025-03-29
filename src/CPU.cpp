@@ -889,7 +889,6 @@ void CPU::executeCop0(const Instruction &instruction)
 
 void CPU::mtc0(const Instruction &instruction)
 {
-    // mtc# rt,rd       ;cop#datRd = rt ;data regs
     uint8_t reg = instruction.r.rd;
     uint32_t data = getReg(instruction.r.rt);
 
@@ -898,8 +897,8 @@ void CPU::mtc0(const Instruction &instruction)
 
 void CPU::mfc0(const Instruction &instruction)
 {
-    uint8_t reg = instruction.r.rd;
-    uint32_t data = getReg(instruction.r.rt);
+    uint8_t reg = instruction.r.rt;
+    uint32_t data = getCop0Reg(instruction.r.rd);
 
     setReg(reg, data);
 }
