@@ -23,6 +23,8 @@ class RegisterWindow : public IWindow
         void drawSpecialRegs();
         void drawCop0Regs();
 
+        void drawRegister(uint8_t index);
+
     private:
         Debugger *m_debugger;
         uint32_t m_prevGPR[32];

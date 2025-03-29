@@ -61,15 +61,31 @@ void RegisterWindow::displayPopup()
 
 void RegisterWindow::drawGpr()
 {
-    for (uint8_t i = 0; i < NB_GPR; i++) {
-        ImGui::TableNextRow();
-        ImGui::TableNextColumn();
-        const char* regName = Disassembler::getRegisterName(i).c_str();
-        ImGui::Text("%s", regName);
-        ImGui::TableNextColumn();
-        ImGui::Text("%08X", m_debugger->getGPR(i));
-        addEditButton(regName, i);
-        m_prevGPR[i] = m_debugger->getGPR(i);
+    auto tableFlags = ImGuiTableFlags_BordersOuter
+                    | ImGuiTableFlags_RowBg
+                    | ImGuiTableFlags_ScrollY;
+
+    if (ImGui::BeginTabItem("GPR"))
+    {
+        if(ImGui::BeginTable("Registers", 2, tableFlags))
+        {
+            ImGui::TableSetupScrollFreeze(0, 1);
+            ImGui::TableSetupColumn("Register", ImGuiTableColumnFlags_NoResize | ImGuiTableColumnFlags_WidthFixed);
+            ImGui::TableSetupColumn("Value");
+            ImGui::TableHeadersRow();
+
+            for (uint8_t i = 0; i < NB_GPR; i++)
+            {
+                ImGui::TableNextRow();
+                ImGui::TableNextColumn();
+                uint32_t value = m_debugger->getGPR(i);
+                drawRegister(i);
+                m_prevGPR[i] = value;
+            }
+            drawSpecialRegs();
+            ImGui::EndTable();
+        }
+        ImGui::EndTabItem();
     }
 }
 
@@ -87,50 +103,76 @@ void RegisterWindow::drawSpecialRegs()
         ImGui::TableNextColumn();
         ImGui::Text("%s", extraRegisters[i]);
         ImGui::TableNextColumn();
-        m_prevSpecialRegs[i] = extraValues[i];
         ImGui::Text("%08X", extraValues[i]);
+        m_prevSpecialRegs[i] = extraValues[i];
     }
 }
 
 void RegisterWindow::drawCop0Regs()
 {
-    //COP0 Registers
-    ImGui::TableNextColumn();
-    m_prevCop0Regs[0] = m_debugger->getCop0Reg(12);
-    ImGui::Text("COP0-SR");
-    ImGui::TableNextColumn();
-    ImGui::Text("%08X", m_debugger->getCop0Reg(12));
-
-    ImGui::TableNextColumn();
-    ImGui::Text("COP0-CAUSE");
-    ImGui::TableNextColumn();
-    m_prevCop0Regs[1] = m_debugger->getCop0Reg(13);
-    ImGui::Text("%08X", m_debugger->getCop0Reg(13));
-}
-
-void RegisterWindow::update()
-{
     auto tableFlags = ImGuiTableFlags_BordersOuter
                     | ImGuiTableFlags_RowBg
                     | ImGuiTableFlags_ScrollY;
 
-    ImGui::Begin("Registers");
-    if(ImGui::BeginTable("Registers", 2, tableFlags))
+    if (ImGui::BeginTabItem("COP0"))
     {
-        ImGui::TableSetupScrollFreeze(0, 1);
-        ImGui::TableSetupColumn("Register", ImGuiTableColumnFlags_NoResize | ImGuiTableColumnFlags_WidthFixed);
-        ImGui::TableSetupColumn("Value");
-        ImGui::TableHeadersRow();
-
-        drawGpr();
-        drawSpecialRegs();
-        drawCop0Regs();
-
-        ImGui::EndTable();
-        if (m_editorOpen == true)
+        if(ImGui::BeginTable("Registers", 2, tableFlags))
         {
-            displayPopup();
+
+            ImGui::TableSetupScrollFreeze(0, 1);
+            ImGui::TableSetupColumn("Register", ImGuiTableColumnFlags_NoResize | ImGuiTableColumnFlags_WidthFixed);
+            ImGui::TableSetupColumn("Value");
+            ImGui::TableHeadersRow();
+
+            ImGui::TableNextColumn();
+            m_prevCop0Regs[0] = m_debugger->getCop0Reg(12);
+            ImGui::Text("COP0-SR");
+            ImGui::TableNextColumn();
+            ImGui::Text("%08X", m_debugger->getCop0Reg(12));
+
+            ImGui::TableNextColumn();
+            ImGui::Text("COP0-CAUSE");
+            ImGui::TableNextColumn();
+            m_prevCop0Regs[1] = m_debugger->getCop0Reg(13);
+            ImGui::Text("%08X", m_debugger->getCop0Reg(13));
+            ImGui::EndTable();
         }
+        ImGui::EndTabItem();
+    }
+}
+
+void RegisterWindow::drawRegister(uint8_t index)
+{
+    ImColor textColor(ImGui::GetColorU32(ImGuiCol_Text));
+    auto value = m_debugger->getGPR(index);
+    auto name = Disassembler::getRegisterName(index).c_str();
+
+    if (value == 0)
+        textColor = ImGui::GetColorU32(ImGuiCol_TextDisabled);
+    if (value != m_prevGPR[index])
+        textColor = ImColor(255, 209, 25);
+    ImGui::Text("%s", name);
+    ImGui::TableNextColumn();
+    ImGui::TextColored(textColor, "%08X", m_debugger->getGPR(index));
+    addEditButton(name, index);
+}
+
+void RegisterWindow::update()
+{
+    // auto tableFlags = ImGuiTableFlags_BordersOuter
+    //                 | ImGuiTableFlags_RowBg
+    //                 | ImGuiTableFlags_ScrollY;
+
+    ImGui::Begin("Registers");
+    if (ImGui::BeginTabBar("##CPURegistersBar"))
+    {
+        drawGpr();
+        drawCop0Regs();
+        ImGui::EndTabBar();
+    }
+    if (m_editorOpen == true)
+    {
+        displayPopup();
     }
     ImGui::End();
 }
