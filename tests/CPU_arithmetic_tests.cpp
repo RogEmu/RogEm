@@ -253,6 +253,112 @@ TEST(CpuTest, ADDIU_3)
     EXPECT_EQ(cpu.gpr[i.i.rt], value + imm);
 }
 
+TEST(CpuTest, ADD_Normal)
+{
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
+    Instruction i;
+
+    uint32_t value1 = 100;
+    uint32_t value2 = 200;
+
+    loadImmediate(cpu, 1, value1);
+    loadImmediate(cpu, 2, value2);
+    i.r.rs = 1;
+    i.r.rt = 2;
+    i.r.rd = 3;
+
+    cpu.addWord(i);
+
+    EXPECT_EQ(cpu.gpr[i.r.rd], value1 + value2);
+}
+
+TEST(CpuTest, ADD_Zero)
+{
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
+    Instruction i;
+
+    loadImmediate(cpu, 1, 0);
+    loadImmediate(cpu, 2, 0);
+    i.r.rs = 1;
+    i.r.rt = 2;
+    i.r.rd = 3;
+
+    cpu.addWord(i);
+
+    EXPECT_EQ(cpu.gpr[i.r.rd], 0);
+}
+
+TEST(CpuTest, ADD_Negative)
+{
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
+    Instruction i;
+
+    int32_t value1 = -50;
+    int32_t value2 = 30;
+
+    loadImmediate(cpu, 1, value1);
+    loadImmediate(cpu, 2, value2);
+    i.r.rs = 1;
+    i.r.rt = 2;
+    i.r.rd = 3;
+
+    cpu.addWord(i);
+
+    EXPECT_EQ(cpu.gpr[i.r.rd], value1 + value2);
+}
+
+TEST(CpuTest, ADD_Overflow_Positive)
+{
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
+    Instruction i;
+
+    int32_t value1 = INT32_MAX;
+    int32_t value2 = 1;
+    int32_t initial_rd_value = 0xDEADBEEF; // Known value for verification
+
+    loadImmediate(cpu, 1, value1);
+    loadImmediate(cpu, 2, value2);
+    loadImmediate(cpu, 3, initial_rd_value); // Initialize rd
+    i.r.rs = 1;
+    i.r.rt = 2;
+    i.r.rd = 3;
+
+    cpu.addWord(i);
+
+    EXPECT_EQ(cpu.gpr[i.r.rd], initial_rd_value); // rd should remain unchanged
+}
+
+TEST(CpuTest, ADD_Overflow_Negative)
+{
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
+    Instruction i;
+
+    int32_t value1 = INT32_MIN;
+    int32_t value2 = -1;
+    int32_t initial_rd_value = 0xDEADBEEF; // Known value for verification
+
+    loadImmediate(cpu, 1, value1);
+    loadImmediate(cpu, 2, value2);
+    loadImmediate(cpu, 3, initial_rd_value); // Initialize rd
+    i.r.rs = 1;
+    i.r.rt = 2;
+    i.r.rd = 3;
+
+    cpu.addWord(i);
+
+    EXPECT_EQ(cpu.gpr[i.r.rd], initial_rd_value); // rd should remain unchanged
+}
+
 TEST(CpuTest, SUB_1)
 {
     auto bios = BIOS();
