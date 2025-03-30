@@ -364,3 +364,101 @@ TEST(CpuTest, LH_NegativeOffset_SignExtension)
     // The 16-bit value 0xFABC should be sign-extended to 0xFFFFFABC (32-bit value)
     EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T0)), 0xFFFFFABC); // Verify the sign extension
 }
+
+TEST(CpuTest, LB_RegularLoad)
+{
+    auto bios = BIOS();
+    auto ram = RAM();
+    auto bus = Bus(&bios, &ram);
+    CPU cpu(&bus);
+    Instruction i;
+
+    uint32_t base_address = 0x1000;  // Aligned base address
+    uint8_t byte_value = 0x17;  // Byte value to store
+    int16_t offset = 0x131;
+
+    ram.storeByte(base_address + offset, byte_value);  // Store the byte at the base address
+
+    cpu.setReg(static_cast<uint8_t>(GprIndex::SP), base_address);  // Set base register (SP)
+    i.i.rs = static_cast<uint8_t>(GprIndex::SP);  // rs = SP
+    i.i.rt = static_cast<uint8_t>(GprIndex::T0); // rt = T0
+    i.i.immediate = (uint16_t)offset;
+
+    cpu.loadByte(i);  // Execute LB instruction
+
+    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T0)), 0x00000017);  // Verify byte value is correctly loaded
+}
+
+TEST(CpuTest, LB_SignExtension_NegativeValue)
+{
+    auto bios = BIOS();
+    auto ram = RAM();
+    auto bus = Bus(&bios, &ram);
+    CPU cpu(&bus);
+    Instruction i;
+
+    uint32_t base_address = 0x1000;
+    uint8_t byte_value = 0xAB;  // Negative byte value
+    int16_t offset = 0x87;
+
+    ram.storeByte(base_address + offset, byte_value);  // Store negative byte
+
+    cpu.setReg(static_cast<uint8_t>(GprIndex::SP), base_address);  // Set base register (SP)
+    i.i.rs = static_cast<uint8_t>(GprIndex::SP);  // rs = SP
+    i.i.rt = static_cast<uint8_t>(GprIndex::T0); // rt = T0
+    i.i.immediate = (uint16_t)offset;
+
+    cpu.loadByte(i);  // Execute LB instruction
+
+    // The byte -0x10 (0xF0) should be sign-extended to 32 bits
+    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T0)), static_cast<int32_t>(0xFFFFFFAB));  // Verify sign extension
+}
+
+TEST(CpuTest, LB_SignExtension_PositiveValue)
+{
+    auto bios = BIOS();
+    auto ram = RAM();
+    auto bus = Bus(&bios, &ram);
+    CPU cpu(&bus);
+    Instruction i;
+
+    uint32_t base_address = 0x1000;
+    uint8_t byte_value = 0x7F;  // Positive byte value
+    int16_t offset = 0xAB;
+
+    ram.storeByte(base_address + offset, byte_value);  // Store positive byte
+
+    cpu.setReg(static_cast<uint8_t>(GprIndex::SP), base_address);  // Set base register (SP)
+    i.i.rs = static_cast<uint8_t>(GprIndex::SP);  // rs = SP
+    i.i.rt = static_cast<uint8_t>(GprIndex::T0); // rt = T0
+    i.i.immediate = (uint16_t)offset;
+
+    cpu.loadByte(i);  // Execute LB instruction
+
+    // The byte 0x7F should be zero-extended to 32 bits
+    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T0)), static_cast<int32_t>(0x0000007F));  // Verify zero extension
+}
+
+TEST(CpuTest, LB_SignExtension_NegativeOffset)
+{
+    auto bios = BIOS();
+    auto ram = RAM();
+    auto bus = Bus(&bios, &ram);
+    CPU cpu(&bus);
+    Instruction i;
+
+    uint32_t base_address = 0x1005;
+    uint8_t byte_value = 0xAB;
+    int16_t offset = -0x131;
+
+    ram.storeByte(base_address + offset, byte_value);  // Store byte at base address
+
+    cpu.setReg(static_cast<uint8_t>(GprIndex::SP), base_address);  // Set base register (SP)
+    i.i.rs = static_cast<uint8_t>(GprIndex::SP);  // rs = SP
+    i.i.rt = static_cast<uint8_t>(GprIndex::T0); // rt = T0
+    i.i.immediate = (uint16_t)offset;  // Negative offset
+
+    cpu.loadByte(i);  // Execute LB instruction
+
+    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T0)), static_cast<int32_t>(0xFFFFFFAB));  // Verify the byte is correctly loaded
+}
