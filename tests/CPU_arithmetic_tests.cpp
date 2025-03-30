@@ -359,6 +359,88 @@ TEST(CpuTest, ADD_Overflow_Negative)
     EXPECT_EQ(cpu.gpr[i.r.rd], initial_rd_value); // rd should remain unchanged
 }
 
+TEST(CpuTest, ADDU_Normal)
+{
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
+    Instruction i;
+
+    uint32_t value1 = 100;
+    uint32_t value2 = 200;
+
+    loadImmediate(cpu, 1, value1);
+    loadImmediate(cpu, 2, value2);
+    i.r.rs = 1;
+    i.r.rt = 2;
+    i.r.rd = 3;
+
+    cpu.addWordUnsigned(i);
+
+    EXPECT_EQ(cpu.gpr[i.r.rd], value1 + value2);
+}
+
+TEST(CpuTest, ADDU_Zero)
+{
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
+    Instruction i;
+
+    loadImmediate(cpu, 1, 0);
+    loadImmediate(cpu, 2, 0);
+    i.r.rs = 1;
+    i.r.rt = 2;
+    i.r.rd = 3;
+
+    cpu.addWordUnsigned(i);
+
+    EXPECT_EQ(cpu.gpr[i.r.rd], 0);
+}
+
+TEST(CpuTest, ADDU_Negative)
+{
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
+    Instruction i;
+
+    int32_t value1 = -50;
+    int32_t value2 = 30;
+
+    loadImmediate(cpu, 1, value1);
+    loadImmediate(cpu, 2, value2);
+    i.r.rs = 1;
+    i.r.rt = 2;
+    i.r.rd = 3;
+
+    cpu.addWordUnsigned(i);
+
+    EXPECT_EQ(cpu.gpr[i.r.rd], static_cast<uint32_t>(value1 + value2));
+}
+
+TEST(CpuTest, ADDU_Overflow)
+{
+    auto bios = BIOS();
+    auto bus = Bus(&bios, nullptr);
+    CPU cpu(&bus);
+    Instruction i;
+
+    uint32_t value1 = 0xFFFFFFFF; // Largest unsigned value
+    uint32_t value2 = 1;          // Causes wraparound
+    uint32_t expected_result = value1 + value2; // Should wrap to 0
+
+    loadImmediate(cpu, 1, value1);
+    loadImmediate(cpu, 2, value2);
+    i.r.rs = 1;
+    i.r.rt = 2;
+    i.r.rd = 3;
+
+    cpu.addWordUnsigned(i);
+
+    EXPECT_EQ(cpu.gpr[i.r.rd], expected_result); // No overflow exception, just wraparound
+}
+
 TEST(CpuTest, SUB_1)
 {
     auto bios = BIOS();
