@@ -5,16 +5,6 @@
 #include "Bus.h"
 #include "CPU.h"
 
-#include <sstream>
-
-namespace testing {
-    template <>
-    std::string PrintToString<uint32_t>(const uint32_t& value) {
-        std::stringstream ss;
-        ss << "0x" << std::hex << value;
-        return ss.str();
-    }
-}
 
 TEST(CpuTest, LW_AlignedAddress)
 {
