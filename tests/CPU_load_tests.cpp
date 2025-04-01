@@ -462,3 +462,206 @@ TEST(CpuTest, LB_SignExtension_NegativeOffset)
 
     EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T0)), static_cast<int32_t>(0xFFFFFFAB));  // Verify the byte is correctly loaded
 }
+
+TEST(CpuTest, LHU_PositiveOffset)
+{
+    auto bios = BIOS();
+    auto ram = RAM();
+    auto bus = Bus(&bios, &ram);
+    CPU cpu(&bus);
+    Instruction i;
+
+    uint32_t base_address = 0x2000;
+    uint16_t halfword_value = 0x1234;
+    int16_t offset = 0x1368; // Positive aligned offset
+
+    ram.storeHalfWord(base_address + offset, halfword_value);
+
+    cpu.setReg(static_cast<uint8_t>(GprIndex::A0), base_address);
+
+    i.i.rs = static_cast<uint8_t>(GprIndex::A0);
+    i.i.rt = static_cast<uint8_t>(GprIndex::V0);
+    i.i.immediate = offset;
+
+    cpu.loadHalfWordUnsigned(i);
+
+    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::V0)), static_cast<uint32_t>(halfword_value));
+}
+
+TEST(CpuTest, LHU_NegativeOffset)
+{
+    auto bios = BIOS();
+    auto ram = RAM();
+    auto bus = Bus(&bios, &ram);
+    CPU cpu(&bus);
+    Instruction i;
+
+    uint32_t base_address = 0x3004;
+    uint16_t halfword_value = 0x5678;
+    int16_t offset = -1738; // Negative offset, ensuring correct address calculation
+
+    ram.storeHalfWord(base_address + offset, halfword_value);
+
+    cpu.setReg(static_cast<uint8_t>(GprIndex::A1), base_address);
+
+    i.i.rs = static_cast<uint8_t>(GprIndex::A1);
+    i.i.rt = static_cast<uint8_t>(GprIndex::V1);
+    i.i.immediate = offset;
+
+    cpu.loadHalfWordUnsigned(i);
+
+    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::V1)), static_cast<uint32_t>(halfword_value));
+}
+
+TEST(CpuTest, LHU_ZeroOffset)
+{
+    auto bios = BIOS();
+    auto ram = RAM();
+    auto bus = Bus(&bios, &ram);
+    CPU cpu(&bus);
+    Instruction i;
+
+    uint32_t base_address = 0x4000;
+    uint16_t halfword_value = 0x9ABC;
+    int16_t offset = 0; // Zero offset
+
+    ram.storeHalfWord(base_address + offset, halfword_value);
+
+    cpu.setReg(static_cast<uint8_t>(GprIndex::T1), base_address);
+
+    i.i.rs = static_cast<uint8_t>(GprIndex::T1);
+    i.i.rt = static_cast<uint8_t>(GprIndex::S1);
+    i.i.immediate = offset;
+
+    cpu.loadHalfWordUnsigned(i);
+
+    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::S1)), static_cast<uint32_t>(halfword_value));
+}
+
+TEST(CpuTest, LHU_MaxOffset)
+{
+    auto bios = BIOS();
+    auto ram = RAM();
+    auto bus = Bus(&bios, &ram);
+    CPU cpu(&bus);
+    Instruction i;
+
+    uint32_t base_address = 0x5001;
+    uint16_t halfword_value = 0xDEAD;
+    int16_t offset = INT16_MAX; // Maximum positive offset
+
+    ram.storeHalfWord(base_address + offset, halfword_value);
+
+    cpu.setReg(static_cast<uint8_t>(GprIndex::S2), base_address);
+
+    i.i.rs = static_cast<uint8_t>(GprIndex::S2);
+    i.i.rt = static_cast<uint8_t>(GprIndex::T2);
+    i.i.immediate = offset;
+
+    cpu.loadHalfWordUnsigned(i);
+
+    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T2)), static_cast<uint32_t>(halfword_value));
+}
+
+TEST(CpuTest, LHU_MinOffset)
+{
+    auto bios = BIOS();
+    auto ram = RAM();
+    auto bus = Bus(&bios, &ram);
+    CPU cpu(&bus);
+    Instruction i;
+
+    uint32_t base_address = 0xF080;
+    uint16_t halfword_value = 0xBEEF;
+    int16_t offset = INT16_MIN; // Minimum negative offset
+
+    ram.storeHalfWord(base_address + offset, halfword_value);
+
+    cpu.setReg(static_cast<uint8_t>(GprIndex::S3), base_address);
+
+    i.i.rs = static_cast<uint8_t>(GprIndex::S3);
+    i.i.rt = static_cast<uint8_t>(GprIndex::T3);
+    i.i.immediate = offset;
+
+    cpu.loadHalfWordUnsigned(i);
+
+    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T3)), static_cast<uint32_t>(halfword_value));
+}
+
+TEST(CpuTest, LHU_UnalignedAddress_PositiveOffset)
+{
+    auto bios = BIOS();
+    auto ram = RAM();
+    auto bus = Bus(&bios, &ram);
+    CPU cpu(&bus);
+    Instruction i;
+
+    uint32_t base_address = 0x7008;
+    int16_t offset = 0xB;
+    uint16_t halfword_value = 0x1234;
+
+    ram.storeHalfWord(base_address + offset, halfword_value);
+
+    cpu.setReg(static_cast<uint8_t>(GprIndex::S4), base_address);
+    cpu.setReg(static_cast<uint8_t>(GprIndex::T4), 0xFFFFFFFF); // Ensure the value is not modified
+
+    i.i.rs = static_cast<uint8_t>(GprIndex::S4);
+    i.i.rt = static_cast<uint8_t>(GprIndex::T4);
+    i.i.immediate = offset;
+
+    cpu.loadHalfWordUnsigned(i);
+
+    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T4)), 0xFFFFFFFF); // Should remain unchanged
+}
+
+TEST(CpuTest, LHU_UnalignedAddress_NegativeOffset)
+{
+    auto bios = BIOS();
+    auto ram = RAM();
+    auto bus = Bus(&bios, &ram);
+    CPU cpu(&bus);
+    Instruction i;
+
+    uint32_t base_address = 0x7008;
+    int16_t offset = -0xB;
+    uint16_t halfword_value = 0x1234;
+
+    ram.storeHalfWord(base_address + offset, halfword_value);
+
+    cpu.setReg(static_cast<uint8_t>(GprIndex::S4), base_address);
+    cpu.setReg(static_cast<uint8_t>(GprIndex::T4), 0xFFFFFFFF); // Ensure the value is not modified
+
+    i.i.rs = static_cast<uint8_t>(GprIndex::S4);
+    i.i.rt = static_cast<uint8_t>(GprIndex::T4);
+    i.i.immediate = offset;
+
+    cpu.loadHalfWordUnsigned(i);
+
+    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T4)), 0xFFFFFFFF); // Should remain unchanged
+}
+
+TEST(CpuTest, LHU_ZeroExtension)
+{
+    auto bios = BIOS();
+    auto ram = RAM();
+    auto bus = Bus(&bios, &ram);
+    CPU cpu(&bus);
+    Instruction i;
+
+    uint32_t base_address = 0x8000;
+    uint16_t halfword_value = 0xABCD;
+    int16_t offset = 2;
+
+    ram.storeHalfWord(base_address + offset, halfword_value);
+
+    cpu.setReg(static_cast<uint8_t>(GprIndex::T5), base_address);
+
+    i.i.rs = static_cast<uint8_t>(GprIndex::T5);
+    i.i.rt = static_cast<uint8_t>(GprIndex::S5);
+    i.i.immediate = offset;
+
+    cpu.loadHalfWordUnsigned(i);
+
+    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::S5)), static_cast<uint32_t>(halfword_value));
+    // Must be zero-extended: 0x0000ABCD
+}
