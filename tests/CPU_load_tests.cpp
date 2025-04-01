@@ -665,3 +665,153 @@ TEST(CpuTest, LHU_ZeroExtension)
     EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::S5)), static_cast<uint32_t>(halfword_value));
     // Must be zero-extended: 0x0000ABCD
 }
+
+TEST(CpuTest, LBU_PositiveOffset)
+{
+    auto bios = BIOS();
+    auto ram = RAM();
+    auto bus = Bus(&bios, &ram);
+    CPU cpu(&bus);
+    Instruction i;
+
+    uint32_t base_address = 0xA000;
+    uint8_t byte_value = 0xBB;
+    int16_t offset = 0x0AF4;
+
+    ram.storeByte(base_address + offset, byte_value);
+
+    cpu.setReg(static_cast<uint8_t>(GprIndex::A0), base_address);
+
+    i.i.rs = static_cast<uint8_t>(GprIndex::A0);
+    i.i.rt = static_cast<uint8_t>(GprIndex::V0);
+    i.i.immediate = offset;
+
+    cpu.loadByteUnsigned(i);
+
+    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::V0)), static_cast<uint32_t>(byte_value));
+}
+
+TEST(CpuTest, LBU_NegativeOffset)
+{
+    auto bios = BIOS();
+    auto ram = RAM();
+    auto bus = Bus(&bios, &ram);
+    CPU cpu(&bus);
+    Instruction i;
+
+    uint32_t base_address = 0x3004;
+    uint8_t byte_value = 0x56;
+    int16_t offset = -478;
+
+    ram.storeByte(base_address + offset, byte_value);
+
+    cpu.setReg(static_cast<uint8_t>(GprIndex::A1), base_address);
+
+    i.i.rs = static_cast<uint8_t>(GprIndex::A1);
+    i.i.rt = static_cast<uint8_t>(GprIndex::V1);
+    i.i.immediate = offset;
+
+    cpu.loadByteUnsigned(i);
+
+    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::V1)), static_cast<uint32_t>(byte_value));
+}
+
+TEST(CpuTest, LBU_ZeroOffset)
+{
+    auto bios = BIOS();
+    auto ram = RAM();
+    auto bus = Bus(&bios, &ram);
+    CPU cpu(&bus);
+    Instruction i;
+
+    uint32_t base_address = 0x4000;
+    uint8_t byte_value = 0x9A;
+    int16_t offset = 0; // Zero offset
+
+    ram.storeByte(base_address + offset, byte_value);
+
+    cpu.setReg(static_cast<uint8_t>(GprIndex::T1), base_address);
+
+    i.i.rs = static_cast<uint8_t>(GprIndex::T1);
+    i.i.rt = static_cast<uint8_t>(GprIndex::S1);
+    i.i.immediate = offset;
+
+    cpu.loadByteUnsigned(i);
+
+    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::S1)), static_cast<uint32_t>(byte_value));
+}
+
+TEST(CpuTest, LBU_MaxOffset)
+{
+    auto bios = BIOS();
+    auto ram = RAM();
+    auto bus = Bus(&bios, &ram);
+    CPU cpu(&bus);
+    Instruction i;
+
+    uint32_t base_address = 0x5000;
+    uint8_t byte_value = 0xDE;
+    int16_t offset = INT16_MAX;
+
+    ram.storeByte(base_address + offset, byte_value);
+
+    cpu.setReg(static_cast<uint8_t>(GprIndex::S2), base_address);
+
+    i.i.rs = static_cast<uint8_t>(GprIndex::S2);
+    i.i.rt = static_cast<uint8_t>(GprIndex::T2);
+    i.i.immediate = offset;
+
+    cpu.loadByteUnsigned(i);
+
+    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T2)), static_cast<uint32_t>(byte_value));
+}
+
+TEST(CpuTest, LBU_MinOffset)
+{
+    auto bios = BIOS();
+    auto ram = RAM();
+    auto bus = Bus(&bios, &ram);
+    CPU cpu(&bus);
+    Instruction i;
+
+    uint32_t base_address = 0xF0F0;
+    uint8_t byte_value = 0xBE;
+    int16_t offset = INT16_MIN;
+
+    ram.storeByte(base_address + offset, byte_value);
+
+    cpu.setReg(static_cast<uint8_t>(GprIndex::S3), base_address);
+
+    i.i.rs = static_cast<uint8_t>(GprIndex::S3);
+    i.i.rt = static_cast<uint8_t>(GprIndex::T3);
+    i.i.immediate = offset;
+
+    cpu.loadByteUnsigned(i);
+
+    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T3)), static_cast<uint32_t>(byte_value));
+}
+
+TEST(CpuTest, LBU_ZeroExtension)
+{
+    auto bios = BIOS();
+    auto ram = RAM();
+    auto bus = Bus(&bios, &ram);
+    CPU cpu(&bus);
+    Instruction i;
+
+    uint32_t base_address = 0x7000;
+    uint8_t byte_value = 0xAB;
+    int16_t offset = 3;
+
+    ram.storeByte(base_address + offset, byte_value);
+
+    cpu.setReg(static_cast<uint8_t>(GprIndex::T4), base_address);
+
+    i.i.rs = static_cast<uint8_t>(GprIndex::T4);
+    i.i.rt = static_cast<uint8_t>(GprIndex::S4);
+    i.i.immediate = offset;
+
+    cpu.loadByteUnsigned(i);
+
+    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::S4)), static_cast<uint32_t>(byte_value)); // Must be zero-extended: 0x000000AB
+}
