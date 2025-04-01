@@ -25,7 +25,7 @@ TEST(CpuTest, LW_AlignedAddress)
     Instruction i;
 
     uint32_t base_address = 0x1000;
-    uint32_t offset = 0x4;
+    int16_t offset = 0x4;
     uint32_t address = base_address + offset;
     uint32_t expected_value = 0xDEADBEEF;
 
@@ -50,7 +50,7 @@ TEST(CpuTest, LW_UnalignedAddress)
     Instruction i;
 
     uint32_t base_address = 0x1000;
-    uint32_t offset = 0x3; // Unaligned
+    int16_t offset = 0x3; // Unaligned
     uint32_t initial_rt_value = 0xBADF00D;
 
     cpu.setReg(static_cast<uint8_t>(GprIndex::SP), base_address); // Set base register (SP)
@@ -74,7 +74,7 @@ TEST(CpuTest, LW_NegativeOffset)
     Instruction i;
 
     uint32_t base_address = 0x2008;
-    uint32_t offset = -4; // Negative offset
+    int16_t offset = -4; // Negative offset
     uint32_t target_address = base_address + offset;
     uint32_t expected_value = 0x12345678;
 
@@ -99,7 +99,7 @@ TEST(CpuTest, LW_MaxAddress)
     Instruction i;
 
     uint32_t base_address = 0x1FFFC;
-    uint32_t offset = 0x0; // No offset
+    int16_t offset = 0x0; // No offset
     uint32_t address = base_address + offset;
     uint32_t expected_value = 0xAABBCCDD;
 
@@ -124,7 +124,7 @@ TEST(CpuTest, LW_ZeroRegister)
     Instruction i;
 
     uint32_t base_address = 0x1000;
-    uint32_t offset = 0x4;
+    int16_t offset = 0x4;
     uint32_t address = base_address + offset;
     uint32_t value = 0xCAFEBABE;
 
@@ -150,7 +150,7 @@ TEST(CpuTest, LH_BasicLoad_PositiveOffset)
 
     uint32_t base_address = 0x1000;  // Address in valid RAM space (KUSEG)
     uint16_t halfword_value = 0x1234;  // A simple 16-bit value
-    uint16_t offset = 4;  // A simple 16-bit value
+    int16_t offset = 4;  // A simple 16-bit value
 
     ram.storeHalfWord(base_address + offset, halfword_value); // Store the halfword with positive offset
 

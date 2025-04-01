@@ -15,8 +15,8 @@ TEST(CpuTest, SLT_Set_Same_Sign)
     uint8_t targetReg = static_cast<uint8_t>(GprIndex::T1);
     uint8_t destReg = static_cast<uint8_t>(GprIndex::AT);
 
-    cpu.setReg(srcReg, (int32_t)139);
-    cpu.setReg(targetReg, (int32_t)1380);
+    cpu.setReg(srcReg, 139);
+    cpu.setReg(targetReg, 1380);
     i.r.rs = srcReg;
     i.r.rt = targetReg;
     i.r.rd = destReg;
@@ -36,8 +36,8 @@ TEST(CpuTest, SLT_Set_Different_Sign)
     uint8_t targetReg = static_cast<uint8_t>(GprIndex::T1);
     uint8_t destReg = static_cast<uint8_t>(GprIndex::AT);
 
-    cpu.setReg(srcReg, (int32_t)-97984);
-    cpu.setReg(targetReg, (int32_t)5437809);
+    cpu.setReg(srcReg, (uint32_t)-97984);
+    cpu.setReg(targetReg, 5437809);
     i.r.rs = srcReg;
     i.r.rt = targetReg;
     i.r.rd = destReg;
@@ -57,8 +57,8 @@ TEST(CpuTest, SLT_Set_Int_Bounds)
     uint8_t targetReg = static_cast<uint8_t>(GprIndex::T1);
     uint8_t destReg = static_cast<uint8_t>(GprIndex::AT);
 
-    cpu.setReg(srcReg, INT32_MIN);
-    cpu.setReg(targetReg, INT32_MAX);
+    cpu.setReg(srcReg, (uint32_t)INT32_MIN);
+    cpu.setReg(targetReg, (uint32_t)INT32_MAX);
     i.r.rs = srcReg;
     i.r.rt = targetReg;
     i.r.rd = destReg;
@@ -78,8 +78,8 @@ TEST(CpuTest, SLT_No_Set_Same_Sign)
     uint8_t targetReg = static_cast<uint8_t>(GprIndex::T1);
     uint8_t destReg = static_cast<uint8_t>(GprIndex::AT);
 
-    cpu.setReg(srcReg, (int32_t)87908);
-    cpu.setReg(targetReg, (int32_t)7898);
+    cpu.setReg(srcReg, 87908);
+    cpu.setReg(targetReg, 7898);
     i.r.rs = srcReg;
     i.r.rt = targetReg;
     i.r.rd = destReg;
@@ -99,8 +99,8 @@ TEST(CpuTest, SLT_No_Set_Different_Sign)
     uint8_t targetReg = static_cast<uint8_t>(GprIndex::T1);
     uint8_t destReg = static_cast<uint8_t>(GprIndex::AT);
 
-    cpu.setReg(srcReg, (int32_t)87908);
-    cpu.setReg(targetReg, (int32_t)-7898);
+    cpu.setReg(srcReg, 87908);
+    cpu.setReg(targetReg, (uint32_t)-7898);
     i.r.rs = srcReg;
     i.r.rt = targetReg;
     i.r.rd = destReg;
@@ -120,8 +120,8 @@ TEST(CpuTest, SLT_No_Set_Int_Bounds)
     uint8_t targetReg = static_cast<uint8_t>(GprIndex::T1);
     uint8_t destReg = static_cast<uint8_t>(GprIndex::AT);
 
-    cpu.setReg(srcReg, INT32_MAX);
-    cpu.setReg(targetReg, INT32_MIN);
+    cpu.setReg(srcReg, (uint32_t)INT32_MAX);
+    cpu.setReg(targetReg, (uint32_t)INT32_MIN);
     i.r.rs = srcReg;
     i.r.rt = targetReg;
     i.r.rd = destReg;
@@ -225,7 +225,7 @@ TEST(CpuTest, SLTU_Set_From_Int_2)
     uint8_t targetReg = static_cast<uint8_t>(GprIndex::T1);
     uint8_t destReg = static_cast<uint8_t>(GprIndex::AT);
 
-    cpu.setReg(srcReg, INT32_MIN); // equal to 80000000
+    cpu.setReg(srcReg, (uint32_t)INT32_MIN); // equal to 80000000
     cpu.setReg(targetReg, UINT32_MAX); // equal to FFFFFFFF
     i.r.rs = srcReg;
     i.r.rt = targetReg;
@@ -247,7 +247,7 @@ TEST(CpuTest, SLTU_Set_From_Int_3)
     uint8_t destReg = static_cast<uint8_t>(GprIndex::AT);
 
     cpu.setReg(srcReg, 1);
-    cpu.setReg(targetReg, -2); // equal to FFFFFFFE
+    cpu.setReg(targetReg, (uint32_t)-2); // equal to FFFFFFFE
     i.r.rs = srcReg;
     i.r.rt = targetReg;
     i.r.rd = destReg;
@@ -288,8 +288,8 @@ TEST(CpuTest, SLTU_No_Set_From_Int)
     uint8_t targetReg = static_cast<uint8_t>(GprIndex::T1);
     uint8_t destReg = static_cast<uint8_t>(GprIndex::AT);
 
-    cpu.setReg(srcReg, -1); // equal to FFFFFFFF
-    cpu.setReg(targetReg, -2); // equal to FFFFFFFE
+    cpu.setReg(srcReg, (uint32_t)-1); // equal to FFFFFFFF
+    cpu.setReg(targetReg, (uint32_t)-2); // equal to FFFFFFFE
     i.r.rs = srcReg;
     i.r.rt = targetReg;
     i.r.rd = destReg;
@@ -309,7 +309,7 @@ TEST(CpuTest, SLTI_Set_1)
     uint8_t targetReg = static_cast<uint8_t>(GprIndex::T1);
     int16_t imm = 4820;
 
-    cpu.setReg(srcReg, (int32_t)139);
+    cpu.setReg(srcReg, 139);
     i.i.rs = srcReg;
     i.i.rt = targetReg;
     i.i.immediate = imm;
@@ -329,7 +329,7 @@ TEST(CpuTest, SLTI_Set_2)
     uint8_t targetReg = static_cast<uint8_t>(GprIndex::T1);
     int16_t imm = 4820;
 
-    cpu.setReg(srcReg, (int32_t)-139);
+    cpu.setReg(srcReg, (uint32_t)-139);
     i.i.rs = srcReg;
     i.i.rt = targetReg;
     i.i.immediate = imm;
@@ -349,7 +349,7 @@ TEST(CpuTest, SLTI_Set_3)
     uint8_t targetReg = static_cast<uint8_t>(GprIndex::T1);
     int16_t imm = -4820;
 
-    cpu.setReg(srcReg, -879482);
+    cpu.setReg(srcReg, (uint32_t)-879482);
     i.i.rs = srcReg;
     i.i.rt = targetReg;
     i.i.immediate = imm;
@@ -369,7 +369,7 @@ TEST(CpuTest, SLTI_Set_Bounds_1)
     uint8_t targetReg = static_cast<uint8_t>(GprIndex::T1);
     int16_t imm = INT16_MIN;
 
-    cpu.setReg(srcReg, INT32_MIN);
+    cpu.setReg(srcReg, (uint32_t)INT32_MIN);
     i.i.rs = srcReg;
     i.i.rt = targetReg;
     i.i.immediate = imm;
@@ -389,7 +389,7 @@ TEST(CpuTest, SLTI_Set_Bounds_2)
     uint8_t targetReg = static_cast<uint8_t>(GprIndex::T1);
     int16_t imm = INT16_MAX;
 
-    cpu.setReg(srcReg, INT32_MIN);
+    cpu.setReg(srcReg, (uint32_t)INT32_MIN);
     i.i.rs = srcReg;
     i.i.rt = targetReg;
     i.i.immediate = imm;
@@ -409,7 +409,7 @@ TEST(CpuTest, SLTI_No_Set_Bounds_1)
     uint8_t targetReg = static_cast<uint8_t>(GprIndex::T1);
     int16_t imm = INT16_MAX;
 
-    cpu.setReg(srcReg, INT32_MAX);
+    cpu.setReg(srcReg, (uint32_t)INT32_MAX);
     i.i.rs = srcReg;
     i.i.rt = targetReg;
     i.i.immediate = imm;
@@ -429,7 +429,7 @@ TEST(CpuTest, SLTI_No_Set_Bounds_2)
     uint8_t targetReg = static_cast<uint8_t>(GprIndex::T1);
     int16_t imm = INT16_MIN;
 
-    cpu.setReg(srcReg, INT32_MAX);
+    cpu.setReg(srcReg, (uint32_t)INT32_MAX);
     i.i.rs = srcReg;
     i.i.rt = targetReg;
     i.i.immediate = imm;
@@ -469,7 +469,7 @@ TEST(CpuTest, SLTI_No_Set_Equal)
     uint8_t targetReg = static_cast<uint8_t>(GprIndex::T1);
     int16_t imm = 0;
 
-    cpu.setReg(srcReg, (int32_t)0);
+    cpu.setReg(srcReg, 0);
     i.i.rs = srcReg;
     i.i.rt = targetReg;
     i.i.immediate = imm;
@@ -590,7 +590,7 @@ TEST(CpuTest, SLTIU_Bounds_1)
     uint8_t targetReg = static_cast<uint8_t>(GprIndex::T1);
     uint16_t imm = 0;
 
-    cpu.setReg(srcReg, INT32_MAX);
+    cpu.setReg(srcReg, (uint32_t)INT32_MAX);
     i.i.rs = srcReg;
     i.i.rt = targetReg;
     i.i.immediate = imm;
