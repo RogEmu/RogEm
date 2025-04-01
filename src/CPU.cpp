@@ -570,7 +570,7 @@ void CPU::loadWordRight(const Instruction &instruction)
 
     uint32_t shift = (address & 3) * 8;
     uint32_t mask = 0xFFFFFFFF >> shift;
-    uint32_t right = (value << shift) & mask;
+    uint32_t right = value & mask;
 
     uint32_t res = (getReg(instruction.i.rt) & ~mask) | right;
     setReg(instruction.i.rt, res);
@@ -584,9 +584,9 @@ void CPU::loadWordLeft(const Instruction &instruction)
 
     uint32_t shift = (3 - (address & 3)) * 8;
     uint32_t mask = 0xFFFFFFFF << shift;
-    uint32_t left = (value >> shift) & mask;
 
-    uint32_t res = (getReg(instruction.i.rt) & ~mask) | left;
+    value &= mask;
+    uint32_t res = (getReg(instruction.i.rt) & ~mask) | value;
     setReg(instruction.i.rt, res);
 }
 
