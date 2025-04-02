@@ -10,7 +10,7 @@ on:
 
 jobs:
   build:
-    runs-on: [self-hosted]
+    runs-on: [ubuntu-22.04]
 
     strategy:
       # Set fail-fast to false to ensure that feedback is delivered for all matrix combinations. Consider changing this to true when your workflow is stable.
@@ -26,7 +26,7 @@ jobs:
         build_type: [Release, Debug]
         c_compiler: [gcc]
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-22.04
             c_compiler: gcc
             cpp_compiler: g++
           # - os: ubuntu-latest
