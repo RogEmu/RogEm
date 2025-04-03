@@ -99,6 +99,11 @@ void BreakpointWindow::DisplayBreakpoints()
     ImGui::EndTable();
 }
 
+std::vector<Breakpoint> BreakpointWindow::GetBreakpoints() const
+{
+    return m_breakpoints;
+}
+
 void BreakpointWindow::update()
 {
     ImGui::Begin("Breakpoints");

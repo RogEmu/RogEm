@@ -23,6 +23,7 @@ class BreakpointWindow : public IWindow
         ~BreakpointWindow();
 
         void update() override;
+        std::vector<Breakpoint> GetBreakpoints() const;
 
     private:
         void AddBreakpointButton();
