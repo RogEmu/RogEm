@@ -272,6 +272,16 @@ void CPU::specialInstruction(const Instruction &instruction)
     }
 }
 
+uint32_t CPU::getPC() const
+{
+    return pc;
+}
+
+void CPU::setPC(uint32_t val)
+{
+    pc = val;
+}
+
 uint32_t CPU::getReg(uint8_t reg) const
 {
     return gpr[reg];

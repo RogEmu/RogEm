@@ -128,8 +128,16 @@ std::vector<Breakpoint> &Debugger::getBreakpoints()
 
 void Debugger::update()
 {
-    for (auto &window : m_windows)
+    for (auto &window : m_windows) {
         window->update();
+        uint32_t pc = m_system->getCPU()->getPC();
+        for (auto bp : m_breakpoints) {
+            if (bp.enabled && bp.addr == pc) {
+                m_paused = true;
+                break;
+            }
+        }
+    }
 }
 
 void Debugger::pause(bool pause)
