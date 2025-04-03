@@ -33,6 +33,7 @@ class Debugger
         ~Debugger();
 
         void update();
+        void draw();
 
         void pause(bool pause);
         bool isPaused() const;

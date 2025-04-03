@@ -136,38 +136,43 @@ std::vector<Breakpoint> &Debugger::getBreakpoints()
 
 void Debugger::update()
 {
-    for (auto &window : m_windows) {
-        uint32_t pc = getSpecialReg((uint8_t)SpecialRegIndex::PC);
-        for (auto bp : m_breakpoints) {
-            if (bp.enabled){
-                if (bp.instructionType == BreakpointType::EXEC) {
-                    if (bp.enabled && bp.addr == pc) {
-                        m_paused = true;
-                        break;
-                    }
+    uint32_t pc = getSpecialReg((uint8_t)SpecialRegIndex::PC);
+    for (auto bp : m_breakpoints) {
+        if (bp.enabled){
+            if (bp.instructionType == BreakpointType::EXEC) {
+                if (bp.enabled && bp.addr == pc) {
+                    m_paused = true;
+                    break;
                 }
-                // if (bp.instructionType == type::WRITE){
-                //     uint32_t instructionWord = readWord(pc);
-                //     Instruction instruction = {.raw = instructionWord};
-                //     type instructionType = Disassembler::getInstructionType(instruction);
-                //     if (instructionType == type::READ) {
-                //         uint32_t value = readWord(valueAboutToWrite(Disassembler::disassemble(pc, instruction)));
-                //         if (value == bp.addr) {
-                //             m_paused = true;
-                //             break;
-                //         }
-                //     }
-                //     if (instructionType == type::WRITE) {
-                //         uint32_t value = valueAboutToWrite(Disassembler::disassemble(pc, instruction));
-                //         if (value == bp.addr) {
-                //             m_paused = true;
-                //             break;
-                //         }
-                //     }
-                // }
             }
+            // if (bp.instructionType == type::WRITE){
+            //     uint32_t instructionWord = readWord(pc);
+            //     Instruction instruction = {.raw = instructionWord};
+            //     type instructionType = Disassembler::getInstructionType(instruction);
+            //     if (instructionType == type::READ) {
+            //         uint32_t value = readWord(valueAboutToWrite(Disassembler::disassemble(pc, instruction)));
+            //         if (value == bp.addr) {
+            //             m_paused = true;
+            //             break;
+            //         }
+            //     }
+            //     if (instructionType == type::WRITE) {
+            //         uint32_t value = valueAboutToWrite(Disassembler::disassemble(pc, instruction));
+            //         if (value == bp.addr) {
+            //             m_paused = true;
+            //             break;
+            //         }
+            //     }
+            // }
         }
-        window->update();
+    }
+}
+
+void Debugger::draw()
+{
+    for (auto &subwin : m_windows)
+    {
+        subwin->update();
     }
 }
 

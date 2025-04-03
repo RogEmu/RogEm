@@ -85,6 +85,7 @@ void System::run()
 
     while (m_isRunning)
     {
+        m_debug->update();
         if (!m_debug->isPaused())
         {
             if (simulationTimer > (m_debug->getSimulationSpeed()))
@@ -101,15 +102,15 @@ void System::run()
                 // ImGui_ImplGlfw_Sleep(10);
                 return;
             }
-            if (glfwWindowShouldClose(m_window)) {
+            if (glfwWindowShouldClose(m_window))
+            {
                 m_isRunning = false;
-                return;
             }
             newFrame();
             ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport());
-            m_debug->update();
-            uiTimer = 0;
+            m_debug->draw();
             renderFrame();
+            uiTimer = 0;
         }
         dt = deltaTime();
         uiTimer += dt;
