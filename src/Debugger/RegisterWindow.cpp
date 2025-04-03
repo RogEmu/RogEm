@@ -12,6 +12,7 @@ RegisterWindow::RegisterWindow(Debugger *debugger) :
     m_editorOpen(false),
     m_registerNameToChange("")
 {
+    is_highlighted.resize(NB_GPR, false);
 }
 
 void RegisterWindow::addEditButton(const char* regName, int regIndex)
@@ -78,9 +79,7 @@ void RegisterWindow::drawGpr()
             {
                 ImGui::TableNextRow();
                 ImGui::TableNextColumn();
-                uint32_t value = m_debugger->getGPR(i);
                 drawRegister(i);
-                m_prevGPR[i] = value;
             }
             drawSpecialRegs();
             ImGui::EndTable();
@@ -141,6 +140,40 @@ void RegisterWindow::drawCop0Regs()
     }
 }
 
+bool isGPREqual(uint32_t* current, uint32_t* previous)
+{
+    for (uint8_t i = 0; i < NB_GPR; i++)
+    {
+        if (current[i] != previous[i])
+            return false;
+    }
+    return true;
+}
+
+void RegisterWindow::updateRegisterChanges()
+{
+    for (uint8_t i = 0; i < NB_GPR; i++)
+    {
+        m_currentGPR[i] = m_debugger->getGPR(i);
+    }
+    if (isGPREqual(m_currentGPR, m_prevGPR) == false)
+    {
+        for (uint8_t i = 0; i < NB_GPR; i++)
+        {
+            if (m_currentGPR[i] != m_prevGPR[i])
+            {
+                is_highlighted[i] = true;
+            }
+            else
+            {
+                is_highlighted[i] = false;
+            }
+        }
+        std::copy(std::begin(m_currentGPR), std::end(m_currentGPR), std::begin(m_prevGPR));
+    }
+}
+
+
 void RegisterWindow::drawRegister(uint8_t index)
 {
     ImColor textColor(ImGui::GetColorU32(ImGuiCol_Text));
@@ -149,8 +182,9 @@ void RegisterWindow::drawRegister(uint8_t index)
 
     if (value == 0)
         textColor = ImGui::GetColorU32(ImGuiCol_TextDisabled);
-    if (value != m_prevGPR[index])
+    if (is_highlighted[index]) {
         textColor = ImColor(255, 209, 25);
+    }
     ImGui::Text("%s", name);
     ImGui::TableNextColumn();
     ImGui::TextColored(textColor, "%08X", m_debugger->getGPR(index));
@@ -166,6 +200,7 @@ void RegisterWindow::update()
     ImGui::Begin("Registers");
     if (ImGui::BeginTabBar("##CPURegistersBar"))
     {
+        updateRegisterChanges();
         drawGpr();
         drawCop0Regs();
         ImGui::EndTabBar();
