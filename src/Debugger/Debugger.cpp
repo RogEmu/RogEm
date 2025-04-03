@@ -111,7 +111,7 @@ std::vector<uint8_t> *Debugger::memoryRange(uint32_t addr)
     return slice;
 }
 
-void Debugger::addBreakpoint(uint32_t addr, type type, const std::string &label)
+void Debugger::addBreakpoint(uint32_t addr, BreakpointType type, const std::string &label)
 {
     m_breakpoints.push_back({addr, type, label, true});
 }
@@ -140,7 +140,7 @@ void Debugger::update()
         uint32_t pc = getSpecialReg((uint8_t)SpecialRegIndex::PC);
         for (auto bp : m_breakpoints) {
             if (bp.enabled){
-                if (bp.instructionType == type::EXEC) {
+                if (bp.instructionType == BreakpointType::EXEC) {
                     if (bp.enabled && bp.addr == pc) {
                         m_paused = true;
                         break;

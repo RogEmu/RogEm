@@ -11,10 +11,17 @@ class IWindow;
 struct CPU;
 class System;
 
+enum class BreakpointType
+{
+    EXEC,
+    READ,
+    WRITE
+};
+
 struct Breakpoint
 {
     uint32_t addr;
-    type instructionType;
+    BreakpointType instructionType;
     std::string label;
     bool enabled;
 };
@@ -48,7 +55,7 @@ class Debugger
         uint32_t readWord(uint32_t addr) const;
 
         // Breakpoints
-        void addBreakpoint(uint32_t addr, type type, const std::string &label);
+        void addBreakpoint(uint32_t addr, BreakpointType type, const std::string &label);
         void removeBreakpoint(long index);
         std::vector<Breakpoint> &getBreakpoints();
 

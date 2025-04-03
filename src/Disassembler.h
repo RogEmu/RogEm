@@ -13,21 +13,12 @@
 
 #include "Instruction.h"
 
-enum class type
-{
-    UNKNOWN = -1,
-    EXEC = 0,
-    READ = 1,
-    WRITE = 2,
-};
-
 namespace Disassembler
 {
 std::string disassemble(uint32_t pc, uint32_t word);
 std::string disassemble(uint32_t pc, Instruction i);
 std::string formatAsHexBytes(uint32_t value);
 std::string getRegisterName(uint8_t reg);
-type getInstructionType(Instruction i);
 };
 
 

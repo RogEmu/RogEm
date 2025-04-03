@@ -29,7 +29,6 @@ struct InstructionData
 {
     std::string name;
     std::string asmFormat;
-    type InstructionType;
 };
 
 std::string Disassembler::getRegisterName(uint8_t reg)
@@ -40,62 +39,62 @@ std::string Disassembler::getRegisterName(uint8_t reg)
 }
 
 static const std::unordered_map<PrimaryOpCode, InstructionData> primaryData = {
-    {PrimaryOpCode::ADDI, InstructionData{"addi", arithmeticImmediateFormat, type::EXEC}},
-    {PrimaryOpCode::ADDIU, InstructionData{"addiu", arithmeticImmediateFormat, type::EXEC}},
-    {PrimaryOpCode::ANDI, InstructionData{"andi", arithmeticImmediateFormat, type::EXEC}},
-    {PrimaryOpCode::J, InstructionData{"j", "%address", type::EXEC}},
-    {PrimaryOpCode::JAL, InstructionData{"jal", "%address", type::EXEC}},
-    {PrimaryOpCode::BEQ, InstructionData{"beq", arithmeticImmediateFormat, type::EXEC}},
-    {PrimaryOpCode::BNE, InstructionData{"bne", arithmeticImmediateFormat, type::EXEC}},
-    {PrimaryOpCode::BGTZ, InstructionData{"bgtz", arithmeticImmediateFormat, type::EXEC}},
-    {PrimaryOpCode::BLEZ, InstructionData{"blez", arithmeticImmediateFormat, type::EXEC}},
-    {PrimaryOpCode::COP0, InstructionData{"cop0", "Incomplete", type::EXEC}},
-    {PrimaryOpCode::LB, InstructionData{"lb", loadStoreFormat, type::READ}},
-    {PrimaryOpCode::LBU, InstructionData{"lbu", loadStoreFormat, type::READ}},
-    {PrimaryOpCode::LH, InstructionData{"lh", loadStoreFormat, type::READ}},
-    {PrimaryOpCode::LHU, InstructionData{"lhu", loadStoreFormat, type::READ}},
-    {PrimaryOpCode::LUI, InstructionData{"lui", "$%rt, %imm", type::EXEC}},
-    {PrimaryOpCode::LW, InstructionData{"lw", loadStoreFormat, type::READ}},
-    {PrimaryOpCode::LWL, InstructionData{"lwl", loadStoreFormat, type::READ}},
-    {PrimaryOpCode::LWR, InstructionData{"lwr", loadStoreFormat, type::READ}},
-    {PrimaryOpCode::ORI, InstructionData{"ori", arithmeticImmediateFormat, type::EXEC}},
-    {PrimaryOpCode::SB, InstructionData{"sb", loadStoreFormat, type::WRITE}},
-    {PrimaryOpCode::SH, InstructionData{"sh", loadStoreFormat, type::WRITE}},
-    {PrimaryOpCode::SLTI, InstructionData{"slti", arithmeticImmediateFormat, type::EXEC}},
-    {PrimaryOpCode::SLTIU, InstructionData{"sltiu", arithmeticImmediateFormat, type::EXEC}},
-    {PrimaryOpCode::SW, InstructionData{"sw", loadStoreFormat, type::WRITE}},
-    {PrimaryOpCode::SWL, InstructionData{"swl", loadStoreFormat, type::WRITE}},
-    {PrimaryOpCode::SWR, InstructionData{"swr", loadStoreFormat, type::WRITE}},
-    {PrimaryOpCode::XORI, InstructionData{"xori", arithmeticImmediateFormat, type::EXEC}},
+    {PrimaryOpCode::ADDI, InstructionData{"addi", arithmeticImmediateFormat}},
+    {PrimaryOpCode::ADDIU, InstructionData{"addiu", arithmeticImmediateFormat}},
+    {PrimaryOpCode::ANDI, InstructionData{"andi", arithmeticImmediateFormat}},
+    {PrimaryOpCode::J, InstructionData{"j", "%address"}},
+    {PrimaryOpCode::JAL, InstructionData{"jal", "%address"}},
+    {PrimaryOpCode::BEQ, InstructionData{"beq", arithmeticImmediateFormat}},
+    {PrimaryOpCode::BNE, InstructionData{"bne", arithmeticImmediateFormat}},
+    {PrimaryOpCode::BGTZ, InstructionData{"bgtz", arithmeticImmediateFormat}},
+    {PrimaryOpCode::BLEZ, InstructionData{"blez", arithmeticImmediateFormat}},
+    {PrimaryOpCode::COP0, InstructionData{"cop0", "Incomplete"}},
+    {PrimaryOpCode::LB, InstructionData{"lb", loadStoreFormat}},
+    {PrimaryOpCode::LBU, InstructionData{"lbu", loadStoreFormat}},
+    {PrimaryOpCode::LH, InstructionData{"lh", loadStoreFormat}},
+    {PrimaryOpCode::LHU, InstructionData{"lhu", loadStoreFormat}},
+    {PrimaryOpCode::LUI, InstructionData{"lui", "$%rt, %imm"}},
+    {PrimaryOpCode::LW, InstructionData{"lw", loadStoreFormat}},
+    {PrimaryOpCode::LWL, InstructionData{"lwl", loadStoreFormat}},
+    {PrimaryOpCode::LWR, InstructionData{"lwr", loadStoreFormat}},
+    {PrimaryOpCode::ORI, InstructionData{"ori", arithmeticImmediateFormat}},
+    {PrimaryOpCode::SB, InstructionData{"sb", loadStoreFormat}},
+    {PrimaryOpCode::SH, InstructionData{"sh", loadStoreFormat}},
+    {PrimaryOpCode::SLTI, InstructionData{"slti", arithmeticImmediateFormat}},
+    {PrimaryOpCode::SLTIU, InstructionData{"sltiu", arithmeticImmediateFormat}},
+    {PrimaryOpCode::SW, InstructionData{"sw", loadStoreFormat}},
+    {PrimaryOpCode::SWL, InstructionData{"swl", loadStoreFormat}},
+    {PrimaryOpCode::SWR, InstructionData{"swr", loadStoreFormat}},
+    {PrimaryOpCode::XORI, InstructionData{"xori", arithmeticImmediateFormat}}
 };
 
 static const std::unordered_map<SecondaryOpCode, InstructionData> secondaryData = {
-    {SecondaryOpCode::ADD, InstructionData{"add", arithmeticFormat, type::EXEC}},
-    {SecondaryOpCode::ADDU, InstructionData{"addu", arithmeticFormat, type::EXEC}},
-    {SecondaryOpCode::AND, InstructionData{"and", arithmeticFormat, type::EXEC}},
-    {SecondaryOpCode::NOR, InstructionData{"nor", arithmeticFormat, type::EXEC}},
-    {SecondaryOpCode::OR, InstructionData{"or", arithmeticFormat, type::EXEC}},
-    {SecondaryOpCode::SLL, InstructionData{"sll", "$%rd, $%rs, %imm", type::EXEC}},
-    {SecondaryOpCode::SLT, InstructionData{"slt", arithmeticFormat, type::EXEC}},
-    {SecondaryOpCode::SLTU, InstructionData{"sltu", "$%rd, $%rs, %imm", type::EXEC}},
-    {SecondaryOpCode::SUB, InstructionData{"sub", arithmeticFormat, type::EXEC}},
-    {SecondaryOpCode::SUBU, InstructionData{"subu", arithmeticFormat, type::EXEC}},
-    {SecondaryOpCode::XOR, InstructionData{"xor", arithmeticFormat, type::EXEC}},
-    {SecondaryOpCode::SRL, InstructionData{"srl", "$%rd, $%rs, %imm", type::EXEC}},
-    {SecondaryOpCode::SRA, InstructionData{"sra", "$%rd, $%rs, %imm", type::EXEC}},
-    {SecondaryOpCode::SLLV, InstructionData{"sllv", arithmeticFormat, type::EXEC}},
-    {SecondaryOpCode::SRLV, InstructionData{"srlv", arithmeticFormat, type::EXEC}},
-    {SecondaryOpCode::SRAV, InstructionData{"srav", arithmeticFormat, type::EXEC}},
-    {SecondaryOpCode::MULT, InstructionData{"mult", arithmeticFormat, type::EXEC}},
-    {SecondaryOpCode::MULTU, InstructionData{"multu", arithmeticFormat, type::EXEC}},
-    {SecondaryOpCode::DIV, InstructionData{"div", arithmeticFormat, type::EXEC}},
-    {SecondaryOpCode::DIVU, InstructionData{"divu", arithmeticFormat, type::EXEC}},
-    {SecondaryOpCode::MFHI, InstructionData{"mfhi", "$%rd", type::EXEC}},
-    {SecondaryOpCode::MFLO, InstructionData{"mflo", "$%rd", type::EXEC}},
-    {SecondaryOpCode::MTHI, InstructionData{"mthi", "$%rs", type::EXEC}},
-    {SecondaryOpCode::MTLO, InstructionData{"mtlo", "$%rs", type::EXEC}},
-    {SecondaryOpCode::JR, InstructionData{"jr", "$%rs", type::EXEC}},
-    {SecondaryOpCode::JALR, InstructionData{"jalr", "$%rd, $%rs", type::EXEC}},
+    {SecondaryOpCode::ADD, InstructionData{"add", arithmeticFormat}},
+    {SecondaryOpCode::ADDU, InstructionData{"addu", arithmeticFormat}},
+    {SecondaryOpCode::AND, InstructionData{"and", arithmeticFormat}},
+    {SecondaryOpCode::NOR, InstructionData{"nor", arithmeticFormat}},
+    {SecondaryOpCode::OR, InstructionData{"or", arithmeticFormat}},
+    {SecondaryOpCode::SLL, InstructionData{"sll", "$%rd, $%rs, %imm"}},
+    {SecondaryOpCode::SLT, InstructionData{"slt", arithmeticFormat}},
+    {SecondaryOpCode::SLTU, InstructionData{"sltu", "$%rd, $%rs, %imm"}},
+    {SecondaryOpCode::SUB, InstructionData{"sub", arithmeticFormat}},
+    {SecondaryOpCode::SUBU, InstructionData{"subu", arithmeticFormat}},
+    {SecondaryOpCode::XOR, InstructionData{"xor", arithmeticFormat}},
+    {SecondaryOpCode::SRL, InstructionData{"srl", "$%rd, $%rs, %imm"}},
+    {SecondaryOpCode::SRA, InstructionData{"sra", "$%rd, $%rs, %imm"}},
+    {SecondaryOpCode::SLLV, InstructionData{"sllv", arithmeticFormat}},
+    {SecondaryOpCode::SRLV, InstructionData{"srlv", arithmeticFormat}},
+    {SecondaryOpCode::SRAV, InstructionData{"srav", arithmeticFormat}},
+    {SecondaryOpCode::MULT, InstructionData{"mult", arithmeticFormat}},
+    {SecondaryOpCode::MULTU, InstructionData{"multu", arithmeticFormat}},
+    {SecondaryOpCode::DIV, InstructionData{"div", arithmeticFormat}},
+    {SecondaryOpCode::DIVU, InstructionData{"divu", arithmeticFormat}},
+    {SecondaryOpCode::MFHI, InstructionData{"mfhi", "$%rd"}},
+    {SecondaryOpCode::MFLO, InstructionData{"mflo", "$%rd"}},
+    {SecondaryOpCode::MTHI, InstructionData{"mthi", "$%rs"}},
+    {SecondaryOpCode::MTLO, InstructionData{"mtlo", "$%rs"}},
+    {SecondaryOpCode::JR, InstructionData{"jr", "$%rs"}},
+    {SecondaryOpCode::JALR, InstructionData{"jalr", "$%rd, $%rs"}},
 };
 
 static int16_t computeBranchOffset(Instruction i)
@@ -125,44 +124,6 @@ static std::string formatAssembly(uint32_t pc, Instruction i, const InstructionD
     return result;
 }
 
-type Disassembler::getInstructionType(Instruction i) {
-    auto primary = static_cast<PrimaryOpCode>(i.r.opcode);
-
-    if (primary == PrimaryOpCode::SPECIAL) {
-        auto secondary = static_cast<SecondaryOpCode>(i.r.funct);
-        if (secondaryData.find(secondary) != secondaryData.end()) {
-            return secondaryData.at(secondary).InstructionType;
-        }
-    }
-    if (primary == PrimaryOpCode::BCONDZ) {
-        auto bcond = static_cast<BranchOnConditionZero>(i.i.rt);
-        switch (bcond) {
-            case BranchOnConditionZero::BLTZ:
-            case BranchOnConditionZero::BGEZ:
-            case BranchOnConditionZero::BLTZAL:
-            case BranchOnConditionZero::BGEZAL:
-                return type::EXEC;
-            default:
-                return type::UNKNOWN;
-        }
-    }
-    if (primary == PrimaryOpCode::COP0) {
-        auto cop = static_cast<CoprocessorOpcodes>(i.r.rs);
-        switch (cop) {
-            case CoprocessorOpcodes::MTC:
-                return type::WRITE;
-            case CoprocessorOpcodes::MFC:
-                return type::READ;
-            default:
-                return type::UNKNOWN;
-        }
-    }
-    if (primaryData.find(primary) != primaryData.end()) {
-        return primaryData.at(primary).InstructionType;
-    }
-    return type::UNKNOWN;
-}
-
 static std::string disassembleSpecial(uint32_t pc, Instruction i)
 {
     auto secondary = static_cast<SecondaryOpCode>(i.r.funct);
@@ -182,13 +143,13 @@ static std::string dissambleBcondZ(uint32_t pc, Instruction i)
     switch (bcond)
     {
     case BranchOnConditionZero::BLTZ:
-        return formatAssembly(pc, i, InstructionData{"bltz", "$%rs, %imm", type::EXEC});
+        return formatAssembly(pc, i, InstructionData{"bltz", "$%rs, %imm"});
     case BranchOnConditionZero::BGEZ:
-        return formatAssembly(pc, i, InstructionData{"bgez", "$%rs, %imm", type::EXEC});
+        return formatAssembly(pc, i, InstructionData{"bgez", "$%rs, %imm"});
     case BranchOnConditionZero::BLTZAL:
-        return formatAssembly(pc, i, InstructionData{"bltzal", "$%rs, %imm", type::EXEC});
+        return formatAssembly(pc, i, InstructionData{"bltzal", "$%rs, %imm"});
     case BranchOnConditionZero::BGEZAL:
-        return formatAssembly(pc, i, InstructionData{"bgezal", "$%rs, %imm", type::EXEC});
+        return formatAssembly(pc, i, InstructionData{"bgezal", "$%rs, %imm"});
     default:
         return std::string("MIPS Disassembler: Illegal instruction");
     }
@@ -201,9 +162,9 @@ static std::string disassembleCop0(uint32_t pc, Instruction i)
     switch (code)
     {
     case CoprocessorOpcodes::MTC:
-        return formatAssembly(pc, i, InstructionData{"mtc0", "$%rt, $%rd", type::WRITE}); // type a revoir
+        return formatAssembly(pc, i, InstructionData{"mtc0", "$%rt, $%rd"});
     case CoprocessorOpcodes::MFC:
-        return formatAssembly(pc, i, InstructionData{"mfc0", "$%rt, $%rd", type::READ}); // type a revoir
+        return formatAssembly(pc, i, InstructionData{"mfc0", "$%rt, $%rd"});
     default:
         break;
     }

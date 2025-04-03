@@ -5,7 +5,6 @@
 #include <cstdint>
 #include <vector>
 #include <string>
-#include "Disassembler.h"
 
 class Debugger;
 

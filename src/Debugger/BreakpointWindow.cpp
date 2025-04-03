@@ -26,7 +26,7 @@ void BreakpointWindow::addBreakpointButton()
         static char labelText[32] = "\0";
         ImGui::Text("Add Breakpoint");
         ImGui::InputText("Address", addr, 9, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_AutoSelectAll);
-        if (ImGui::BeginCombo("Breakpoint Type", (m_breakpointType == 0) ? "Exec" : (m_breakpointType == 1) ? "Read" : "Write"))
+        if (ImGui::BeginCombo("Breakpoint Type", "Exec"))
         {
             if (ImGui::Selectable("Exec", false))
                 m_breakpointType = 0;
@@ -42,8 +42,12 @@ void BreakpointWindow::addBreakpointButton()
             char* end;
             uint32_t value = std::strtoul(addr, &end, 16);
             if (!*end) {
-                type type = (m_breakpointType == 0) ? type::EXEC : (m_breakpointType == 1) ? type::READ : type::WRITE;
-                m_debugger->addBreakpoint(value, type, labelText);
+                if (m_breakpointType == 0)
+                    m_debugger->addBreakpoint(value, BreakpointType::EXEC, labelText);
+                else if (m_breakpointType == 1)
+                    m_debugger->addBreakpoint(value, BreakpointType::READ, labelText);
+                else
+                    m_debugger->addBreakpoint(value, BreakpointType::WRITE, labelText);
             }
             ImGui::CloseCurrentPopup();
             addr[0] = '\0';
@@ -82,7 +86,12 @@ void BreakpointWindow::displayBreakpoints()
         ImGui::TableNextColumn();
         ImGui::Text("%08X", bp.addr);
         ImGui::TableNextColumn();
-        ImGui::Text("%s", (bp.instructionType == type::EXEC) ? "Exec" : (bp.instructionType == type::READ) ? "Read" : "Write");
+        if (bp.instructionType == BreakpointType::EXEC)
+            ImGui::Text("%s", "Exec");
+        else if (bp.instructionType == BreakpointType::READ)
+            ImGui::Text("%s", "Read");
+        else
+            ImGui::Text("%s", "Write");
         ImGui::TableNextColumn();
         ImGui::Text("%s", bp.label.c_str());
         ImGui::TableNextColumn();
