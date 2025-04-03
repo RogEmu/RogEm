@@ -1,6 +1,7 @@
 #ifndef ASSEMBLYWINDOW_HPP_
 #define ASSEMBLYWINDOW_HPP_
 
+#include "imgui.h"
 #include "IWindow.hpp"
 #include <memory>
 
@@ -20,7 +21,12 @@ class AssemblyWindow : public IWindow
         void drawAssembly();
         void drawAssemblyLine(uint32_t addr);
 
+        void jumpToPC();
+        void findPcCursor(uint32_t startAddr, const ImGuiListClipper &clipper);
+
     private:
+        bool m_autoFollowPc;
+        float m_pcCursorPosY;
         Debugger *m_debugger;
 };
 

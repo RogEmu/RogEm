@@ -1,5 +1,4 @@
 #include "AssemblyWindow.hpp"
-#include "imgui.h"
 #include <fmt/format.h>
 
 #include "CPU.h"
@@ -34,6 +33,17 @@ void AssemblyWindow::drawTopBar()
     if (ImGui::ArrowButton("##CPU_Step_Fw", ImGuiDir_Right) && paused)
     {
         m_debugger->stepOver();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Jump to PC"))
+    {
+        jumpToPC();
+    }
+    ImGui::SameLine();
+    ImGui::Checkbox("Auto follow PC", &m_autoFollowPc);
+    if (m_autoFollowPc)
+    {
+        jumpToPC();
     }
     ImGui::EndGroup();
     ImGui::SliderFloat("Simulation Speed", &simSpeed, 0.00001f, 1.0f, "%.5f");
@@ -72,6 +82,7 @@ void AssemblyWindow::drawAssembly()
             drawAssemblyLine(currentAddr);
         }
     }
+    findPcCursor(startAddr,clipper);
     ImGui::EndTable();
     ImGui::End();
 }
@@ -89,4 +100,19 @@ void AssemblyWindow::drawAssemblyLine(uint32_t addr)
     ImGui::TextColored(lineColor, "%s", Disassembler::formatAsHexBytes(currenInstruction).c_str());
     ImGui::TableNextColumn();
     ImGui::TextColored(lineColor, "%s", Disassembler::disassemble(pc, currenInstruction).c_str());
+}
+
+void AssemblyWindow::jumpToPC()
+{
+    auto pcPosY = m_pcCursorPosY;
+
+    ImGui::SetNextWindowScroll(ImVec2(0, pcPosY));
+}
+
+void AssemblyWindow::findPcCursor(uint32_t startAddr, const ImGuiListClipper &clipper)
+{
+    auto pc = m_debugger->getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC));
+    auto pcPosY = clipper.ItemsHeight * ((pc - startAddr) * 0.25f);
+
+    m_pcCursorPosY = pcPosY;
 }
