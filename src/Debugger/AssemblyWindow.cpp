@@ -69,7 +69,6 @@ void AssemblyWindow::drawAssembly()
 
     ImGuiListClipper clipper;
     clipper.Begin(size / 4 + 1);
-    clipper.IncludeItemByIndex(m_pcCursor);
     while (clipper.Step())
     {
         for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++)
