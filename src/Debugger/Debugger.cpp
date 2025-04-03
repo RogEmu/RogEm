@@ -13,6 +13,7 @@
 #include "MemoryWindow.hpp"
 #include "CPU.h"
 #include "System.hpp"
+#include "BreakpointWindow.hpp"
 
 Debugger::Debugger(System *system) :
     m_system(system),
@@ -21,6 +22,7 @@ Debugger::Debugger(System *system) :
 {
     m_windows.emplace_back(std::make_unique<RegisterWindow>(this));
     m_windows.emplace_back(std::make_unique<AssemblyWindow>(this));
+    m_windows.emplace_back(std::make_unique<BreakpointWindow>(this));
     auto biosMemoryWindow = std::make_unique<MemoryWindow>(this);
     biosMemoryWindow->setBaseAddr(0xBFC00000);
     biosMemoryWindow->setTitle("BIOS");
