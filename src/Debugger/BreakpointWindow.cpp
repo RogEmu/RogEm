@@ -5,7 +5,8 @@
 #include <fmt/format.h>
 
 BreakpointWindow::BreakpointWindow(Debugger *debugger) :
-    m_debugger(debugger)
+    m_debugger(debugger),
+    m_displayBreakpoints(true)
 {
 }
 
@@ -42,8 +43,7 @@ void BreakpointWindow::AddBreakpointButton()
             char* end;
             uint32_t value = std::strtoul(addr, &end, 16);
             if (!*end) {
-                m_breakpoints.push_back({value, m_breakpointType, labelText});
-                printf("Breakpoint added at %08X with type %d and label %s\n", value, m_breakpointType, labelText);
+                m_breakpoints.push_back({value, m_breakpointType, labelText, true});
             }
             ImGui::CloseCurrentPopup();
             addr[0] = '\0';
@@ -60,9 +60,49 @@ void BreakpointWindow::AddBreakpointButton()
     }
 }
 
+void BreakpointWindow::DisplayBreakpoints()
+{
+    ImGui::Checkbox("Display Breakpoints", &m_displayBreakpoints);
+    if (!m_displayBreakpoints)
+        return;
+    ImGui::BeginTable("Breakpoints", 5, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_Resizable);
+    ImGui::TableSetupColumn("#");
+    ImGui::TableSetupColumn("Address");
+    ImGui::TableSetupColumn("Type");
+    ImGui::TableSetupColumn("Label");
+    ImGui::TableSetupColumn("Action");
+    ImGui::TableHeadersRow();
+
+    for (auto& bp : m_breakpoints)
+    {
+        ImGui::TableNextRow();
+        ImGui::TableNextColumn();
+        ImGui::Text("%ld", &bp - &m_breakpoints[0]);
+        ImGui::TableNextColumn();
+        ImGui::Text("%08X", bp.addr);
+        ImGui::TableNextColumn();
+        ImGui::Text("%s", (bp.type == 0) ? "Exec" : (bp.type == 1) ? "Read" : "Write");
+        ImGui::TableNextColumn();
+        ImGui::Text("%s", bp.label.c_str());
+        ImGui::TableNextColumn();
+        std::string EnableLabel = fmt::format("Enable##{}", &bp - &m_breakpoints[0]);
+        ImGui::Checkbox(EnableLabel.c_str(), &bp.enabled);
+        ImGui::SameLine();
+        std::string RemoveLabel = fmt::format("Remove##{}", &bp - &m_breakpoints[0]);
+        if (ImGui::Button(RemoveLabel.c_str()))
+        {
+            m_breakpoints.erase(m_breakpoints.begin() + (&bp - &m_breakpoints[0]));
+            break;
+        }
+    }
+    ImGui::EndTable();
+}
+
 void BreakpointWindow::update()
 {
     ImGui::Begin("Breakpoints");
+    if (!m_breakpoints.empty())
+        DisplayBreakpoints();
     AddBreakpointButton();
     ImGui::End();
 }
