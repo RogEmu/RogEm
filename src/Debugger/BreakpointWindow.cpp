@@ -8,6 +8,7 @@ BreakpointWindow::BreakpointWindow(Debugger *debugger) :
     m_debugger(debugger),
     m_displayBreakpoints(true)
 {
+    m_breakpointType = 0;
 }
 
 BreakpointWindow::~BreakpointWindow()
@@ -25,7 +26,7 @@ void BreakpointWindow::AddBreakpointButton()
         static char labelText[32] = "\0";
         ImGui::Text("Add Breakpoint");
         ImGui::InputText("Address", addr, 9, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_AutoSelectAll);
-        if (ImGui::BeginCombo("Breakpoint Type", "Breakpoint"))
+        if (ImGui::BeginCombo("Breakpoint Type", (m_breakpointType == 0) ? "Exec" : (m_breakpointType == 1) ? "Read" : "Write"))
         {
             for (int i = 0; i < 3; i++)
             {
