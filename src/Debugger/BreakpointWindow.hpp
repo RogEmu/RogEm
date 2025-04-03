@@ -4,8 +4,16 @@
 #include "IWindow.hpp"
 #include <cstdint>
 #include <vector>
+#include <string>
 
 class Debugger;
+
+struct Breakpoint
+{
+    uint32_t addr;
+    int type;
+    std::string label;
+};
 
 class BreakpointWindow : public IWindow
 {
@@ -19,7 +27,8 @@ class BreakpointWindow : public IWindow
 
     private:
         Debugger *m_debugger;
-        std::vector<uint32_t> m_breakpoints;
+        std::vector<Breakpoint> m_breakpoints;
+        int m_breakpointType;
 };
 
 #endif
