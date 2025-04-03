@@ -15,7 +15,7 @@ BreakpointWindow::~BreakpointWindow()
 {
 }
 
-void BreakpointWindow::AddBreakpointButton()
+void BreakpointWindow::addBreakpointButton()
 {
     if (ImGui::Button("Add Breakpoint")){
         ImGui::OpenPopup("Breapkpoint Popup");
@@ -28,14 +28,12 @@ void BreakpointWindow::AddBreakpointButton()
         ImGui::InputText("Address", addr, 9, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_AutoSelectAll);
         if (ImGui::BeginCombo("Breakpoint Type", (m_breakpointType == 0) ? "Exec" : (m_breakpointType == 1) ? "Read" : "Write"))
         {
-            for (int i = 0; i < 3; i++)
-            {
-                const char* type = (i == 0) ? "Exec" : (i == 1) ? "Read" : "Write";
-                if (ImGui::Selectable(type, false))
-                {
-                    m_breakpointType = i;
-                }
-            }
+            if (ImGui::Selectable("Exec", false))
+                m_breakpointType = 0;
+            if (ImGui::Selectable("Read", false))
+                m_breakpointType = 1;
+            if (ImGui::Selectable("Write", false))
+                m_breakpointType = 2;
             ImGui::EndCombo();
         }
         ImGui::InputText("Label", labelText, 32, ImGuiInputTextFlags_AutoSelectAll);
@@ -44,7 +42,8 @@ void BreakpointWindow::AddBreakpointButton()
             char* end;
             uint32_t value = std::strtoul(addr, &end, 16);
             if (!*end) {
-                m_debugger->addBreakpoint(value, m_breakpointType, labelText);
+                type type = (m_breakpointType == 0) ? type::EXEC : (m_breakpointType == 1) ? type::READ : type::WRITE;
+                m_debugger->addBreakpoint(value, type, labelText);
             }
             ImGui::CloseCurrentPopup();
             addr[0] = '\0';
@@ -61,7 +60,7 @@ void BreakpointWindow::AddBreakpointButton()
     }
 }
 
-void BreakpointWindow::DisplayBreakpoints()
+void BreakpointWindow::displayBreakpoints()
 {
     ImGui::Checkbox("Display Breakpoints", &m_displayBreakpoints);
     if (!m_displayBreakpoints)
@@ -83,7 +82,7 @@ void BreakpointWindow::DisplayBreakpoints()
         ImGui::TableNextColumn();
         ImGui::Text("%08X", bp.addr);
         ImGui::TableNextColumn();
-        ImGui::Text("%s", (bp.type == 0) ? "Exec" : (bp.type == 1) ? "Read" : "Write");
+        ImGui::Text("%s", (bp.instructionType == type::EXEC) ? "Exec" : (bp.instructionType == type::READ) ? "Read" : "Write");
         ImGui::TableNextColumn();
         ImGui::Text("%s", bp.label.c_str());
         ImGui::TableNextColumn();
@@ -104,7 +103,7 @@ void BreakpointWindow::update()
 {
     ImGui::Begin("Breakpoints");
     if (!m_debugger->getBreakpoints().empty())
-        DisplayBreakpoints();
-    AddBreakpointButton();
+        displayBreakpoints();
+    addBreakpointButton();
     ImGui::End();
 }

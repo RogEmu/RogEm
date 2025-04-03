@@ -64,9 +64,6 @@ struct CPU
     void executeInstruction(const Instruction &instruction);
     void reset();
 
-    uint32_t getPC() const;
-    void setPC(uint32_t pc);
-
     uint32_t getReg(uint8_t reg) const;
     void setReg(uint8_t reg, uint32_t val);
 

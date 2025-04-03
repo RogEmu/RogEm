@@ -5,6 +5,7 @@
 #include <memory>
 #include <cstdint>
 #include <vector>
+#include "Disassembler.h"
 
 class IWindow;
 struct CPU;
@@ -13,7 +14,7 @@ class System;
 struct Breakpoint
 {
     uint32_t addr;
-    int type;
+    type instructionType;
     std::string label;
     bool enabled;
 };
@@ -47,7 +48,7 @@ class Debugger
         uint32_t readWord(uint32_t addr) const;
 
         // Breakpoints
-        void addBreakpoint(uint32_t addr, int type, const std::string &label);
+        void addBreakpoint(uint32_t addr, type type, const std::string &label);
         void removeBreakpoint(long index);
         std::vector<Breakpoint> &getBreakpoints();
 

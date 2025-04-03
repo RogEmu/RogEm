@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <vector>
 #include <string>
+#include "Disassembler.h"
 
 class Debugger;
 
@@ -17,8 +18,8 @@ class BreakpointWindow : public IWindow
         void update() override;
 
     private:
-        void AddBreakpointButton();
-        void DisplayBreakpoints();
+        void addBreakpointButton();
+        void displayBreakpoints();
 
     private:
         Debugger *m_debugger;
