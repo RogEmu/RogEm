@@ -1,7 +1,7 @@
 #include "BreakpointWindow.hpp"
+#include "Debugger.hpp"
 
 #include "imgui.h"
-#include "imgui/imgui_memory_editor.h"
 #include <fmt/format.h>
 
 BreakpointWindow::BreakpointWindow(Debugger *debugger) :
@@ -44,7 +44,7 @@ void BreakpointWindow::AddBreakpointButton()
             char* end;
             uint32_t value = std::strtoul(addr, &end, 16);
             if (!*end) {
-                m_breakpoints.push_back({value, m_breakpointType, labelText, true});
+                m_debugger->addBreakpoint(value, m_breakpointType, labelText);
             }
             ImGui::CloseCurrentPopup();
             addr[0] = '\0';
@@ -73,12 +73,13 @@ void BreakpointWindow::DisplayBreakpoints()
     ImGui::TableSetupColumn("Label");
     ImGui::TableSetupColumn("Action");
     ImGui::TableHeadersRow();
+    long index = 0;
 
-    for (auto& bp : m_breakpoints)
+    for (auto& bp : m_debugger->getBreakpoints())
     {
         ImGui::TableNextRow();
         ImGui::TableNextColumn();
-        ImGui::Text("%ld", &bp - &m_breakpoints[0]);
+        ImGui::Text("%ld", index);
         ImGui::TableNextColumn();
         ImGui::Text("%08X", bp.addr);
         ImGui::TableNextColumn();
@@ -86,28 +87,23 @@ void BreakpointWindow::DisplayBreakpoints()
         ImGui::TableNextColumn();
         ImGui::Text("%s", bp.label.c_str());
         ImGui::TableNextColumn();
-        std::string EnableLabel = fmt::format("Enable##{}", &bp - &m_breakpoints[0]);
+        std::string EnableLabel = fmt::format("Enable##{}", index);
         ImGui::Checkbox(EnableLabel.c_str(), &bp.enabled);
         ImGui::SameLine();
-        std::string RemoveLabel = fmt::format("Remove##{}", &bp - &m_breakpoints[0]);
+        std::string RemoveLabel = fmt::format("Remove##{}", index);
         if (ImGui::Button(RemoveLabel.c_str()))
         {
-            m_breakpoints.erase(m_breakpoints.begin() + (&bp - &m_breakpoints[0]));
-            break;
+            m_debugger->removeBreakpoint(index);
         }
+        index++;
     }
     ImGui::EndTable();
-}
-
-std::vector<Breakpoint> BreakpointWindow::GetBreakpoints() const
-{
-    return m_breakpoints;
 }
 
 void BreakpointWindow::update()
 {
     ImGui::Begin("Breakpoints");
-    if (!m_breakpoints.empty())
+    if (!m_debugger->getBreakpoints().empty())
         DisplayBreakpoints();
     AddBreakpointButton();
     ImGui::End();

@@ -111,6 +111,21 @@ std::vector<uint8_t> *Debugger::memoryRange(uint32_t addr)
     return slice;
 }
 
+void Debugger::addBreakpoint(uint32_t addr, int type, const std::string &label)
+{
+    m_breakpoints.push_back({addr, type, label, true});
+}
+
+void Debugger::removeBreakpoint(long index)
+{
+    m_breakpoints.erase(m_breakpoints.begin() + index);
+}
+
+std::vector<Breakpoint> &Debugger::getBreakpoints()
+{
+    return m_breakpoints;
+}
+
 void Debugger::update()
 {
     for (auto &window : m_windows)

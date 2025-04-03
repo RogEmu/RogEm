@@ -10,6 +10,14 @@ class IWindow;
 struct CPU;
 class System;
 
+struct Breakpoint
+{
+    uint32_t addr;
+    int type;
+    std::string label;
+    bool enabled;
+};
+
 class Debugger
 {
     public:
@@ -38,12 +46,19 @@ class Debugger
         uint16_t readHalfWord(uint32_t addr) const;
         uint32_t readWord(uint32_t addr) const;
 
+        // Breakpoints
+        void addBreakpoint(uint32_t addr, int type, const std::string &label);
+        void removeBreakpoint(long index);
+        std::vector<Breakpoint> &getBreakpoints();
+
         std::vector<uint8_t> *memoryRange(uint32_t addr);
 
     private:
         System *m_system;
 
         std::list<std::shared_ptr<IWindow>> m_windows;
+
+        std::vector<Breakpoint> m_breakpoints;
 
         bool m_paused;
         float m_simSpeed;
