@@ -22,11 +22,12 @@ class AssemblyWindow : public IWindow
         void drawAssemblyLine(uint32_t addr);
 
         void jumpToPC();
-        void findPcCursor(uint32_t startAddr, const ImGuiListClipper &clipper);
+        void updatePcCursor(uint32_t baseAddr, float itemHeight);
 
     private:
+        bool m_jumpToPc;
         bool m_autoFollowPc;
-        float m_pcCursorPosY;
+        float m_pcCursor;
         Debugger *m_debugger;
 };
 
