@@ -19,10 +19,12 @@ AssemblyWindow::~AssemblyWindow()
 
 void AssemblyWindow::update()
 {
-    ImGui::Begin("Assembly");
-
-    drawTopBar();
-    drawAssembly();
+    if (ImGui::Begin("Assembly"))
+    {
+        drawTopBar();
+        drawAssembly();
+    }
+    ImGui::End();
 }
 
 void AssemblyWindow::drawTopBar()
@@ -84,7 +86,6 @@ void AssemblyWindow::drawAssembly()
         jumpToPC();
     }
     ImGui::EndTable();
-    ImGui::End();
 }
 
 void AssemblyWindow::drawAssemblyLine(uint32_t addr)
