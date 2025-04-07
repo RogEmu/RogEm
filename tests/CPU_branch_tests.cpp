@@ -4,7 +4,7 @@
 #include "Bus.h"
 #include "CPU.h"
 
-TEST(CpuTest, BEQ_When_BrancH_Equal)
+TEST(CpuTest, BEQ_Equal)
 {
     auto bios = BIOS();
     auto bus = Bus(&bios, nullptr);
@@ -27,7 +27,7 @@ TEST(CpuTest, BEQ_When_BrancH_Equal)
     EXPECT_EQ(cpu.m_inBranchDelay, true);
 }
 
-TEST(CpuTest, BEQ_When_BrancH_Not_Equal)
+TEST(CpuTest, BEQ_Not_Equal)
 {
     auto bios = BIOS();
     auto bus = Bus(&bios, nullptr);
@@ -47,7 +47,7 @@ TEST(CpuTest, BEQ_When_BrancH_Not_Equal)
     cpu.m_branchSlotAddr = 0;
     cpu.branchOnEqual(i);
 
-    EXPECT_EQ(cpu.pc, RESET_VECTOR + 4);
+    EXPECT_EQ(cpu.pc, RESET_VECTOR);
 }
 
 TEST(CpuTest, BNE_BranchWhenNotEqual)
