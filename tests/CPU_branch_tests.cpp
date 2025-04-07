@@ -4,43 +4,47 @@
 #include "Bus.h"
 #include "CPU.h"
 
-TEST(CpuTest, BEQ_1)
+TEST(CpuTest, BEQ_When_BrancH_Equal)
 {
     auto bios = BIOS();
     auto bus = Bus(&bios, nullptr);
     CPU cpu(&bus);
     Instruction i;
-
+    uint8_t srcReg = static_cast<uint8_t>(GprIndex::T0);
+    uint8_t targetReg = static_cast<uint8_t>(GprIndex::T1);
     uint32_t value = 0xB16B00B5;
+
     int16_t imm = 0x0004;
 
-    loadImmediate(cpu, 11, value);
-    i.i.rs = 11;
-    i.i.rt = 11;
+    loadImmediate(cpu, srcReg, value);
+    loadImmediate(cpu, targetReg, value);
+    i.i.rs = srcReg;
+    i.i.rt = targetReg;
     i.i.immediate = imm;
     cpu.branchOnEqual(i);
 
-    EXPECT_EQ(cpu.pc, RESET_VECTOR + 4 + (imm << 2));
+    EXPECT_EQ(cpu.m_branchSlotAddr, cpu.pc + 4 + (imm << 2));
+    EXPECT_EQ(cpu.m_inBranchDelay, true);
 }
 
-TEST(CpuTest, BEQ_2)
+TEST(CpuTest, BEQ_When_BrancH_Not_Equal)
 {
     auto bios = BIOS();
     auto bus = Bus(&bios, nullptr);
     CPU cpu(&bus);
     Instruction i;
-
+    uint8_t srcReg = static_cast<uint8_t>(GprIndex::T0);
+    uint8_t targetReg = static_cast<uint8_t>(GprIndex::T1);
     uint32_t value = 0xB16B00B5;
+
     int16_t imm = 0x0004;
 
-    cpu.pc = RESET_VECTOR;  // Set initial PC
-
-    loadImmediate(cpu, 11, value);
-    cpu.gpr[12] = 0;  // Ensure $12 is zero
-
-    i.i.rs = 11;
-    i.i.rt = 12;
+    loadImmediate(cpu, srcReg, value);
+    loadImmediate(cpu, targetReg, value + 1);
+    i.i.rs = srcReg;
+    i.i.rt = targetReg;
     i.i.immediate = imm;
+    cpu.m_branchSlotAddr = 0;
     cpu.branchOnEqual(i);
 
     EXPECT_EQ(cpu.pc, RESET_VECTOR + 4);

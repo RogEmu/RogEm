@@ -803,9 +803,7 @@ void CPU::executeBranch(const Instruction &instruction)
 void CPU::branchOnEqual(const Instruction &instruction)
 {
     if (getReg(instruction.i.rs) == getReg(instruction.i.rt))
-        pc += 4 + ((int16_t)instruction.i.immediate << 2);
-    else
-        pc += 4;
+        executeBranch(instruction);
 }
 
 void CPU::branchOnNotEqual(const Instruction &instruction)
