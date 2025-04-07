@@ -46,58 +46,73 @@ TEST(CpuTest, BEQ_2)
     EXPECT_EQ(cpu.pc, RESET_VECTOR + 4);
 }
 
-TEST(CpuTest, BNE_BranchWhenNotEqual) {
+TEST(CpuTest, BNE_BranchWhenNotEqual)
+{
     auto bios = BIOS();
     auto bus = Bus(&bios, nullptr);
     CPU cpu(&bus);
     Instruction i;
 
-    cpu.pc = RESET_VECTOR;
-    cpu.gpr[1] = 0x1234;
-    cpu.gpr[2] = 0x5678;
+    uint8_t srcReg = static_cast<uint8_t>(GprIndex::T0);
+    uint8_t targetReg = static_cast<uint8_t>(GprIndex::T1);
 
-    i.i.rs = 1;
-    i.i.rt = 2;
+    cpu.setReg(srcReg, 11);
+    cpu.setReg(targetReg, 12);
+
+    i.i.rs = srcReg;
+    i.i.rt = targetReg;
     i.i.immediate = 0x0004;
+    cpu.m_branchSlotAddr = 0;
 
     cpu.branchOnNotEqual(i);
     EXPECT_EQ(cpu.m_branchSlotAddr, RESET_VECTOR + 4 + ((int16_t)i.i.immediate << 2));
+    EXPECT_EQ(cpu.m_inBranchDelay, true);  // Branch taken
 }
 
-TEST(CpuTest, BNE_NoBranchWhenEqual) {
+TEST(CpuTest, BNE_NoBranchWhenEqual)
+{
     auto bios = BIOS();
     auto bus = Bus(&bios, nullptr);
     CPU cpu(&bus);
     Instruction i;
 
-    cpu.pc = RESET_VECTOR;
-    cpu.gpr[3] = 0xDEAD;
-    cpu.gpr[4] = 0xDEAD;
+    uint8_t srcReg = static_cast<uint8_t>(GprIndex::T0);
+    uint8_t targetReg = static_cast<uint8_t>(GprIndex::T1);
 
-    i.i.rs = 3;
-    i.i.rt = 4;
+    cpu.setReg(srcReg, 11);
+    cpu.setReg(targetReg, 11);  // Same value
+
+    i.i.rs = srcReg;
+    i.i.rt = targetReg;
     i.i.immediate = 0x0004;
+    cpu.m_branchSlotAddr = 0;
 
     cpu.branchOnNotEqual(i);
-    EXPECT_EQ(cpu.pc + 4, RESET_VECTOR + 4);  // No branch
+    EXPECT_EQ(cpu.m_branchSlotAddr, 0);  // No branch
+    EXPECT_EQ(cpu.m_inBranchDelay, false);  // No branch taken
 }
 
-TEST(CpuTest, BNE_NoBranch_ZeroRegistersEqual) {
+TEST(CpuTest, BNE_NoBranch_ZeroRegistersEqual)
+{
     auto bios = BIOS();
     auto bus = Bus(&bios, nullptr);
     CPU cpu(&bus);
     Instruction i;
 
-    cpu.pc = RESET_VECTOR;
-    cpu.gpr[0] = 0;  // $zero
-    cpu.gpr[1] = 0;
+    uint8_t srcReg = static_cast<uint8_t>(GprIndex::T0);
+    uint8_t targetReg = static_cast<uint8_t>(GprIndex::T1);
 
-    i.i.rs = 0;
-    i.i.rt = 1;
-    i.i.immediate = 2;
+    cpu.setReg(srcReg, 0);
+    cpu.setReg(targetReg, 0);  // Same value
+
+    i.i.rs = srcReg;
+    i.i.rt = targetReg;
+    i.i.immediate = 0x0004;
+    cpu.m_branchSlotAddr = 0;
 
     cpu.branchOnNotEqual(i);
-    EXPECT_EQ(cpu.pc + 4, RESET_VECTOR + 4);  // No branch
+    EXPECT_EQ(cpu.m_branchSlotAddr, 0);  // No branch
+    EXPECT_EQ(cpu.m_inBranchDelay, false);  // No branch taken
 }
 
 TEST(CpuTest, BNE_MaxPositiveOffset) {
@@ -106,14 +121,18 @@ TEST(CpuTest, BNE_MaxPositiveOffset) {
     CPU cpu(&bus);
     Instruction i;
 
-    cpu.pc = RESET_VECTOR;
-    cpu.gpr[2] = 100;
-    cpu.gpr[3] = 200;
+    uint8_t srcReg = static_cast<uint8_t>(GprIndex::T0);
+    uint8_t targetReg = static_cast<uint8_t>(GprIndex::T1);
 
-    i.i.rs = 2;
-    i.i.rt = 3;
-    i.i.immediate = 0x7FFF;
+    cpu.setReg(srcReg, 11);
+    cpu.setReg(targetReg, 12);
+
+    i.i.rs = srcReg;
+    i.i.rt = targetReg;
+    i.i.immediate = 0x7FFF;  // Maximum positive offset
+    cpu.m_branchSlotAddr = 0;
 
     cpu.branchOnNotEqual(i);
-    EXPECT_EQ(cpu.m_branchSlotAddr, RESET_VECTOR + 4 + (0x7FFF << 2));
+    EXPECT_EQ(cpu.m_branchSlotAddr, RESET_VECTOR + 4 + ((int16_t)i.i.immediate << 2));
+    EXPECT_EQ(cpu.m_inBranchDelay, true);  // Branch taken
 }
