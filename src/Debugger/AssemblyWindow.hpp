@@ -21,8 +21,11 @@ class AssemblyWindow : public IWindow
         void drawAssembly();
         void drawAssemblyLine(uint32_t addr);
 
+        uint32_t getAddressFromLine(int line);
+        int getLineFromAddress(uint32_t addr);
+
         void jumpToPC();
-        void updatePcCursor(uint32_t baseAddr, float itemHeight);
+        void updatePcCursor(float itemHeight);
 
     private:
         bool m_jumpToPc;

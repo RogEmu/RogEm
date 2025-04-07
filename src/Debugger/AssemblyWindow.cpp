@@ -1,6 +1,7 @@
 #include "AssemblyWindow.hpp"
 #include <fmt/format.h>
 
+#include "MemoryMap.hpp"
 #include "CPU.h"
 #include "Disassembler.h"
 #include "Debugger.hpp"
@@ -66,25 +67,24 @@ void AssemblyWindow::drawAssembly()
     ImGui::TableSetupColumn("Assembly");
     ImGui::TableHeadersRow();
 
-    uint32_t startAddr = 0xBFC00000;
-    uint32_t size = 0x7FFFF;
+    uint32_t size = (MemoryMap::RAM_RANGE.length + MemoryMap::BIOS_RANGE.length) / 4;
 
+    if (m_jumpToPc || m_autoFollowPc)
+    {
+        jumpToPC();
+    }
     ImGuiListClipper clipper;
-    clipper.Begin(size / 4 + 1);
+    clipper.Begin(size);
     while (clipper.Step())
     {
         for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++)
         {
             ImGui::TableNextColumn();
-            uint32_t currentAddr = startAddr + i * 4;
+            uint32_t currentAddr = getAddressFromLine(i);
             drawAssemblyLine(currentAddr);
         }
     }
-    updatePcCursor(startAddr, clipper.ItemsHeight);
-    if (m_jumpToPc || m_autoFollowPc)
-    {
-        jumpToPC();
-    }
+    updatePcCursor(clipper.ItemsHeight);
     ImGui::EndTable();
 }
 
@@ -94,13 +94,44 @@ void AssemblyWindow::drawAssemblyLine(uint32_t addr)
     ImColor lineColor(IM_COL32_WHITE);
     uint32_t currentInstruction = m_debugger->readWord(addr);
 
-    if (addr == pc)
+    if (getLineFromAddress(pc) == getLineFromAddress(addr))
+    {
         lineColor = ImColor(255, 209, 25);
+    }
     ImGui::TextColored(lineColor, "0x%08x", addr);
     ImGui::TableNextColumn();
     ImGui::TextColored(lineColor, "%s", Disassembler::formatAsHexBytes(currentInstruction).c_str());
     ImGui::TableNextColumn();
-    ImGui::TextColored(lineColor, "%s", Disassembler::disassemble(pc, currentInstruction).c_str());
+    ImGui::TextColored(lineColor, "%s", Disassembler::disassemble(addr, currentInstruction).c_str());
+}
+
+uint32_t AssemblyWindow::getAddressFromLine(int line)
+{
+    uint32_t currentAddr = line * 4;
+
+    if (MemoryMap::RAM_RANGE.contains(currentAddr))
+    {
+        return currentAddr;
+    }
+    else
+    {
+        return MemoryMap::BIOS_BASE_KSEG1 + (currentAddr - MemoryMap::RAM_RANGE.length);
+    }
+}
+
+int AssemblyWindow::getLineFromAddress(uint32_t addr)
+{
+    auto mappedAddr = MemoryMap::mapAddress(addr);
+
+    if (MemoryMap::RAM_RANGE.contains(mappedAddr))
+    {
+        return (mappedAddr - MemoryMap::RAM_BASE_KUSEG) / 4;
+    }
+    else if (MemoryMap::BIOS_RANGE.contains(mappedAddr))
+    {
+        return (MemoryMap::RAM_RANGE.length + (mappedAddr - MemoryMap::BIOS_BASE_KUSEG)) / 4;
+    }
+    return -1;
 }
 
 void AssemblyWindow::jumpToPC()
@@ -108,8 +139,9 @@ void AssemblyWindow::jumpToPC()
     ImGui::SetScrollFromPosY(ImGui::GetCursorStartPos().y + m_pcCursor, 0.42f);
 }
 
-void AssemblyWindow::updatePcCursor(uint32_t baseAddr, float itemHeight)
+void AssemblyWindow::updatePcCursor(float itemHeight)
 {
     auto pc = m_debugger->getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC));
-    m_pcCursor = (pc - baseAddr) * 0.25f * itemHeight;
+    auto line = getLineFromAddress(pc);
+    m_pcCursor = line * itemHeight;
 }
