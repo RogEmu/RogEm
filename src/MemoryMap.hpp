@@ -1,0 +1,74 @@
+/*
+** EPITECH PROJECT, 2025
+** rogem
+** File description:
+** MemoryMap
+*/
+
+#ifndef MEMORYMAP_HPP_
+#define MEMORYMAP_HPP_
+
+#include <cstdint>
+
+namespace MemoryMap
+{
+
+struct MemRange
+{
+    uint32_t start;
+    uint32_t length;
+
+    bool contains(uint32_t addr) const
+    {
+        return (addr >= start && addr < start + length);
+    }
+
+    uint32_t remap(uint32_t addr) const
+    {
+        return addr - start;
+    }
+};
+
+enum class MemorySegments : uint32_t
+{
+    KUSEG = 0x0,
+    KSEG0 = 0x80000000,
+    KSEG1 = 0xA0000000,
+    KSEG2 = 0xFFFE0000
+};
+
+// All possible RAM base addresses
+constexpr uint32_t RAM_BASE_KUSEG = 0x0;
+constexpr uint32_t RAM_BASE_KSEG0 = 0x80000000;
+constexpr uint32_t RAM_BASE_KSEG1 = 0xA0000000;
+
+// All possible BIOS base addresses
+constexpr uint32_t BIOS_BASE_KUSEG = 0x1FC00000;
+constexpr uint32_t BIOS_BASE_KSEG0 = 0x9FC00000;
+constexpr uint32_t BIOS_BASE_KSEG1 = 0xBFC00000;
+
+// When adding address spaces, use physical addresses
+constexpr MemRange BIOS_RANGE = {BIOS_BASE_KUSEG, 512 * 1024};
+constexpr MemRange RAM_RANGE = {RAM_BASE_KUSEG, 2 * 1024 * 1024};
+constexpr MemRange MEMORY_CONTROL_1_RANGE = {0x1F801000, 36};
+constexpr MemRange MEMORY_CONTROL_2_RANGE = {0x1F801060, 4};
+constexpr MemRange CACHE_CONTROL_RANGE = {0xFFFE0000, 512};
+constexpr MemRange SPU_CONTROL_REGS_RANGE = {0x1F801D80, 64};
+constexpr MemRange EXP_REG_2_RANGE = {0x1F802000, 1024 * 8};
+
+constexpr MemorySegments AddressSegments[] = {
+    MemorySegments::KUSEG,
+    MemorySegments::KUSEG,
+    MemorySegments::KUSEG,
+    MemorySegments::KUSEG,
+    MemorySegments::KSEG0,
+    MemorySegments::KSEG1,
+    MemorySegments::KSEG2,
+    MemorySegments::KSEG2,
+};
+
+uint32_t mapAddress(uint32_t addr);
+
+};
+
+#endif /* !MEMORYMAP_HPP_ */

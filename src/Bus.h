@@ -14,30 +14,6 @@
 class BIOS;
 class RAM;
 
-struct MemRange
-{
-    uint32_t start;
-    uint32_t length;
-
-    bool contains(uint32_t addr) const
-    {
-        return (addr >= start && addr < start + length);
-    }
-
-    uint32_t remap(uint32_t addr) const
-    {
-        return addr - start;
-    }
-};
-
-enum class MemorySegments
-{
-    KUSEG,
-    KSEG0,
-    KSEG1,
-    KSEG2
-};
-
 class Bus
 {
     public:
@@ -50,8 +26,6 @@ class Bus
         void storeHalfWord(uint32_t addr, uint16_t value);
         uint8_t loadByte(uint32_t addr) const;
         void storeByte(uint32_t addr, uint8_t value);
-
-        uint32_t mapAddress(uint32_t addr) const;
 
         std::vector<uint8_t> *getMemoryRange(uint32_t addr);
         const std::vector<uint8_t> *getMemoryRange(uint32_t addr) const;

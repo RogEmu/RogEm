@@ -13,6 +13,7 @@ set(SRC_FILES
     CPU.cpp
     Disassembler.cpp
     System.cpp
+    MemoryMap.cpp
     Debugger/Debugger.cpp
     Debugger/AssemblyWindow.cpp
     Debugger/RegisterWindow.cpp
