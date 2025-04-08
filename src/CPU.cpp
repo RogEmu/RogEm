@@ -159,6 +159,9 @@ void CPU::executeInstruction(const Instruction &instruction)
     case PrimaryOpCode::BEQ:
         branchOnEqual(instruction);
         break;
+    case PrimaryOpCode::BLEZ:
+        branchOnLessThanOrEqualToZero(instruction);
+        break;
     default:
         illegalInstruction(instruction);
         break;
