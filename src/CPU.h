@@ -144,15 +144,14 @@ struct CPU
 
     // Branch instructions
     void executeBranch(const Instruction &instruction);
-    void branchOnEqual(const Instruction &instruction); // Tested
-    void branchOnNotEqual(const Instruction &instruction);
-    void branchOnLessThanZero(const Instruction &instruction);
-    void branchOnLessThanZeroAndLink(const Instruction &instruction);
-    void branchOnGreaterThanOrEqualToZero(const Instruction &instruction);
-    void branchOnGreaterThanZero(const Instruction &instruction);
-    void branchOnGreaterThanZeroAndLink(const Instruction &instruction);
-    void branchOnLessThanOrEqualToZero(const Instruction &instruction);
-    void branchOnGreaterThanOrEqualToZeroAndLink(const Instruction &instruction);
+    void branchOnEqual(const Instruction &instruction); // BEQ
+    void branchOnNotEqual(const Instruction &instruction); // BNZ
+    void branchOnLessThanOrEqualToZero(const Instruction &instruction); // BLEZ
+    void branchOnGreaterThanZero(const Instruction &instruction); // BGTZ
+    void branchOnLessThanZero(const Instruction &instruction); // BLTZ
+    void branchOnLessThanZeroAndLink(const Instruction &instruction); //BLTZAL
+    void branchOnGreaterThanOrEqualToZero(const Instruction &instruction); //BGEZ
+    void branchOnGreaterThanOrEqualToZeroAndLink(const Instruction &instruction); // BGEZAL
 
     //COP0 Instructions
     void executeCop0(const Instruction &instruction);

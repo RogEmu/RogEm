@@ -178,12 +178,12 @@ void CPU::branchOnConditionZero(const Instruction &Instruction)
     case BranchOnConditionZero::BGEZ:
         branchOnGreaterThanOrEqualToZero(Instruction);
         break;
-    // case BranchOnConditionZero::BLTZAL:
-    //     branchOnLessThanZeroAndLink(Instruction);
-    //     break;
-    // case BranchOnConditionZero::BGEZAL:
-    //     branchOnGreaterOrEqualZeroAndLink(Instruction);
-    //     break;
+    case BranchOnConditionZero::BLTZAL:
+        branchOnLessThanZeroAndLink(Instruction);
+        break;
+    case BranchOnConditionZero::BGEZAL:
+        branchOnGreaterThanOrEqualToZeroAndLink(Instruction);
+        break;
     default:
         illegalInstruction(Instruction);
         break;
@@ -836,15 +836,6 @@ void CPU::branchOnGreaterThanZero(const Instruction &instruction)
         executeBranch(instruction);
 }
 
-void CPU::branchOnGreaterThanZeroAndLink(const Instruction &instruction)
-{
-    if (static_cast<int32_t>(getReg(instruction.i.rs)) > 0)
-    {
-        setReg(31, pc + 8);
-        executeBranch(instruction);
-    }
-}
-
 void CPU::branchOnLessThanOrEqualToZero(const Instruction &instruction)
 {
     if (static_cast<int32_t>(getReg(instruction.i.rs)) <= 0)
@@ -856,10 +847,8 @@ void CPU::branchOnLessThanZeroAndLink(const Instruction &instruction)
     if (static_cast<int32_t>(getReg(instruction.i.rs)) < 0)
     {
         setReg(31, pc + 8);
-        pc += 4 + ((int16_t)instruction.i.immediate << 2);
+        executeBranch(instruction);
     }
-    else
-        pc += 4;
 }
 
 void CPU::branchOnGreaterThanOrEqualToZeroAndLink(const Instruction &instruction)
@@ -867,10 +856,8 @@ void CPU::branchOnGreaterThanOrEqualToZeroAndLink(const Instruction &instruction
     if (static_cast<int32_t>(getReg(instruction.i.rs)) >= 0)
     {
         setReg(31, pc + 8);
-        pc += 4 + ((int16_t)instruction.i.immediate << 2);
+        executeBranch(instruction);
     }
-    else
-        pc += 4;
 }
 
 void CPU::executeCop0(const Instruction &instruction)
