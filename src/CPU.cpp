@@ -135,6 +135,9 @@ void CPU::executeInstruction(const Instruction &instruction)
     case PrimaryOpCode::LWL:
         loadWordLeft(instruction);
         break;
+    case PrimaryOpCode::BGTZ:
+        branchOnGreaterThanZero(instruction);
+        break;
     // case PrimaryOpCode::SLTI:
     //     setOnLessThanImmediate(instruction);
     //     break;
