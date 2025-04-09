@@ -116,6 +116,32 @@ void Debugger::addBreakpoint(uint32_t addr, BreakpointType type, const std::stri
     m_breakpoints.push_back({addr, type, label, true});
 }
 
+long Debugger::getBreakpointIndex(uint32_t addr)
+{
+    for (int i = 0; i < static_cast<int>(m_breakpoints.size()); i++) {
+        if (m_breakpoints[i].addr == addr) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+bool Debugger::isBreakpointEnabled(long index)
+{
+    if (index < 0 || index >= static_cast<long>(m_breakpoints.size())) {
+        return false;
+    }
+    return m_breakpoints[index].enabled;
+}
+
+void Debugger::enableBreakpoint(long index, bool enable)
+{
+    if (index < 0 || index >= static_cast<long>(m_breakpoints.size())) {
+        return;
+    }
+    m_breakpoints[index].enabled = enable;
+}
+
 void Debugger::removeBreakpoint(long index)
 {
     if (index < 0 || index >= static_cast<long>(m_breakpoints.size())) {
@@ -170,6 +196,7 @@ void Debugger::update()
 
 void Debugger::draw()
 {
+    ImGui::ShowDemoWindow();
     for (auto &subwin : m_windows)
     {
         subwin->update();
@@ -180,3 +207,4 @@ void Debugger::pause(bool pause)
 {
     m_paused = pause;
 }
+

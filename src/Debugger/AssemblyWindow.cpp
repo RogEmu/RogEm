@@ -56,6 +56,7 @@ void AssemblyWindow::drawAssembly()
     auto tableFlags = ImGuiTableFlags_RowBg
                     | ImGuiTableFlags_Borders
                     | ImGuiTableFlags_ScrollY
+                    | ImGuiTableFlags_HighlightHoveredColumn
                     | ImGuiTableFlags_Resizable;
 
     if (!ImGui::BeginTable("Assembly", 3, tableFlags))
@@ -70,9 +71,7 @@ void AssemblyWindow::drawAssembly()
     uint32_t size = (MemoryMap::RAM_RANGE.length + MemoryMap::BIOS_RANGE.length) / 4;
 
     if (m_jumpToPc || m_autoFollowPc)
-    {
         jumpToPC();
-    }
     ImGuiListClipper clipper;
     clipper.Begin(size);
     while (clipper.Step())
@@ -88,22 +87,83 @@ void AssemblyWindow::drawAssembly()
     ImGui::EndTable();
 }
 
+void drawCircle(ImDrawList* draw_list, ImVec2 center, float radius, ImU32 color)
+{
+    draw_list->AddCircleFilled(center, radius, color);
+}
+
 void AssemblyWindow::drawAssemblyLine(uint32_t addr)
 {
     uint32_t pc = m_debugger->getSpecialReg((uint8_t)SpecialRegIndex::PC);
     ImColor lineColor(IM_COL32_WHITE);
     uint32_t currentInstruction = m_debugger->readWord(addr);
 
-    if (getLineFromAddress(pc) == getLineFromAddress(addr))
+    const bool isPCLine = (getLineFromAddress(pc) == getLineFromAddress(addr));
+    const bool isSelected = (m_selectedAddr == addr);
+    const bool hasBreakpoint = (m_debugger->getBreakpointIndex(addr) != -1);
+
+    if (isSelected)
+    {
+        ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.2f, 0.6f, 1.0f, 0.4f));         // highlight selected line
+        ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.3f, 0.7f, 1.0f, 0.6f));
+        ImGui::PushStyleColor(ImGuiCol_HeaderActive, ImVec4(0.4f, 0.8f, 1.0f, 0.9f));
+    }
+
+    if (isPCLine)
     {
         lineColor = ImColor(255, 209, 25);
+        ImGui::PushStyleColor(ImGuiCol_Text, lineColor.Value); // highlight PC line
     }
-    ImGui::TextColored(lineColor, "0x%08x", addr);
+
+    ImGuiSelectableFlags selectable_flags = ImGuiSelectableFlags_SpanAllColumns;
+
+    ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 16);
+
+    if (ImGui::Selectable(fmt::format("0x{:08X}", addr).c_str(), isSelected, selectable_flags))
+        m_selectedAddr = addr;
+
+    if (isSelected)
+        ImGui::PopStyleColor(3);
+
+    if (isPCLine)
+        ImGui::PopStyleColor();
+
+    if (hasBreakpoint)
+    {
+        ImDrawList* draw_list = ImGui::GetWindowDrawList();
+        ImVec2 circleCenter = ImVec2(cursorPos.x + 8, cursorPos.y + ImGui::GetTextLineHeight() * 0.5f);
+        int bpIndex = m_debugger->getBreakpointIndex(addr);
+        bool isEnabled = m_debugger->isBreakpointEnabled(bpIndex);
+
+        if (isEnabled)
+            draw_list->AddCircleFilled(circleCenter, 5.0f, IM_COL32(255, 50, 50, 255)); // filled red
+        else
+            draw_list->AddCircle(circleCenter, 5.0f, IM_COL32(255, 50, 50, 255), 16, 2.0f); // outlined red
+    }
+
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("0x%08X", addr);
+
+    if (ImGui::IsItemClicked() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
+        int bpIndex = m_debugger->getBreakpointIndex(addr);
+        if (bpIndex != -1) {
+            bool enabled = m_debugger->isBreakpointEnabled(bpIndex);
+            m_debugger->enableBreakpoint(bpIndex, !enabled);
+        }
+        else
+            m_debugger->addBreakpoint(addr, BreakpointType::EXEC, fmt::format("Breakpoint at 0x{:08X}", addr));
+    }
+
+
     ImGui::TableNextColumn();
     ImGui::TextColored(lineColor, "%s", Disassembler::formatAsHexBytes(currentInstruction).c_str());
     ImGui::TableNextColumn();
     ImGui::TextColored(lineColor, "%s", Disassembler::disassemble(addr, currentInstruction).c_str());
 }
+
+
 
 uint32_t AssemblyWindow::getAddressFromLine(int line)
 {

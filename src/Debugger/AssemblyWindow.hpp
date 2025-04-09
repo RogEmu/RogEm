@@ -32,6 +32,7 @@ class AssemblyWindow : public IWindow
         bool m_autoFollowPc;
         float m_pcCursor;
         Debugger *m_debugger;
+        uint32_t m_selectedAddr;
 };
 
 #endif /* !ASSEMBLYWINDOW_HPP_ */

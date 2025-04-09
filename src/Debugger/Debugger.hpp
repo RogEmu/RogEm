@@ -58,6 +58,9 @@ class Debugger
         // Breakpoints
         void addBreakpoint(uint32_t addr, BreakpointType type, const std::string &label);
         void removeBreakpoint(long index);
+        void enableBreakpoint(long index, bool enable);
+        bool isBreakpointEnabled(long index);
+        long getBreakpointIndex(uint32_t addr);
         std::vector<Breakpoint> &getBreakpoints();
 
         std::vector<uint8_t> *memoryRange(uint32_t addr);
