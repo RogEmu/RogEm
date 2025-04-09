@@ -715,7 +715,7 @@ TEST(CpuBranchTests, BGEZ_MaxNegativeOffset)
     EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), branchTarget);
 }
 
-TEST(Cpu_Branch, BLEZ_ZeroOffset)
+TEST(CpuBranchTests, BLEZ_ZeroOffset)
 {
     BIOS bios;
     RAM ram;
@@ -741,7 +741,7 @@ TEST(Cpu_Branch, BLEZ_ZeroOffset)
     EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), branchTarget);
 }
 
-TEST(Cpu_Branch, BLEZ_BranchTaken_Negative)
+TEST(CpuBranchTests, BLEZ_BranchTaken_Negative)
 {
     BIOS bios;
     RAM ram;
@@ -768,7 +768,7 @@ TEST(Cpu_Branch, BLEZ_BranchTaken_Negative)
     EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), branchTarget);
 }
 
-TEST(Cpu_Branch, BLEZ_BranchTaken_Zero)
+TEST(CpuBranchTests, BLEZ_BranchTaken_Zero)
 {
     BIOS bios;
     RAM ram;
@@ -795,7 +795,7 @@ TEST(Cpu_Branch, BLEZ_BranchTaken_Zero)
     EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), branchTarget);
 }
 
-TEST(Cpu_Branch, BLEZ_BranchNotTaken_Positive)
+TEST(CpuBranchTests, BLEZ_BranchNotTaken_Positive)
 {
     BIOS bios;
     RAM ram;
@@ -822,7 +822,7 @@ TEST(Cpu_Branch, BLEZ_BranchNotTaken_Positive)
     EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), branchTarget);
 }
 
-TEST(Cpu_Branch, BLEZ_MaxPositiveOffset)
+TEST(CpuBranchTests, BLEZ_MaxPositiveOffset)
 {
     BIOS bios;
     RAM ram;
@@ -849,7 +849,7 @@ TEST(Cpu_Branch, BLEZ_MaxPositiveOffset)
     EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), branchTarget);
 }
 
-TEST(Cpu_Branch, BLEZ_MaxNegativeOffset)
+TEST(CpuBranchTests, BLEZ_MaxNegativeOffset)
 {
     BIOS bios;
     RAM ram;
@@ -873,5 +873,153 @@ TEST(Cpu_Branch, BLEZ_MaxNegativeOffset)
 
     cpu.step();
     EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T1)), 0x1234);
+    EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), branchTarget);
+}
+
+TEST(CpuBranchTests, BLTZAL_BranchTaken)
+{
+    BIOS bios;
+    RAM ram;
+    Bus bus(&bios, &ram);
+    CPU cpu(&bus);
+
+    uint32_t pc = 0x00100000;
+    uint16_t offset = 0x0020;
+    uint32_t branchTarget = pc + 4 + (offset << 2); // 0x00100084
+
+    cpu.setReg(static_cast<uint8_t>(GprIndex::T0), 0xFFFFFFFF); // -1 -> taken
+    cpu.setReg(static_cast<uint8_t>(GprIndex::RA), 0);          // clear RA
+    cpu.setSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC), pc);
+
+    bus.storeWord(pc, 0x05100020);     // BLTZAL T0, +0x20
+    bus.storeWord(pc + 4, 0x34080042); // ORI T0, R0, 0x0042 (delay slot)
+
+    cpu.step();
+
+    EXPECT_TRUE(cpu.m_inBranchDelay);
+    EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
+
+    cpu.step();
+
+    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T0)), 0x42);
+    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::RA)), pc + 8); // RA should be set to return address
+    EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), branchTarget);
+}
+
+TEST(CpuBranchTests, BLTZAL_BranchNotTaken_Zero)
+{
+    BIOS bios;
+    RAM ram;
+    Bus bus(&bios, &ram);
+    CPU cpu(&bus);
+
+    uint32_t pc = 0x00100000;
+    uint32_t fallthrough = pc + 8;
+    uint32_t ra = 0xDEADBEEF;
+
+    cpu.setReg(static_cast<uint8_t>(GprIndex::T0), 0); // 0 -> not taken
+    cpu.setReg(static_cast<uint8_t>(GprIndex::RA), ra);
+    cpu.setSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC), pc);
+
+    bus.storeWord(pc, 0x05100020);     // BLTZAL T0, +0x20
+    bus.storeWord(pc + 4, 0x34080042); // ORI T0, R0, 0x0042 (delay slot)
+
+    cpu.step();
+
+    EXPECT_FALSE(cpu.m_inBranchDelay);
+
+    cpu.step();
+
+    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T0)), 0x42);
+    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::RA)), ra); // RA unchanged
+    EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), fallthrough);
+}
+
+TEST(CpuBranchTests, BLTZAL_BranchNotTaken)
+{
+    BIOS bios;
+    RAM ram;
+    Bus bus(&bios, &ram);
+    CPU cpu(&bus);
+
+    uint32_t pc = 0x00100000;
+    uint32_t fallthrough = pc + 8;
+    uint32_t ra = 0xDEADBEEF;
+
+    cpu.setReg(static_cast<uint8_t>(GprIndex::T0), 190); // 190 -> not taken
+    cpu.setReg(static_cast<uint8_t>(GprIndex::RA), ra);
+    cpu.setSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC), pc);
+
+    bus.storeWord(pc, 0x05100020);     // BLTZAL T0, +0x20
+    bus.storeWord(pc + 4, 0x34080042); // ORI T0, R0, 0x0042 (delay slot)
+
+    cpu.step();
+
+    EXPECT_FALSE(cpu.m_inBranchDelay);
+
+    cpu.step();
+
+    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T0)), 0x42);
+    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::RA)), ra); // RA unchanged
+    EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), fallthrough);
+}
+
+TEST(CpuBranchTests, BLTZAL_MaxNegativeOffset)
+{
+    BIOS bios;
+    RAM ram;
+    Bus bus(&bios, &ram);
+    CPU cpu(&bus);
+
+    uint32_t pc = 0x00100000;
+    int16_t offset = INT16_MIN;
+    uint32_t branchTarget = pc + 4 + (offset << 2); // PC + 4 + (-0x8000 << 2)
+
+    cpu.setReg(static_cast<uint8_t>(GprIndex::T0), 0xFFFFFFFF); // -1 -> taken
+    cpu.setReg(static_cast<uint8_t>(GprIndex::RA), 0);
+    cpu.setSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC), pc);
+
+    bus.storeWord(pc, 0x05108000);     // BLTZAL T0, -0x8000
+    bus.storeWord(pc + 4, 0x34080042); // ORI T0, R0, 0x0042 (delay slot)
+
+    cpu.step();
+
+    EXPECT_TRUE(cpu.m_inBranchDelay);
+    EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
+
+    cpu.step();
+
+    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T0)), 0x42);
+    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::RA)), pc + 8);
+    EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), branchTarget);
+}
+
+TEST(CpuBranchTests, BLTZAL_MaxPositiveOffset)
+{
+    BIOS bios;
+    RAM ram;
+    Bus bus(&bios, &ram);
+    CPU cpu(&bus);
+
+    uint32_t pc = 0x00100000;
+    int16_t offset = INT16_MAX;
+    uint32_t branchTarget = pc + 4 + (offset << 2); // pc + 4 + (0x7FFF * 4) = 0x00100000 + 4 + 0x1FFFC = 0x0020FFFC
+
+    cpu.setReg(static_cast<uint8_t>(GprIndex::T0), 0xFFFFFFFF); // -1 → taken
+    cpu.setReg(static_cast<uint8_t>(GprIndex::RA), 0);
+    cpu.setSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC), pc);
+
+    bus.storeWord(pc, 0x05107FFF);     // BLTZAL T0, +0x7FFF
+    bus.storeWord(pc + 4, 0x34080042); // ORI T0, R0, 0x0042 (delay slot)
+
+    cpu.step();
+
+    EXPECT_TRUE(cpu.m_inBranchDelay);
+    EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
+
+    cpu.step();
+
+    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T0)), 0x42);
+    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::RA)), pc + 8);
     EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), branchTarget);
 }
