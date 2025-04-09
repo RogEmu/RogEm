@@ -1091,6 +1091,7 @@ TEST(CpuBranchTests, BGEZAL_BranchNotTaken)
 
     uint32_t pc = 0x00100000;
     uint32_t nextPc = pc + 8;
+    cpu.m_branchSlotAddr = UINT32_MAX; // Should not change
 
     cpu.setSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC), pc);
     cpu.setReg(static_cast<uint8_t>(GprIndex::T0), 0xFFFFFFFF);  // T0 = -1 (branch not taken)
@@ -1102,7 +1103,7 @@ TEST(CpuBranchTests, BGEZAL_BranchNotTaken)
 
     cpu.step();
     EXPECT_FALSE(cpu.m_inBranchDelay);
-    EXPECT_EQ(cpu.m_branchSlotAddr, 0);
+    EXPECT_EQ(cpu.m_branchSlotAddr, UINT32_MAX);
 
     cpu.step();
     EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T1)), 0x42);
