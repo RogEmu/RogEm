@@ -87,11 +87,6 @@ void AssemblyWindow::drawAssembly()
     ImGui::EndTable();
 }
 
-void drawCircle(ImDrawList* draw_list, ImVec2 center, float radius, ImU32 color)
-{
-    draw_list->AddCircleFilled(center, radius, color);
-}
-
 void AssemblyWindow::drawAssemblyLine(uint32_t addr)
 {
     uint32_t pc = m_debugger->getSpecialReg((uint8_t)SpecialRegIndex::PC);
@@ -156,14 +151,11 @@ void AssemblyWindow::drawAssemblyLine(uint32_t addr)
             m_debugger->addBreakpoint(addr, BreakpointType::EXEC, fmt::format("Breakpoint at 0x{:08X}", addr));
     }
 
-
     ImGui::TableNextColumn();
     ImGui::TextColored(lineColor, "%s", Disassembler::formatAsHexBytes(currentInstruction).c_str());
     ImGui::TableNextColumn();
     ImGui::TextColored(lineColor, "%s", Disassembler::disassemble(addr, currentInstruction).c_str());
 }
-
-
 
 uint32_t AssemblyWindow::getAddressFromLine(int line)
 {
