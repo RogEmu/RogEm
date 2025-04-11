@@ -55,6 +55,30 @@ enum class CP0RegIndex
     PRID
 };
 
+enum class ExceptionVector : uint32_t
+{
+    // BEV = 0
+    RESET = 0xBFC00000, // Reset
+    UTLB_MISS = 0x80000000, // UTLB Miss, not used
+    COP0_BRK = 0x80000040, // COP0 Break
+    GENERAL = 0x80000080, // General
+    // BEV = 1 Vectors are unused ?
+};
+
+enum class ExceptionType
+{
+    INTERRUPT = 0,
+    ADDRE_LD = 4,
+    ADDRE_ST,
+    IBUS_ERR,
+    DBUS_ERR,
+    SYSCALL,
+    BP,
+    RI,
+    COP_UNUSABLE,
+    OVERFLOW
+};
+
 struct CPU
 {
     CPU(Bus *bus);
@@ -158,6 +182,10 @@ struct CPU
     void mtc0(const Instruction &instruction); // Tested
     void mfc0(const Instruction &instruction); // Tested
 
+    // Exception Instructions
+    void triggerException(ExceptionType exception);
+    void executeSyscall(const Instruction &instruction);
+
     void illegalInstruction(const Instruction &instruction);
     void specialInstruction(const Instruction &instruction);
     void branchOnConditionZero(const Instruction &instruction);
@@ -169,6 +197,8 @@ struct CPU
     uint32_t pc;
     uint32_t hi;
     uint32_t lo;
+
+    uint32_t m_nextPc;
 
     uint32_t m_branchSlotAddr;
     bool m_inBranchDelay;

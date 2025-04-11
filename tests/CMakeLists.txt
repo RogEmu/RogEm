@@ -28,6 +28,7 @@ add_executable(
     CPU_comparison_tests.cpp
     CPU_load_tests.cpp
     CPU_store_tests.cpp
+    CPU_exception_tests.cpp
     Bus_tests.cpp
 )
 

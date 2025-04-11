@@ -31,30 +31,26 @@ static bool subOverflow(int32_t a, int32_t b)
 }
 
 CPU::CPU(Bus *bus) :
-    pc(RESET_VECTOR),
     m_bus(bus)
 {
-    gpr[0] = 0;
-    m_inBranchDelay = false;
+    reset();
 }
 
 void CPU::step()
 {
     Instruction instruction = fetchInstruction();
-    // std::cout << Disassembler::disassemble(pc, instruction) << std::endl;
-    auto nextPc = pc;
+    m_nextPc = pc;
     if (m_inBranchDelay)
     {
-        nextPc = m_branchSlotAddr;
+        m_nextPc = m_branchSlotAddr;
         m_inBranchDelay = false;
     }
     else
     {
-        nextPc += 4;
+        m_nextPc += 4;
     }
     executeInstruction(instruction);
-    // Disassembler::debugState(pc, gpr);
-    pc = nextPc;
+    pc = m_nextPc;
 }
 
 void CPU::reset()
@@ -271,6 +267,9 @@ void CPU::specialInstruction(const Instruction &instruction)
         break;
     case SecondaryOpCode::JALR:
         jumpAndLinkRegister(instruction);
+        break;
+    case SecondaryOpCode::SYSCALL:
+        executeSyscall(instruction);
         break;
     default:
         illegalInstruction(instruction);
@@ -919,6 +918,44 @@ void CPU::mfc0(const Instruction &instruction)
     uint32_t data = getCop0Reg(instruction.r.rd);
 
     setReg(reg, data);
+}
+
+void CPU::executeSyscall(const Instruction &instruction)
+{
+    (void)instruction;
+    triggerException(ExceptionType::SYSCALL);
+}
+
+void CPU::triggerException(ExceptionType exception)
+{
+    // Set cause register with exception type and branch delay
+    uint32_t cause = 0;
+
+    cause |= ((uint32_t)m_inBranchDelay) << 31;
+    cause |= static_cast<uint32_t>(exception) << 2;
+    setCop0Reg(static_cast<uint8_t>(CP0RegIndex::CAUSE), cause);
+
+    uint32_t returnAddr = pc - (4 * (uint32_t)m_inBranchDelay);
+    setCop0Reg(static_cast<uint8_t>(CP0RegIndex::EPC), returnAddr);
+
+    uint32_t status = getCop0Reg(static_cast<uint8_t>(CP0RegIndex::SR));
+    uint8_t stack = (status << 2) & 0b111111;
+    status &= ~0b111111;
+    status |= stack;
+    setCop0Reg(static_cast<uint8_t>(CP0RegIndex::SR), status);
+
+    uint32_t handlerAddr = 0;
+
+    switch (exception)
+    {
+    case ExceptionType::BP:
+        handlerAddr = static_cast<uint32_t>(ExceptionVector::COP0_BRK);
+        break;
+    default:
+        handlerAddr = static_cast<uint32_t>(ExceptionVector::GENERAL);
+        break;
+    }
+    m_nextPc = handlerAddr;
 }
 
 void CPU::illegalInstruction(const Instruction &instruction)

@@ -56,6 +56,7 @@ enum class SecondaryOpCode
     SRAV = 0x07,
     JR = 0x08,
     JALR = 0x09,
+    SYSCALL = 0xC,
     MFHI = 0x10,
     MTHI = 0x11,
     MFLO = 0x12,
