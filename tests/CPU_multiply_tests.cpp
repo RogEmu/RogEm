@@ -3,6 +3,31 @@
 #include "BIOS.h"
 #include "Bus.h"
 #include "CPU.h"
+#include "RAM.h"
+
+TEST(CPU_MultTests, BasicMultiply)
+{
+    BIOS bios;
+    RAM ram;
+    Bus bus(&bios, &ram);
+    CPU cpu(&bus);
+
+    const uint32_t pc = 0x00000000; // Assuming mapped to RAM
+    const uint32_t instruction = 0x01090018; // MULT T0, T1
+
+    cpu.setSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC), pc);
+    cpu.setReg(static_cast<uint8_t>(GprIndex::T0), 5);
+    cpu.setReg(static_cast<uint8_t>(GprIndex::T1), -3);
+
+    // Instruction at PC
+    bus.storeWord(pc, instruction);
+
+    cpu.step();
+
+    // Check LO and HI
+    EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::LO)), static_cast<uint32_t>(-15)); // 5 * -3
+    EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::HI)), 0xFFFFFFFF);
+}
 
 TEST(CpuTest, MULT_NEGATIVE)
 {

@@ -138,12 +138,12 @@ void CPU::executeInstruction(const Instruction &instruction)
     case PrimaryOpCode::BGTZ:
         branchOnGreaterThanZero(instruction);
         break;
-    // case PrimaryOpCode::SLTI:
-    //     setOnLessThanImmediate(instruction);
-    //     break;
-    // case PrimaryOpCode::SLTIU:
-    //     setOnLessThanImmediateUnsigned(instruction);
-    //     break;
+    case PrimaryOpCode::SLTI:
+        setOnLessThanImmediate(instruction);
+        break;
+    case PrimaryOpCode::SLTIU:
+        setOnLessThanImmediateUnsigned(instruction);
+        break;
     case PrimaryOpCode::SPECIAL:
         specialInstruction(instruction);
         break;
@@ -248,24 +248,24 @@ void CPU::specialInstruction(const Instruction &instruction)
     case SecondaryOpCode::MULTU:
         multiplyUnsigned(instruction);
         break;
-    // case SecondaryOpCode::DIV:
-    //     divide(instruction);
-    //     break;
-    // case SecondaryOpCode::DIVU:
-    //     divideUnsigned(instruction);
-    //     break;
-    // case SecondaryOpCode::MFHI:
-    //     moveFromHi(instruction);
-    //     break;
-    // case SecondaryOpCode::MFLO:
-    //     moveFromLo(instruction);
-    //     break;
-    // case SecondaryOpCode::MTHI:
-    //     moveToHi(instruction);
-    //     break;
-    // case SecondaryOpCode::MTLO:
-    //     moveToLo(instruction);
-    //     break;
+    case SecondaryOpCode::DIV:
+        divide(instruction);
+        break;
+    case SecondaryOpCode::DIVU:
+        divideUnsigned(instruction);
+        break;
+    case SecondaryOpCode::MFHI:
+        moveFromHi(instruction);
+        break;
+    case SecondaryOpCode::MFLO:
+        moveFromLo(instruction);
+        break;
+    case SecondaryOpCode::MTHI:
+        moveToHi(instruction);
+        break;
+    case SecondaryOpCode::MTLO:
+        moveToLo(instruction);
+        break;
     case SecondaryOpCode::JR:
         jumpRegister(instruction);
         break;
@@ -343,6 +343,15 @@ void CPU::loadUpperImmediate(const Instruction &instruction)
 
 void CPU::storeWord(const Instruction &instruction)
 {
+    auto sr = getCop0Reg(static_cast<uint8_t>(CP0RegIndex::SR));
+
+    // Check if cache is isolated
+    // TODO: Implement the REAL cache
+    if (sr & 0x00010000)
+    {
+        return;
+    }
+
     int32_t imm = (int16_t)instruction.i.immediate;
     uint32_t address = getReg(instruction.i.rs) + imm;
     uint32_t value = getReg(instruction.i.rt);
@@ -352,6 +361,15 @@ void CPU::storeWord(const Instruction &instruction)
 
 void CPU::storeHalfWord(const Instruction &instruction)
 {
+    auto sr = getCop0Reg(static_cast<uint8_t>(CP0RegIndex::SR));
+
+    // Check if cache is isolated
+    // TODO: Implement the REAL cache
+    if (sr & 0x00010000)
+    {
+        return;
+    }
+
     int32_t imm = (int16_t)instruction.i.immediate;
     uint32_t address = getReg(instruction.i.rs) + imm;
     uint16_t value = static_cast<uint16_t>(getReg(instruction.i.rt));
@@ -361,6 +379,15 @@ void CPU::storeHalfWord(const Instruction &instruction)
 
 void CPU::storeByte(const Instruction &instruction)
 {
+    auto sr = getCop0Reg(static_cast<uint8_t>(CP0RegIndex::SR));
+
+    // Check if cache is isolated
+    // TODO: Implement the REAL cache
+    if (sr & 0x00010000)
+    {
+        return;
+    }
+
     int32_t imm = (int16_t)instruction.i.immediate;
     uint32_t address = getReg(instruction.i.rs) + imm;
     uint8_t value = static_cast<uint8_t>(getReg(instruction.i.rt));
