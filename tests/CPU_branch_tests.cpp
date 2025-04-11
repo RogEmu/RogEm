@@ -25,7 +25,7 @@ TEST(CpuTest, BEQ_Equal)
     cpu.branchOnEqual(i);
 
     EXPECT_EQ(cpu.m_branchSlotAddr, cpu.pc + 4 + (imm << 2));
-    EXPECT_EQ(cpu.m_inBranchDelay, true);
+    EXPECT_EQ(cpu.m_nextIsBranchDelay, true);
 }
 
 TEST(CpuTest, BEQ_Not_Equal)
@@ -71,7 +71,7 @@ TEST(CpuTest, BNE_BranchWhenNotEqual)
 
     cpu.branchOnNotEqual(i);
     EXPECT_EQ(cpu.m_branchSlotAddr, RESET_VECTOR + 4 + ((int16_t)i.i.immediate << 2));
-    EXPECT_EQ(cpu.m_inBranchDelay, true);  // Branch taken
+    EXPECT_EQ(cpu.m_nextIsBranchDelay, true);  // Branch taken
 }
 
 TEST(CpuTest, BNE_NoBranchWhenEqual)
@@ -94,7 +94,7 @@ TEST(CpuTest, BNE_NoBranchWhenEqual)
 
     cpu.branchOnNotEqual(i);
     EXPECT_EQ(cpu.m_branchSlotAddr, 0);  // No branch
-    EXPECT_EQ(cpu.m_inBranchDelay, false);  // No branch taken
+    EXPECT_EQ(cpu.m_nextIsBranchDelay, false);  // No branch taken
 }
 
 TEST(CpuTest, BNE_NoBranch_ZeroRegistersEqual)
@@ -117,7 +117,7 @@ TEST(CpuTest, BNE_NoBranch_ZeroRegistersEqual)
 
     cpu.branchOnNotEqual(i);
     EXPECT_EQ(cpu.m_branchSlotAddr, 0);  // No branch
-    EXPECT_EQ(cpu.m_inBranchDelay, false);  // No branch taken
+    EXPECT_EQ(cpu.m_nextIsBranchDelay, false);  // No branch taken
 }
 
 TEST(CpuTest, BNE_MaxPositiveOffset) {
@@ -139,7 +139,7 @@ TEST(CpuTest, BNE_MaxPositiveOffset) {
 
     cpu.branchOnNotEqual(i);
     EXPECT_EQ(cpu.m_branchSlotAddr, RESET_VECTOR + 4 + ((int16_t)i.i.immediate << 2));
-    EXPECT_EQ(cpu.m_inBranchDelay, true);  // Branch taken
+    EXPECT_EQ(cpu.m_nextIsBranchDelay, true);  // Branch taken
 }
 
 TEST(CpuBranchTests, BLTZ_BranchTaken)
@@ -164,7 +164,7 @@ TEST(CpuBranchTests, BLTZ_BranchTaken)
     // Step 1: Execute BLTZ
     cpu.step();
 
-    EXPECT_TRUE(cpu.m_inBranchDelay);
+    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
     EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
 
     // Step 2: Execute delay slot
@@ -194,7 +194,7 @@ TEST(CpuBranchTests, BLTZ_BranchNotTaken_Zero)
     // Step 1: Execute BLTZ
     cpu.step();
 
-    EXPECT_FALSE(cpu.m_inBranchDelay);
+    EXPECT_FALSE(cpu.m_nextIsBranchDelay);
 
     // Step 2: Execute delay slot
     cpu.step();
@@ -223,7 +223,7 @@ TEST(CpuBranchTests, BLTZ_BranchNotTaken)
     // Step 1: Execute BLTZ
     cpu.step();
 
-    EXPECT_FALSE(cpu.m_inBranchDelay);
+    EXPECT_FALSE(cpu.m_nextIsBranchDelay);
 
     // Step 2: Execute delay slot
     cpu.step();
@@ -251,7 +251,7 @@ TEST(CpuBranchTests, BLTZ_ZeroOffset)
 
     cpu.step();
 
-    EXPECT_TRUE(cpu.m_inBranchDelay);
+    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
     EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
 
     cpu.step();
@@ -280,7 +280,7 @@ TEST(CpuBranchTests, BLTZ_MaxPositiveOffset)
 
     cpu.step();
 
-    EXPECT_TRUE(cpu.m_inBranchDelay);
+    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
     EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
 
     cpu.step();
@@ -309,7 +309,7 @@ TEST(CpuBranchTests, BLTZ_BackwardBranch)
 
     cpu.step();
 
-    EXPECT_TRUE(cpu.m_inBranchDelay);
+    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
     EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
 
     cpu.step();
@@ -339,7 +339,7 @@ TEST(CpuBranchTests, BLTZ_MaxNegativeOffset)
     // Step 1: Execute BLTZ
     cpu.step();
 
-    EXPECT_TRUE(cpu.m_inBranchDelay);
+    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
     EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
 
     // Step 2: Execute delay slot
@@ -371,7 +371,7 @@ TEST(CpuBranchTests, BGTZ_BranchTaken)
     // Step 1: Execute BLTZ
     cpu.step();
 
-    EXPECT_TRUE(cpu.m_inBranchDelay);
+    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
     EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
 
     // Step 2: Execute delay slot
@@ -401,7 +401,7 @@ TEST(CpuBranchTests, BGTZ_BranchNotTaken_Zero)
     // Step 1: Execute BLTZ
     cpu.step();
 
-    EXPECT_FALSE(cpu.m_inBranchDelay);
+    EXPECT_FALSE(cpu.m_nextIsBranchDelay);
 
     // Step 2: Execute delay slot
     cpu.step();
@@ -430,7 +430,7 @@ TEST(CpuBranchTests, BGTZ_BranchNotTaken)
     // Step 1: Execute BLTZ
     cpu.step();
 
-    EXPECT_FALSE(cpu.m_inBranchDelay);
+    EXPECT_FALSE(cpu.m_nextIsBranchDelay);
 
     // Step 2: Execute delay slot
     cpu.step();
@@ -458,7 +458,7 @@ TEST(CpuBranchTests, BGTZ_ZeroOffset)
 
     cpu.step();
 
-    EXPECT_TRUE(cpu.m_inBranchDelay);
+    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
     EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
 
     cpu.step();
@@ -487,7 +487,7 @@ TEST(CpuBranchTests, BGTZ_MaxPositiveOffset)
 
     cpu.step();
 
-    EXPECT_TRUE(cpu.m_inBranchDelay);
+    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
     EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
 
     cpu.step();
@@ -516,7 +516,7 @@ TEST(CpuBranchTests, BGTZ_BackwardBranch)
 
     cpu.step();
 
-    EXPECT_TRUE(cpu.m_inBranchDelay);
+    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
     EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
 
     cpu.step();
@@ -546,7 +546,7 @@ TEST(CpuBranchTests, BGTZ_MaxNegativeOffset)
     // Step 1: Execute BLTZ
     cpu.step();
 
-    EXPECT_TRUE(cpu.m_inBranchDelay);
+    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
     EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
 
     // Step 2: Execute delay slot
@@ -575,7 +575,7 @@ TEST(CpuBranchTests, BGEZ_BranchTaken_Zero)
     bus.storeWord(pc + 4, 0x34091234); // ORI T1, ZERO, 0x1234
 
     cpu.step();
-    EXPECT_TRUE(cpu.m_inBranchDelay);
+    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
     EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
 
     cpu.step();
@@ -602,7 +602,7 @@ TEST(CpuBranchTests, BGEZ_BranchTaken_Positive)
     bus.storeWord(pc + 4, 0x34091234); // ORI T1, ZERO, 0x1234
 
     cpu.step();
-    EXPECT_TRUE(cpu.m_inBranchDelay);
+    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
     EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
 
     cpu.step();
@@ -628,7 +628,7 @@ TEST(CpuBranchTests, BGEZ_BranchNotTaken)
     bus.storeWord(pc + 4, 0x34091234); // ORI T1, ZERO, 0x1234
 
     cpu.step();
-    EXPECT_FALSE(cpu.m_inBranchDelay);
+    EXPECT_FALSE(cpu.m_nextIsBranchDelay);
 
     cpu.step();
     EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T1)), 0x1234);
@@ -653,7 +653,7 @@ TEST(CpuBranchTests, BGEZ_ZeroOffset)
     bus.storeWord(pc + 4, 0x34091234); // ORI T1, ZERO, 0x1234
 
     cpu.step();
-    EXPECT_TRUE(cpu.m_inBranchDelay);
+    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
     EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
 
     cpu.step();
@@ -680,7 +680,7 @@ TEST(CpuBranchTests, BGEZ_MaxPositiveOffset)
     bus.storeWord(pc + 4, 0x34091234); // ORI T1, ZERO, 0x1234
 
     cpu.step();
-    EXPECT_TRUE(cpu.m_inBranchDelay);
+    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
     EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
 
     cpu.step();
@@ -707,7 +707,7 @@ TEST(CpuBranchTests, BGEZ_MaxNegativeOffset)
     bus.storeWord(pc + 4, 0x34091234); // ORI T1, ZERO, 0x1234
 
     cpu.step();
-    EXPECT_TRUE(cpu.m_inBranchDelay);
+    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
     EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
 
     cpu.step();
@@ -733,7 +733,7 @@ TEST(CpuBranchTests, BLEZ_ZeroOffset)
     bus.storeWord(pc + 4, 0x34091234); // ORI T1, ZERO, 0x1234
 
     cpu.step();
-    EXPECT_TRUE(cpu.m_inBranchDelay);
+    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
     EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
 
     cpu.step();
@@ -760,7 +760,7 @@ TEST(CpuBranchTests, BLEZ_BranchTaken_Negative)
     bus.storeWord(pc + 4, 0x34091234); // ORI T1, ZERO, 0x1234
 
     cpu.step();
-    EXPECT_TRUE(cpu.m_inBranchDelay);
+    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
     EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
 
     cpu.step();
@@ -787,7 +787,7 @@ TEST(CpuBranchTests, BLEZ_BranchTaken_Zero)
     bus.storeWord(pc + 4, 0x34091234); // ORI T1, ZERO, 0x1234
 
     cpu.step();
-    EXPECT_TRUE(cpu.m_inBranchDelay);
+    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
     EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
 
     cpu.step();
@@ -814,7 +814,7 @@ TEST(CpuBranchTests, BLEZ_BranchNotTaken_Positive)
     bus.storeWord(pc + 4, 0x34091234); // ORI T1, ZERO, 0x1234
 
     cpu.step();
-    EXPECT_FALSE(cpu.m_inBranchDelay);
+    EXPECT_FALSE(cpu.m_nextIsBranchDelay);
     EXPECT_EQ(cpu.m_branchSlotAddr, 0xDEADBEEF);
 
     cpu.step();
@@ -841,7 +841,7 @@ TEST(CpuBranchTests, BLEZ_MaxPositiveOffset)
     bus.storeWord(pc + 4, 0x34091234); // ORI T1, ZERO, 0x1234
 
     cpu.step();
-    EXPECT_TRUE(cpu.m_inBranchDelay);
+    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
     EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
 
     cpu.step();
@@ -868,7 +868,7 @@ TEST(CpuBranchTests, BLEZ_MaxNegativeOffset)
     bus.storeWord(pc + 4, 0x34091234); // ORI T1, ZERO, 0x1234
 
     cpu.step();
-    EXPECT_TRUE(cpu.m_inBranchDelay);
+    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
     EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
 
     cpu.step();
@@ -896,7 +896,7 @@ TEST(CpuBranchTests, BLTZAL_BranchTaken)
 
     cpu.step();
 
-    EXPECT_TRUE(cpu.m_inBranchDelay);
+    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
     EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
 
     cpu.step();
@@ -926,7 +926,7 @@ TEST(CpuBranchTests, BLTZAL_BranchNotTaken_Zero)
 
     cpu.step();
 
-    EXPECT_FALSE(cpu.m_inBranchDelay);
+    EXPECT_FALSE(cpu.m_nextIsBranchDelay);
 
     cpu.step();
 
@@ -955,7 +955,7 @@ TEST(CpuBranchTests, BLTZAL_BranchNotTaken)
 
     cpu.step();
 
-    EXPECT_FALSE(cpu.m_inBranchDelay);
+    EXPECT_FALSE(cpu.m_nextIsBranchDelay);
 
     cpu.step();
 
@@ -984,7 +984,7 @@ TEST(CpuBranchTests, BLTZAL_MaxNegativeOffset)
 
     cpu.step();
 
-    EXPECT_TRUE(cpu.m_inBranchDelay);
+    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
     EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
 
     cpu.step();
@@ -1014,7 +1014,7 @@ TEST(CpuBranchTests, BLTZAL_MaxPositiveOffset)
 
     cpu.step();
 
-    EXPECT_TRUE(cpu.m_inBranchDelay);
+    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
     EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
 
     cpu.step();
@@ -1044,7 +1044,7 @@ TEST(CpuBranchTests, BGEZAL_BranchTaken)
     bus.storeWord(pc + 4, 0x34090042); // ORI T1, R0, 0x0042
 
     cpu.step();
-    EXPECT_TRUE(cpu.m_inBranchDelay);
+    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
     EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
 
     cpu.step();
@@ -1073,7 +1073,7 @@ TEST(CpuBranchTests, BGEZAL_BranchTaken_Zero)
     bus.storeWord(pc + 4, 0x34090042); // ORI T1, R0, 0x0042
 
     cpu.step();
-    EXPECT_TRUE(cpu.m_inBranchDelay);
+    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
     EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
 
     cpu.step();
@@ -1102,7 +1102,7 @@ TEST(CpuBranchTests, BGEZAL_BranchNotTaken)
     bus.storeWord(pc + 4, 0x34090042); // ORI T1, R0, 0x0042
 
     cpu.step();
-    EXPECT_FALSE(cpu.m_inBranchDelay);
+    EXPECT_FALSE(cpu.m_nextIsBranchDelay);
     EXPECT_EQ(cpu.m_branchSlotAddr, UINT32_MAX);
 
     cpu.step();
@@ -1131,7 +1131,7 @@ TEST(CpuBranchTests, BGEZAL_MaxPositiveOffset)
     bus.storeWord(pc + 4, 0x34090042); // ORI T1, R0, 0x0042
 
     cpu.step();
-    EXPECT_TRUE(cpu.m_inBranchDelay);
+    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
     EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
 
     cpu.step();
@@ -1160,7 +1160,7 @@ TEST(CpuBranchTests, BGEZAL_MaxNegativeOffset)
     bus.storeWord(pc + 4, 0x34090042); // ORI T1, R0, 0x0042
 
     cpu.step();
-    EXPECT_TRUE(cpu.m_inBranchDelay);
+    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
     EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
 
     cpu.step();

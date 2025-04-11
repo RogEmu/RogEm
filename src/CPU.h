@@ -202,6 +202,7 @@ struct CPU
 
     uint32_t m_branchSlotAddr;
     bool m_inBranchDelay;
+    bool m_nextIsBranchDelay;
 
     // COP0 registers
     uint32_t m_cop0Reg[COP0_NB_REG];

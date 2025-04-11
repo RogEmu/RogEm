@@ -40,10 +40,11 @@ void CPU::step()
 {
     Instruction instruction = fetchInstruction();
     m_nextPc = pc;
-    if (m_inBranchDelay)
+    m_inBranchDelay = m_nextIsBranchDelay;
+    if (m_nextIsBranchDelay)
     {
         m_nextPc = m_branchSlotAddr;
-        m_inBranchDelay = false;
+        m_nextIsBranchDelay = false;
     }
     else
     {
@@ -51,10 +52,12 @@ void CPU::step()
     }
     executeInstruction(instruction);
     pc = m_nextPc;
+    m_inBranchDelay = false;
 }
 
 void CPU::reset()
 {
+    m_nextIsBranchDelay = false;
     m_inBranchDelay = false;
     pc = RESET_VECTOR;
     std::memset(gpr, 0, NB_GPR * sizeof(gpr[0]));
@@ -803,33 +806,31 @@ void CPU::moveToLo(const Instruction &instruction)
 void CPU::jump(const Instruction &instruction)
 {
     m_branchSlotAddr = (pc & 0xF0000000) | (((uint32_t)instruction.j.address) << 2);
-    m_inBranchDelay = true;
+    m_nextIsBranchDelay = true;
 }
 
 void CPU::jumpAndLink(const Instruction &instruction)
 {
     setReg(31, pc + 8);
-    m_branchSlotAddr = (pc & 0xF0000000) | (((uint32_t)instruction.j.address) << 2);
-    m_inBranchDelay = true;
+    jump(instruction);
 }
 
 void CPU::jumpRegister(const Instruction &instruction)
 {
     m_branchSlotAddr = getReg(instruction.r.rs);
-    m_inBranchDelay = true;
+    m_nextIsBranchDelay = true;
 }
 
 void CPU::jumpAndLinkRegister(const Instruction &instruction)
 {
     setReg(instruction.r.rd, pc + 8);
-    m_branchSlotAddr = getReg(instruction.r.rs);
-    m_inBranchDelay = true;
+    jumpRegister(instruction);
 }
 
 void CPU::executeBranch(const Instruction &instruction)
 {
     m_branchSlotAddr = pc + 4 + ((int16_t)instruction.i.immediate << 2);
-    m_inBranchDelay = true;
+    m_nextIsBranchDelay = true;
 }
 
 void CPU::branchOnEqual(const Instruction &instruction)
