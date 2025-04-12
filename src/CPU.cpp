@@ -900,6 +900,11 @@ void CPU::executeCop0(const Instruction &instruction)
         mfc0(instruction);
         break;
     default:
+        if (instruction.r.rs == 0x10 && instruction.r.funct == 0x10)
+        {
+            returnFromException(instruction);
+            break;
+        }
         illegalInstruction(instruction);
         break;
     }
@@ -925,6 +930,16 @@ void CPU::executeSyscall(const Instruction &instruction)
 {
     (void)instruction;
     triggerException(ExceptionType::SYSCALL);
+}
+
+void CPU::returnFromException(const Instruction &instruction)
+{
+    (void)instruction;
+    uint32_t status = getCop0Reg(static_cast<uint8_t>(CP0RegIndex::SR));
+    uint8_t stack = (status >> 2) & 0b111111;
+    status &= ~0b111111;
+    status |= stack;
+    setCop0Reg(static_cast<uint8_t>(CP0RegIndex::SR), status);
 }
 
 void CPU::triggerException(ExceptionType exception)

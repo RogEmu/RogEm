@@ -181,6 +181,7 @@ struct CPU
     void executeCop0(const Instruction &instruction);
     void mtc0(const Instruction &instruction); // Tested
     void mfc0(const Instruction &instruction); // Tested
+    void returnFromException(const Instruction &instruction);
 
     // Exception Instructions
     void triggerException(ExceptionType exception);
