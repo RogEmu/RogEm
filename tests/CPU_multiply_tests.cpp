@@ -17,7 +17,7 @@ TEST(CPU_MultTests, BasicMultiply)
 
     cpu.setSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC), pc);
     cpu.setReg(static_cast<uint8_t>(GprIndex::T0), 5);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T1), -3);
+    cpu.setReg(static_cast<uint8_t>(GprIndex::T1), static_cast<uint32_t>(-3));
 
     // Instruction at PC
     bus.storeWord(pc, instruction);

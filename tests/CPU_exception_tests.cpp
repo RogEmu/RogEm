@@ -37,7 +37,7 @@ TEST(CPU_Exceptions, Syscall)
     EXPECT_EQ(cpu.getCop0Reg(static_cast<uint8_t>(CP0RegIndex::EPC)), pc);
 
     // Cause should have ExcCode = 8 (Syscall)
-    EXPECT_EQ((cpu.getCop0Reg(static_cast<uint8_t>(CP0RegIndex::CAUSE)) >> 2) & 0x1F, (uint32_t)ExceptionType::SYSCALL);
+    EXPECT_EQ((cpu.getCop0Reg(static_cast<uint8_t>(CP0RegIndex::CAUSE)) >> 2) & 0x1F, (uint32_t)ExceptionType::Syscall);
 
     // Branch Delay bit should be 0
     EXPECT_FALSE(cpu.getCop0Reg(static_cast<uint8_t>(CP0RegIndex::SR)) >> 31);
@@ -82,7 +82,7 @@ TEST(CPU_Exceptions, Syscall_BranchDelaySlot)
     EXPECT_EQ(cpu.getCop0Reg(static_cast<uint8_t>(CP0RegIndex::EPC)), pc);
 
     // Cause should have ExcCode = 8 (Syscall)
-    EXPECT_EQ((cpu.getCop0Reg(static_cast<uint8_t>(CP0RegIndex::CAUSE)) >> 2) & 0x1F, (uint32_t)ExceptionType::SYSCALL);
+    EXPECT_EQ((cpu.getCop0Reg(static_cast<uint8_t>(CP0RegIndex::CAUSE)) >> 2) & 0x1F, (uint32_t)ExceptionType::Syscall);
 
     // Branch Delay bit should be 0
     EXPECT_TRUE(cpu.getCop0Reg(static_cast<uint8_t>(CP0RegIndex::CAUSE)) >> 31);

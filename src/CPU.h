@@ -67,16 +67,16 @@ enum class ExceptionVector : uint32_t
 
 enum class ExceptionType
 {
-    INTERRUPT = 0,
-    ADDRE_LD = 4,
-    ADDRE_ST,
-    IBUS_ERR,
-    DBUS_ERR,
-    SYSCALL,
-    BP,
+    Interrupt = 0,
+    AddressErrorLoad= 4,
+    AddressErrorStore,
+    IBusError,
+    DBusError,
+    Syscall,
+    Breakpoint,
     RI,
-    COP_UNUSABLE,
-    OVERFLOW
+    COP_Unusable,
+    Overflow
 };
 
 struct CPU

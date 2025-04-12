@@ -929,7 +929,7 @@ void CPU::mfc0(const Instruction &instruction)
 void CPU::executeSyscall(const Instruction &instruction)
 {
     (void)instruction;
-    triggerException(ExceptionType::SYSCALL);
+    triggerException(ExceptionType::Syscall);
 }
 
 void CPU::returnFromException(const Instruction &instruction)
@@ -964,7 +964,7 @@ void CPU::triggerException(ExceptionType exception)
 
     switch (exception)
     {
-    case ExceptionType::BP:
+    case ExceptionType::Breakpoint:
         handlerAddr = static_cast<uint32_t>(ExceptionVector::COP0_BRK);
         break;
     default:
