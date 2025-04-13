@@ -14,6 +14,7 @@ set(SRC_FILES
     Disassembler.cpp
     System.cpp
     MemoryMap.cpp
+    Memory.cpp
     Debugger/Debugger.cpp
     Debugger/AssemblyWindow.cpp
     Debugger/RegisterWindow.cpp

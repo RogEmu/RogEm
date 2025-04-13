@@ -7,6 +7,7 @@ set(SRC_FILES
     ${CMAKE_SOURCE_DIR}/src/Bus.cpp
     ${CMAKE_SOURCE_DIR}/src/CPU.cpp
     ${CMAKE_SOURCE_DIR}/src/MemoryMap.cpp
+    ${CMAKE_SOURCE_DIR}/src/Memory.cpp
     ${CMAKE_SOURCE_DIR}/src/Disassembler.cpp
 )
 

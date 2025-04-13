@@ -6,13 +6,14 @@
 */
 
 #include "BIOS.h"
-#include <fstream>
-#include <iostream>
-#include <iomanip>
 
-BIOS::BIOS()
+#include <fstream>
+#include <fmt/format.h>
+
+BIOS::BIOS() :
+    Memory(BIOS_SIZE)
 {
-    m_data.resize(BIOS_SIZE);
+    setReadOnly(true);
 }
 
 BIOS::BIOS(const std::string &path) :
@@ -21,61 +22,25 @@ BIOS::BIOS(const std::string &path) :
     loadFromFile(path);
 }
 
-BIOS::~BIOS()
-{
-}
-
-uint32_t BIOS::loadWord(uint32_t off) const
-{
-    uint32_t b1 = m_data[off];
-    uint32_t b2 = m_data[off + 1] << 8;
-    uint32_t b3 = m_data[off + 2] << 16;
-    uint32_t b4 = m_data[off + 3] << 24;
-    return b4 | b3 | b2 | b1;
-}
-
-uint16_t BIOS::loadHalfWord(uint32_t off) const
-{
-    uint16_t b1 = m_data[off];
-    uint16_t b2 = m_data[off + 1] << 8;
-    return b2 | b1;
-}
-
-uint8_t BIOS::loadByte(uint32_t off) const
-{
-    return m_data[off];
-}
-
 bool BIOS::loadFromFile(const std::string &path)
 {
     std::ifstream file(path, std::ios_base::in | std::ios_base::binary);
 
     if (!file.is_open())
     {
-        std::cerr << "Cannot open \"" << path << "\"" << std::endl;
+        fmt::println(stderr, "Cannot open BIOS file \"{}\"", path);
         return false;
     }
     file.read(reinterpret_cast<char*>(m_data.data()), BIOS_SIZE);
     if (file.fail())
     {
-        std::cerr << "Cannot read BIOS file \"" << path << std::endl;
+        fmt::println(stderr, "Cannot read BIOS file \"{}\"", path);
         return false;
     }
     if (file.gcount() != BIOS_SIZE)
     {
-        std::cerr << "The provided BIOS file is invalid: ";
-        std::cerr << "Expected size: " << BIOS_SIZE << " but got : " << file.gcount() << std::endl;
+        fmt::println(stderr, "The provided BIOS file is invalid: Expected size: {} but got {}", BIOS_SIZE, file.gcount());
         return false;
     }
     return true;
-}
-
-std::vector<uint8_t> *BIOS::data()
-{
-    return &m_data;
-}
-
-const std::vector<uint8_t> *BIOS::data() const
-{
-    return &m_data;
 }
