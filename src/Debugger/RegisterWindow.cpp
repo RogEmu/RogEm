@@ -193,21 +193,19 @@ void RegisterWindow::drawRegister(uint8_t index)
 
 void RegisterWindow::update()
 {
-    // auto tableFlags = ImGuiTableFlags_BordersOuter
-    //                 | ImGuiTableFlags_RowBg
-    //                 | ImGuiTableFlags_ScrollY;
+    if (ImGui::Begin("Registers")) {
 
-    ImGui::Begin("Registers");
-    if (ImGui::BeginTabBar("##CPURegistersBar"))
-    {
-        updateRegisterChanges();
-        drawGpr();
-        drawCop0Regs();
-        ImGui::EndTabBar();
-    }
-    if (m_editorOpen == true)
-    {
-        displayPopup();
+        if (ImGui::BeginTabBar("##CPURegistersBar"))
+        {
+            updateRegisterChanges();
+            drawGpr();
+            drawCop0Regs();
+            ImGui::EndTabBar();
+        }
+        if (m_editorOpen == true)
+        {
+            displayPopup();
+        }
     }
     ImGui::End();
 }

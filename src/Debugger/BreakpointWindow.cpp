@@ -110,9 +110,10 @@ void BreakpointWindow::displayBreakpoints()
 
 void BreakpointWindow::update()
 {
-    ImGui::Begin("Breakpoints");
-    if (!m_debugger->getBreakpoints().empty())
-        displayBreakpoints();
-    addBreakpointButton();
+    if (ImGui::Begin("Breakpoints")) {
+        if (!m_debugger->getBreakpoints().empty())
+           displayBreakpoints();
+        addBreakpointButton();
+    }
     ImGui::End();
 }
