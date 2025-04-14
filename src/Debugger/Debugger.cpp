@@ -17,7 +17,7 @@
 
 Debugger::Debugger(System *system) :
     m_system(system),
-    m_paused(false),
+    m_paused(true),
     m_simSpeed(1.0f)
 {
     m_windows.emplace_back(std::make_unique<RegisterWindow>(this));
@@ -155,41 +155,13 @@ std::vector<Breakpoint> &Debugger::getBreakpoints()
     return m_breakpoints;
 }
 
-// static uint32_t valueAboutToWrite(std::string disassembledInstruction)
-// {
-//     return 0;
-// }
-
 void Debugger::update()
 {
     uint32_t pc = getSpecialReg((uint8_t)SpecialRegIndex::PC);
-    for (auto bp : m_breakpoints) {
-        if (bp.enabled){
-            if (bp.instructionType == BreakpointType::EXEC) {
-                if (bp.enabled && bp.addr == pc) {
-                    m_paused = true;
-                    break;
-                }
-            }
-            // if (bp.instructionType == type::WRITE){
-            //     uint32_t instructionWord = readWord(pc);
-            //     Instruction instruction = {.raw = instructionWord};
-            //     type instructionType = Disassembler::getInstructionType(instruction);
-            //     if (instructionType == type::READ) {
-            //         uint32_t value = readWord(valueAboutToWrite(Disassembler::disassemble(pc, instruction)));
-            //         if (value == bp.addr) {
-            //             m_paused = true;
-            //             break;
-            //         }
-            //     }
-            //     if (instructionType == type::WRITE) {
-            //         uint32_t value = valueAboutToWrite(Disassembler::disassemble(pc, instruction));
-            //         if (value == bp.addr) {
-            //             m_paused = true;
-            //             break;
-            //         }
-            //     }
-            // }
+    for (const auto &bp : m_breakpoints) {
+        if (bp.enabled && bp.addr == pc) {
+            m_paused = true;
+            break;
         }
     }
 }
@@ -207,4 +179,3 @@ void Debugger::pause(bool pause)
 {
     m_paused = pause;
 }
-
