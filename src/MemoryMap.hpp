@@ -48,13 +48,20 @@ constexpr uint32_t BIOS_BASE_KSEG0 = 0x9FC00000;
 constexpr uint32_t BIOS_BASE_KSEG1 = 0xBFC00000;
 
 // When adding address spaces, use physical addresses
-constexpr MemRange BIOS_RANGE = {BIOS_BASE_KUSEG, 512 * 1024};
-constexpr MemRange RAM_RANGE = {RAM_BASE_KUSEG, 2 * 1024 * 1024};
-constexpr MemRange MEMORY_CONTROL_1_RANGE = {0x1F801000, 36};
-constexpr MemRange MEMORY_CONTROL_2_RANGE = {0x1F801060, 4};
-constexpr MemRange CACHE_CONTROL_RANGE = {0xFFFE0000, 512};
-constexpr MemRange SPU_CONTROL_REGS_RANGE = {0x1F801D80, 64};
-constexpr MemRange EXP_REG_2_RANGE = {0x1F802000, 1024 * 8};
+// These ranges represent the top-level memory segments of the PS1
+// Sub ranges/mappings are defined below
+constexpr MemRange BIOS_RANGE =              {BIOS_BASE_KUSEG, 512 * 1024};
+constexpr MemRange RAM_RANGE =               {RAM_BASE_KUSEG, 2048 * 1024};
+constexpr MemRange IO_PORTS_RANGE =          {0x1F801000, 4096};
+constexpr MemRange EXP2_RANGE =         {0x1F802000, 8 * 1024};
+constexpr MemRange CACHE_CONTROL_RANGE =     {0xFFFE0000, 512};
+
+// I/O ports mappings within I/O ports range
+constexpr MemRange MEMORY_CONTROL_1_RANGE =  {0x1F801000, 36};
+constexpr MemRange MEMORY_CONTROL_2_RANGE =  {0x1F801060, 4};
+constexpr MemRange INTERRUPT_CONTROL_RANGE = {0x1F801070, 4};
+constexpr MemRange TIMERS_RANGE =            {0x1F801100, 0x2F};
+constexpr MemRange SPU_CONTROL_REGS_RANGE =  {0x1F801D80, 64};
 
 constexpr MemorySegments AddressSegments[] = {
     MemorySegments::KUSEG,

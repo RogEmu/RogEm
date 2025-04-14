@@ -10,9 +10,11 @@
 
 #include <cstdint>
 #include <vector>
+#include <memory>
 
 class BIOS;
 class RAM;
+class Memory;
 
 class Bus
 {
@@ -33,6 +35,9 @@ class Bus
     private:
         BIOS *m_bios;
         RAM *m_ram;
+        std::unique_ptr<Memory> m_ioPorts;
+
+        uint32_t m_cacheControl;
 };
 
 #endif /* !BUS_H_ */
