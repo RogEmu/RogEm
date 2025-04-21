@@ -166,14 +166,27 @@ std::vector<Breakpoint> &Debugger::getBreakpoints()
     return m_breakpoints;
 }
 
+void Debugger::setResumeOnBreakpoint(bool resume)
+{
+    m_resumeOnBreakpoint = resume;
+}
+
 void Debugger::update()
 {
     uint32_t pc = getSpecialReg((uint8_t)SpecialRegIndex::PC);
-    for (const auto &bp : m_breakpoints) {
-        if (bp.enabled && bp.addr == pc) {
-            m_paused = true;
-            break;
+    for (auto bp : m_breakpoints) {
+        if (bp.enabled){
+            if (bp.instructionType == BreakpointType::EXEC) {
+                if (bp.addr == pc) {
+                    m_paused = true;
+                    break;
+                }
+            }
         }
+    }
+    if (m_resumeOnBreakpoint && m_paused) {
+        m_paused = false;
+        m_resumeOnBreakpoint = false;
     }
 }
 

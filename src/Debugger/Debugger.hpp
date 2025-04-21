@@ -66,6 +66,7 @@ class Debugger
         bool isBreakpointEnabled(long index);
         long getBreakpointIndex(uint32_t addr);
         std::vector<Breakpoint> &getBreakpoints();
+        void setResumeOnBreakpoint(bool resume);
 
         std::vector<uint8_t> *memoryRange(uint32_t addr);
 
@@ -76,6 +77,7 @@ class Debugger
         uint32_t m_currentMemAddr;
 
         std::vector<Breakpoint> m_breakpoints;
+        bool m_resumeOnBreakpoint;
 
         bool m_paused;
         float m_simSpeed;

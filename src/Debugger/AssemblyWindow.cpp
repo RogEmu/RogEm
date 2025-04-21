@@ -34,7 +34,8 @@ void AssemblyWindow::drawTopBar()
     float simSpeed = m_debugger->getSimulationSpeed();
 
     ImGui::BeginGroup();
-    ImGui::Checkbox("Pause", &paused);
+    if (ImGui::Checkbox("Pause", &paused))
+        m_debugger->setResumeOnBreakpoint(true);
     ImGui::SameLine();
     if (ImGui::ArrowButton("##CPU_Step_Fw", ImGuiDir_Right) && paused)
     {
@@ -47,7 +48,6 @@ void AssemblyWindow::drawTopBar()
     ImGui::EndGroup();
     ImGui::SliderFloat("Simulation Speed", &simSpeed, 0.00001f, 1.0f, "%.5f");
 
-    m_debugger->pause(paused);
     m_debugger->setSimulationSpeed(simSpeed);
 }
 
