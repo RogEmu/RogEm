@@ -91,6 +91,10 @@ void AssemblyWindow::drawContextMenu(uint32_t addr, bool isSelected, bool hasBre
 {
     if (isSelected && ImGui::BeginPopupContextItem("BreakpointContextMenu"))
     {
+        if (ImGui::MenuItem("Show address in memory"))
+        {
+            m_debugger->setCurrentMemAddr(addr);
+        }
         if (hasBreakpoint)
         {
             int bpIndex = m_debugger->getBreakpointIndex(addr);

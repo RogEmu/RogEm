@@ -55,6 +55,10 @@ class Debugger
         uint16_t readHalfWord(uint32_t addr) const;
         uint32_t readWord(uint32_t addr) const;
 
+        // Memory View
+        void setCurrentMemAddr(uint32_t addr);
+        uint32_t getCurrentMemAddr() const;
+
         // Breakpoints
         void addBreakpoint(uint32_t addr, BreakpointType type, const std::string &label);
         void removeBreakpoint(long index);
@@ -69,6 +73,7 @@ class Debugger
         System *m_system;
 
         std::list<std::shared_ptr<IWindow>> m_windows;
+        uint32_t m_currentMemAddr;
 
         std::vector<Breakpoint> m_breakpoints;
 

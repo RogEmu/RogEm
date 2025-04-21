@@ -109,8 +109,17 @@ uint32_t Debugger::readWord(uint32_t addr) const
 std::vector<uint8_t> *Debugger::memoryRange(uint32_t addr)
 {
     auto slice = m_system->getBus()->getMemoryRange(addr);
-
     return slice;
+}
+
+void Debugger::setCurrentMemAddr(uint32_t addr)
+{
+    m_currentMemAddr = addr;
+}
+
+uint32_t Debugger::getCurrentMemAddr() const
+{
+    return m_currentMemAddr;
 }
 
 void Debugger::addBreakpoint(uint32_t addr, BreakpointType type, const std::string &label)
@@ -170,7 +179,6 @@ void Debugger::update()
 
 void Debugger::draw()
 {
-    ImGui::ShowDemoWindow();
     for (auto &subwin : m_windows)
     {
         subwin->update();

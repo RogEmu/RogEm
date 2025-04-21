@@ -47,5 +47,5 @@ void MemoryWindow::drawEditor(const char *title, uint32_t baseAddr)
         data = static_cast<void *>(slice->data());
         size = slice->size();
     }
-    m_memEdit.DrawWindow(title, data, size, baseAddr);
+    m_memEdit.DrawWindow(title, data, size, m_debugger->getCurrentMemAddr());
 }
