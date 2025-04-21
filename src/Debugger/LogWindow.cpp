@@ -51,7 +51,7 @@ void LogWindow::drawLogsWindow()
     if (ImGui::BeginChild("Logs text", ImVec2(0.0f, 0.0f), ImGuiChildFlags_None, ImGuiWindowFlags_HorizontalScrollbar))
     {
         ImGuiListClipper clipper;
-        clipper.Begin(m_logs.size());
+        clipper.Begin(static_cast<int>(m_logs.size()));
         while (clipper.Step())
         {
             for (int lineNbr = clipper.DisplayStart; lineNbr < clipper.DisplayEnd; ++lineNbr)
