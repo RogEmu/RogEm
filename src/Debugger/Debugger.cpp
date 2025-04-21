@@ -18,7 +18,7 @@
 
 Debugger::Debugger(System *system) :
     m_system(system),
-    m_paused(false),
+    m_paused(true),
     m_simSpeed(1.0f),
     m_resumeOnBreakpoint(false)
 {
@@ -190,12 +190,13 @@ void Debugger::setResumeOnBreakpoint(bool resume)
 void Debugger::update()
 {
     uint32_t pc = getSpecialReg((uint8_t)SpecialRegIndex::PC);
+
     for (auto bp : m_breakpoints) {
         if (bp.enabled){
             if (bp.instructionType == BreakpointType::EXEC) {
                 if (bp.addr == pc) {
                     if (bp.isRunTo == true) {
-                        setBreakpoint(pc, BreakpointType::EXEC, "Run to", false, false);
+                        removeBreakpoint(getBreakpointIndex(bp.addr));
                     }
                     m_paused = true;
                     break;
