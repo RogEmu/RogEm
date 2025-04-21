@@ -101,11 +101,11 @@ void AssemblyWindow::drawContextMenu(uint32_t addr, bool isSelected, bool hasBre
 
     if (isSelected && ImGui::BeginPopupContextItem("BreakpointContextMenu"))
     {
-        if (ImGui::BeginMenu("MemoryContextMenu"))
+        if (ImGui::BeginMenu("Jump to memory address"))
         {
             for (auto& window : m_debugger->getWindows()) {
                 if (auto memWin = dynamic_cast<MemoryWindow*>(window.get())) {
-                    if (ImGui::MenuItem(fmt::format("Open in {}", memWin->getTitle()).c_str()))
+                    if (ImGui::MenuItem(fmt::format("Open in {}", memWin->getTitleChar()).c_str()))
                     {
                         memWin->gotoAddress(addr);
                     }
@@ -122,30 +122,35 @@ void AssemblyWindow::drawContextMenu(uint32_t addr, bool isSelected, bool hasBre
             m_debugger->addBreakpoint(addr, BreakpointType::EXEC, fmt::format("Run to 0x{:08X}", addr), true);
         }
         ImGui::Separator();
-        if (ImGui::MenuItem("Enable Breakpoint"))
+        if (ImGui::MenuItem("Toggle Breakpoint"))
         {
             if (!hasBreakpoint)
+            {
                 m_debugger->addBreakpoint(addr, BreakpointType::EXEC, fmt::format("Breakpoint at 0x{:08X}", addr), false);
-            else
-                m_debugger->toggleBreakpoint(m_debugger->getBreakpointIndex(addr), true);
+            }
+            if (hasBreakpoint)
+            {
+                uint32_t bpIndex = m_debugger->getBreakpointIndex(addr);
+                if (m_debugger->isBreakpointEnabled(bpIndex))
+                {
+                    m_debugger->toggleBreakpoint(bpIndex, false);
+                }
+                else
+                {
+                    m_debugger->toggleBreakpoint(bpIndex, true);
+                }
+            }
         }
         if (hasBreakpoint)
         {
-            long bpIndex = m_debugger->getBreakpointIndex(addr);
-            if (ImGui::MenuItem("Disable Breakpoint"))
-            {
-                m_debugger->toggleBreakpoint(bpIndex, false);
-            }
             ImGui::Separator();
             if (ImGui::MenuItem("Remove Breakpoint"))
             {
-                m_debugger->removeBreakpoint(bpIndex);
+                m_debugger->removeBreakpoint(m_debugger->getBreakpointIndex(addr));
             }
         }
         else
         {
-            ImGui::TextColored(GREY, "Disable Breakpoint");
-            ImGui::Separator();
             ImGui::TextColored(GREY, "Remove Breakpoint");
         }
         ImGui::EndPopup();
