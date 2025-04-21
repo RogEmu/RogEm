@@ -203,7 +203,6 @@ void Debugger::update()
 
 void Debugger::draw()
 {
-    ImGui::ShowDemoWindow();
     for (auto &subwin : m_windows)
     {
         subwin->update();
