@@ -192,6 +192,7 @@ void AssemblyWindow::drawAssemblyLine(uint32_t addr)
     if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Right))
     {
         m_selectedAddr = addr;
+        ImGui::OpenPopup("BreakpointContextMenu");
     }
     drawContextMenu(addr, isSelected, hasBreakpoint);
 
