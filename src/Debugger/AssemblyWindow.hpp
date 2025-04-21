@@ -5,6 +5,8 @@
 #include "IWindow.hpp"
 #include <memory>
 
+#define GREY ImColor(171, 183, 183, 255)
+
 struct CPU;
 class Debugger;
 

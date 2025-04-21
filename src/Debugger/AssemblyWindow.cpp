@@ -122,13 +122,16 @@ void AssemblyWindow::drawContextMenu(uint32_t addr, bool isSelected, bool hasBre
             m_debugger->addBreakpoint(addr, BreakpointType::EXEC, fmt::format("Run to 0x{:08X}", addr), true);
         }
         ImGui::Separator();
+        if (ImGui::MenuItem("Enable Breakpoint"))
+        {
+            if (!hasBreakpoint)
+                m_debugger->addBreakpoint(addr, BreakpointType::EXEC, fmt::format("Breakpoint at 0x{:08X}", addr), false);
+            else
+                m_debugger->toggleBreakpoint(m_debugger->getBreakpointIndex(addr), true);
+        }
         if (hasBreakpoint)
         {
-            int bpIndex = m_debugger->getBreakpointIndex(addr);
-            if (ImGui::MenuItem("Enable Breakpoint"))
-            {
-                m_debugger->toggleBreakpoint(bpIndex, true);
-            }
+            long bpIndex = m_debugger->getBreakpointIndex(addr);
             if (ImGui::MenuItem("Disable Breakpoint"))
             {
                 m_debugger->toggleBreakpoint(bpIndex, false);
@@ -141,10 +144,9 @@ void AssemblyWindow::drawContextMenu(uint32_t addr, bool isSelected, bool hasBre
         }
         else
         {
-            if (ImGui::MenuItem("Add Breakpoint"))
-            {
-                m_debugger->addBreakpoint(addr, BreakpointType::EXEC, fmt::format("Breakpoint at 0x{:08X}", addr), false);
-            }
+            ImGui::TextColored(GREY, "Disable Breakpoint");
+            ImGui::Separator();
+            ImGui::TextColored(GREY, "Remove Breakpoint");
         }
         ImGui::EndPopup();
     }
