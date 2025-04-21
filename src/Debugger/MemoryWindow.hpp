@@ -23,6 +23,7 @@ class MemoryWindow : public IWindow
 
         MemoryEditor* getMemoryEditor();
         void gotoAddress(uint32_t addr);
+        void requestFocus();
 
     private:
         void drawEditor(const char *title, uint32_t baseAddr);
@@ -32,6 +33,7 @@ class MemoryWindow : public IWindow
         MemoryEditor m_memEdit;
 
         uint32_t m_baseAddr;
+        bool m_wantsFocus = false;
 };
 
 #endif /* !MEMORYWINDOW_HPP_ */

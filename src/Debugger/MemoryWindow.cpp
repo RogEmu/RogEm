@@ -35,6 +35,11 @@ MemoryEditor* MemoryWindow::getMemoryEditor()
     return &m_memEdit;
 }
 
+void MemoryWindow::requestFocus()
+{
+    m_wantsFocus = true;
+}
+
 void MemoryWindow::gotoAddress(uint32_t addr)
 {
     m_memEdit.GotoAddr = addr - m_baseAddr;
@@ -51,5 +56,11 @@ void MemoryWindow::drawEditor(const char *title, uint32_t baseAddr)
         data = static_cast<void *>(slice->data());
         size = slice->size();
     }
+    if (m_wantsFocus)
+    {
+        ImGui::SetNextWindowFocus();
+        m_wantsFocus = false;
+    }
+
     m_memEdit.DrawWindow(title, data, size, baseAddr);
 }

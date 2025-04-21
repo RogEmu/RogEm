@@ -108,6 +108,7 @@ void AssemblyWindow::drawContextMenu(uint32_t addr, bool isSelected, bool hasBre
                     if (ImGui::MenuItem(fmt::format("Open in {}", memWin->getTitleChar()).c_str()))
                     {
                         memWin->gotoAddress(addr);
+                        memWin->requestFocus();
                     }
                 }
             }
