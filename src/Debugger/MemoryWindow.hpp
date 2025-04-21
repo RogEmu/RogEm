@@ -19,8 +19,12 @@ class MemoryWindow : public IWindow
         void update() override;
 
         void setTitle(const char *title);
+        const char *getTitle() const;
         void setBaseAddr(uint32_t baseAddr);
         void setReadOnly(bool readOnly);
+
+        MemoryEditor* getMemoryEditor();
+        void gotoAddress(uint32_t addr);
 
     private:
         void drawEditor(const char *title, uint32_t baseAddr);
@@ -31,6 +35,7 @@ class MemoryWindow : public IWindow
 
         const char *m_title;
         uint32_t m_baseAddr;
+        size_t m_size;
 };
 
 #endif /* !MEMORYWINDOW_HPP_ */

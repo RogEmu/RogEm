@@ -56,9 +56,8 @@ class Debugger
         uint16_t readHalfWord(uint32_t addr) const;
         uint32_t readWord(uint32_t addr) const;
 
-        // Memory View
-        void setCurrentMemAddr(uint32_t addr);
-        uint32_t getCurrentMemAddr() const;
+        // Get window
+        std::list<std::shared_ptr<IWindow>> &getWindows() { return m_windows; }
 
         // Breakpoints
         void addBreakpoint(uint32_t addr, BreakpointType type, const std::string &label, bool isRunTo);

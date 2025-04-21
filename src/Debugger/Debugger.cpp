@@ -113,16 +113,6 @@ std::vector<uint8_t> *Debugger::memoryRange(uint32_t addr)
     return slice;
 }
 
-void Debugger::setCurrentMemAddr(uint32_t addr)
-{
-    m_currentMemAddr = addr;
-}
-
-uint32_t Debugger::getCurrentMemAddr() const
-{
-    return m_currentMemAddr;
-}
-
 void Debugger::addBreakpoint(uint32_t addr, BreakpointType type, const std::string &label, bool isRunTo)
 {
     m_breakpoints.push_back({addr, type, label, true, isRunTo});
@@ -212,6 +202,7 @@ void Debugger::update()
 
 void Debugger::draw()
 {
+    ImGui::ShowDemoWindow();
     for (auto &subwin : m_windows)
     {
         subwin->update();

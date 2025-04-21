@@ -5,6 +5,7 @@
 #include "CPU.h"
 #include "Disassembler.h"
 #include "Debugger.hpp"
+#include "MemoryWindow.hpp"
 
 AssemblyWindow::AssemblyWindow(Debugger *debugger) :
     m_jumpToPc(false),
@@ -100,9 +101,17 @@ void AssemblyWindow::drawContextMenu(uint32_t addr, bool isSelected, bool hasBre
 
     if (isSelected && ImGui::BeginPopupContextItem("BreakpointContextMenu"))
     {
-        if (ImGui::MenuItem("Show address in memory"))
+        if (ImGui::BeginMenu("MemoryContextMenu"))
         {
-            m_debugger->setCurrentMemAddr(addr);
+            for (auto& window : m_debugger->getWindows()) {
+                if (auto memWin = dynamic_cast<MemoryWindow*>(window.get())) {
+                    if (ImGui::MenuItem(fmt::format("Open in {}", memWin->getTitle()).c_str()))
+                    {
+                        memWin->gotoAddress(addr);
+                    }
+                }
+            }
+            ImGui::EndMenu();
         }
         ImGui::Separator();
         if (ImGui::MenuItem("Run to address"))
@@ -181,7 +190,6 @@ void AssemblyWindow::drawAssemblyLine(uint32_t addr)
     if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Right))
     {
         m_selectedAddr = addr;
-        ImGui::OpenPopup("BreakpointContextMenu");
     }
     drawContextMenu(addr, isSelected, hasBreakpoint);
 
