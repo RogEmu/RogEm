@@ -87,6 +87,38 @@ void AssemblyWindow::drawAssembly()
     ImGui::EndTable();
 }
 
+void AssemblyWindow::drawContextMenu(uint32_t addr, bool isSelected, bool hasBreakpoint)
+{
+    if (isSelected && ImGui::BeginPopupContextItem("BreakpointContextMenu"))
+    {
+        if (hasBreakpoint)
+        {
+            int bpIndex = m_debugger->getBreakpointIndex(addr);
+            if (ImGui::MenuItem("Enable Breakpoint"))
+            {
+                m_debugger->toggleBreakpoint(bpIndex, true);
+            }
+            if (ImGui::MenuItem("Disable Breakpoint"))
+            {
+                m_debugger->toggleBreakpoint(bpIndex, false);
+            }
+            ImGui::Separator();
+            if (ImGui::MenuItem("Remove Breakpoint"))
+            {
+                m_debugger->removeBreakpoint(bpIndex);
+            }
+        }
+        else
+        {
+            if (ImGui::MenuItem("Add Breakpoint"))
+            {
+                m_debugger->addBreakpoint(addr, BreakpointType::EXEC, fmt::format("Breakpoint at 0x{:08X}", addr));
+            }
+        }
+        ImGui::EndPopup();
+    }
+}
+
 void AssemblyWindow::drawAssemblyLine(uint32_t addr)
 {
     uint32_t pc = m_debugger->getSpecialReg((uint8_t)SpecialRegIndex::PC);
@@ -138,14 +170,19 @@ void AssemblyWindow::drawAssemblyLine(uint32_t addr)
             draw_list->AddCircle(circleCenter, 5.0f, IM_COL32(255, 50, 50, 255), 16, 2.0f); // outlined red
     }
 
-    if (ImGui::IsItemHovered())
-        ImGui::SetTooltip("0x%08X", addr);
+    if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Right))
+    {
+        m_selectedAddr = addr;
+        ImGui::OpenPopup("BreakpointContextMenu");
+    }
+    drawContextMenu(addr, isSelected, hasBreakpoint);
 
-    if (ImGui::IsItemClicked() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
+    if (ImGui::IsItemClicked() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+    {
         int bpIndex = m_debugger->getBreakpointIndex(addr);
         if (bpIndex != -1) {
             bool enabled = m_debugger->isBreakpointEnabled(bpIndex);
-            m_debugger->enableBreakpoint(bpIndex, !enabled);
+            m_debugger->toggleBreakpoint(bpIndex, !enabled);
         }
         else
             m_debugger->addBreakpoint(addr, BreakpointType::EXEC, fmt::format("Breakpoint at 0x{:08X}", addr));

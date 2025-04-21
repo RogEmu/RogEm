@@ -20,6 +20,7 @@ class AssemblyWindow : public IWindow
         void drawTopBar();
         void drawAssembly();
         void drawAssemblyLine(uint32_t addr);
+        void drawContextMenu(uint32_t addr, bool isSelected, bool hasBreakpoint);
 
         uint32_t getAddressFromLine(int line);
         int getLineFromAddress(uint32_t addr);

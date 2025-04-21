@@ -136,7 +136,7 @@ bool Debugger::isBreakpointEnabled(long index)
     return m_breakpoints[index].enabled;
 }
 
-void Debugger::enableBreakpoint(long index, bool enable)
+void Debugger::toggleBreakpoint(long index, bool enable)
 {
     if (index < 0 || index >= static_cast<long>(m_breakpoints.size())) {
         return;
