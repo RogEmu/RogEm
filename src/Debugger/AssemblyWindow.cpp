@@ -32,10 +32,16 @@ void AssemblyWindow::drawTopBar()
 {
     bool paused = m_debugger->isPaused();
     float simSpeed = m_debugger->getSimulationSpeed();
+    uint32_t pc = m_debugger->getSpecialReg((uint8_t)SpecialRegIndex::PC);
+    bool isBreakpoint = (m_debugger->getBreakpointIndex(pc) != -1);
 
     ImGui::BeginGroup();
-    if (ImGui::Checkbox("Pause", &paused))
-        m_debugger->setResumeOnBreakpoint(true);
+    if (ImGui::Checkbox("Pause", &paused)) {
+        if (isBreakpoint)
+            m_debugger->setResumeOnBreakpoint(true);
+        else
+            m_debugger->pause(paused);
+    }
     ImGui::SameLine();
     if (ImGui::ArrowButton("##CPU_Step_Fw", ImGuiDir_Right) && paused)
     {
@@ -89,12 +95,24 @@ void AssemblyWindow::drawAssembly()
 
 void AssemblyWindow::drawContextMenu(uint32_t addr, bool isSelected, bool hasBreakpoint)
 {
+    uint32_t pc = m_debugger->getSpecialReg((uint8_t)SpecialRegIndex::PC);
+    bool isBreakpoint = (m_debugger->getBreakpointIndex(pc) != -1);
+
     if (isSelected && ImGui::BeginPopupContextItem("BreakpointContextMenu"))
     {
         if (ImGui::MenuItem("Show address in memory"))
         {
             m_debugger->setCurrentMemAddr(addr);
         }
+        ImGui::Separator();
+        if (ImGui::MenuItem("Run to address"))
+        {
+            if (isBreakpoint)
+                m_debugger->setResumeOnBreakpoint(true);
+            m_debugger->pause(false);
+            m_debugger->addBreakpoint(addr, BreakpointType::EXEC, fmt::format("Run to 0x{:08X}", addr), true);
+        }
+        ImGui::Separator();
         if (hasBreakpoint)
         {
             int bpIndex = m_debugger->getBreakpointIndex(addr);
@@ -116,7 +134,7 @@ void AssemblyWindow::drawContextMenu(uint32_t addr, bool isSelected, bool hasBre
         {
             if (ImGui::MenuItem("Add Breakpoint"))
             {
-                m_debugger->addBreakpoint(addr, BreakpointType::EXEC, fmt::format("Breakpoint at 0x{:08X}", addr));
+                m_debugger->addBreakpoint(addr, BreakpointType::EXEC, fmt::format("Breakpoint at 0x{:08X}", addr), false);
             }
         }
         ImGui::EndPopup();
@@ -159,7 +177,13 @@ void AssemblyWindow::drawAssemblyLine(uint32_t addr)
         ImGui::PopStyleColor(3);
 
     if (isPCLine)
-        ImGui::PopStyleColor();
+    ImGui::PopStyleColor();
+    if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Right))
+    {
+        m_selectedAddr = addr;
+        ImGui::OpenPopup("BreakpointContextMenu");
+    }
+    drawContextMenu(addr, isSelected, hasBreakpoint);
 
     if (hasBreakpoint)
     {
@@ -174,12 +198,6 @@ void AssemblyWindow::drawAssemblyLine(uint32_t addr)
             draw_list->AddCircle(circleCenter, 5.0f, IM_COL32(255, 50, 50, 255), 16, 2.0f); // outlined red
     }
 
-    if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Right))
-    {
-        m_selectedAddr = addr;
-        ImGui::OpenPopup("BreakpointContextMenu");
-    }
-    drawContextMenu(addr, isSelected, hasBreakpoint);
 
     if (ImGui::IsItemClicked() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
     {
@@ -189,7 +207,7 @@ void AssemblyWindow::drawAssemblyLine(uint32_t addr)
             m_debugger->toggleBreakpoint(bpIndex, !enabled);
         }
         else
-            m_debugger->addBreakpoint(addr, BreakpointType::EXEC, fmt::format("Breakpoint at 0x{:08X}", addr));
+            m_debugger->addBreakpoint(addr, BreakpointType::EXEC, fmt::format("Breakpoint at 0x{:08X}", addr), false);
     }
 
     ImGui::TableNextColumn();

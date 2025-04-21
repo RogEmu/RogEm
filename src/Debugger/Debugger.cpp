@@ -18,8 +18,9 @@
 
 Debugger::Debugger(System *system) :
     m_system(system),
-    m_paused(true),
-    m_simSpeed(1.0f)
+    m_paused(false),
+    m_simSpeed(1.0f),
+    m_resumeOnBreakpoint(false)
 {
     m_windows.emplace_back(std::make_unique<RegisterWindow>(this));
     m_windows.emplace_back(std::make_unique<AssemblyWindow>(this));
@@ -122,9 +123,9 @@ uint32_t Debugger::getCurrentMemAddr() const
     return m_currentMemAddr;
 }
 
-void Debugger::addBreakpoint(uint32_t addr, BreakpointType type, const std::string &label)
+void Debugger::addBreakpoint(uint32_t addr, BreakpointType type, const std::string &label, bool isRunTo)
 {
-    m_breakpoints.push_back({addr, type, label, true});
+    m_breakpoints.push_back({addr, type, label, true, isRunTo});
 }
 
 long Debugger::getBreakpointIndex(uint32_t addr)
@@ -161,6 +162,21 @@ void Debugger::removeBreakpoint(long index)
     m_breakpoints.erase(m_breakpoints.begin() + index);
 }
 
+void Debugger::setBreakpoint(uint32_t addr, BreakpointType type, const std::string &label, bool enabled, bool isRunTo)
+{
+    auto it = std::find_if(m_breakpoints.begin(), m_breakpoints.end(), [addr](const Breakpoint &bp) {
+        return bp.addr == addr;
+    });
+    if (it != m_breakpoints.end()) {
+        it->enabled = enabled;
+        it->instructionType = type;
+        it->label = label;
+        it->isRunTo = isRunTo;
+    } else {
+        m_breakpoints.push_back({addr, type, label, enabled, isRunTo});
+    }
+}
+
 std::vector<Breakpoint> &Debugger::getBreakpoints()
 {
     return m_breakpoints;
@@ -178,6 +194,9 @@ void Debugger::update()
         if (bp.enabled){
             if (bp.instructionType == BreakpointType::EXEC) {
                 if (bp.addr == pc) {
+                    if (bp.isRunTo == true) {
+                        setBreakpoint(pc, BreakpointType::EXEC, "Run to", false, false);
+                    }
                     m_paused = true;
                     break;
                 }

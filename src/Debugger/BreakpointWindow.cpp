@@ -43,11 +43,11 @@ void BreakpointWindow::addBreakpointButton()
             uint32_t value = std::strtoul(addr, &end, 16);
             if (!*end) {
                 if (m_breakpointType == 0)
-                    m_debugger->addBreakpoint(value, BreakpointType::EXEC, labelText);
+                    m_debugger->addBreakpoint(value, BreakpointType::EXEC, labelText, false);
                 else if (m_breakpointType == 1)
-                    m_debugger->addBreakpoint(value, BreakpointType::READ, labelText);
+                    m_debugger->addBreakpoint(value, BreakpointType::READ, labelText, false);
                 else
-                    m_debugger->addBreakpoint(value, BreakpointType::WRITE, labelText);
+                    m_debugger->addBreakpoint(value, BreakpointType::WRITE, labelText, false);
             }
             ImGui::CloseCurrentPopup();
             addr[0] = '\0';

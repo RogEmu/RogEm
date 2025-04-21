@@ -24,6 +24,7 @@ struct Breakpoint
     BreakpointType instructionType;
     std::string label;
     bool enabled;
+    bool isRunTo;
 };
 
 class Debugger
@@ -60,13 +61,14 @@ class Debugger
         uint32_t getCurrentMemAddr() const;
 
         // Breakpoints
-        void addBreakpoint(uint32_t addr, BreakpointType type, const std::string &label);
+        void addBreakpoint(uint32_t addr, BreakpointType type, const std::string &label, bool isRunTo);
         void removeBreakpoint(long index);
         void toggleBreakpoint(long index, bool enable);
         bool isBreakpointEnabled(long index);
         long getBreakpointIndex(uint32_t addr);
         std::vector<Breakpoint> &getBreakpoints();
         void setResumeOnBreakpoint(bool resume);
+        void setBreakpoint(uint32_t addr, BreakpointType type, const std::string &label, bool enabled, bool isRunTo);
 
         std::vector<uint8_t> *memoryRange(uint32_t addr);
 
@@ -77,10 +79,10 @@ class Debugger
         uint32_t m_currentMemAddr;
 
         std::vector<Breakpoint> m_breakpoints;
-        bool m_resumeOnBreakpoint;
 
         bool m_paused;
         float m_simSpeed;
+        bool m_resumeOnBreakpoint;
 };
 
 #endif /* !DEBUGGER_HPP_ */
