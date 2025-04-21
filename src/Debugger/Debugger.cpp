@@ -138,7 +138,6 @@ bool Debugger::isBreakpointEnabled(long index)
 
 void Debugger::toggleBreakpoint(long index, bool enable)
 {
-    printf("Breakpoint %ld is %s\n", index, enable ? "enabled" : "disabled");
     if (index < 0 || index >= static_cast<long>(m_breakpoints.size())) {
         return;
     }
