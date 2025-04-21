@@ -4,3 +4,4 @@ build/
 *.bin
 imgui.ini
 /CMakeSettings.json
+/vcpkg_installed

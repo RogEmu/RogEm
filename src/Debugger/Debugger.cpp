@@ -36,6 +36,8 @@ Debugger::Debugger(System *system) :
     ramMemoryWindow->setBaseAddr(0);
     ramMemoryWindow->setTitle("RAM");
     m_windows.push_back(std::move(ramMemoryWindow));
+
+    loadBreakpointsFromFile();
 }
 
 Debugger::~Debugger()
@@ -113,9 +115,29 @@ std::vector<uint8_t> *Debugger::memoryRange(uint32_t addr)
     return slice;
 }
 
+//The following functions are required for nlohmann-json to work, but are called automatically upon conversion
+void to_json(nlohmann::json& j, const Breakpoint& b)
+{
+    j = nlohmann::json {
+        {"addr", b.addr},
+        {"instructionType", static_cast<int>(b.instructionType)},
+        {"label", b.label},
+        {"enabled", b.enabled}
+    };
+}
+
+void from_json(const nlohmann::json& j, Breakpoint& b)
+{
+    b.addr = j.at("addr").get<uint32_t>();
+    b.instructionType = static_cast<BreakpointType>(j.at("instructionType").get<int>());
+    b.label = j.at("label").get<std::string>();
+    b.enabled = j.at("enabled").get<bool>();
+}
+
 void Debugger::addBreakpoint(uint32_t addr, BreakpointType type, const std::string &label, bool isRunTo)
 {
     m_breakpoints.push_back({addr, type, label, true, isRunTo});
+    saveBreakpointsToFile();
 }
 
 long Debugger::getBreakpointIndex(uint32_t addr)
@@ -150,6 +172,26 @@ void Debugger::removeBreakpoint(long index)
         return;
     }
     m_breakpoints.erase(m_breakpoints.begin() + index);
+    saveBreakpointsToFile();
+}
+
+void Debugger::saveBreakpointsToFile()
+{
+    std::ofstream file(breakpointsFilePath);
+    if (file.is_open()) {
+        nlohmann::json j = m_breakpoints;
+        file << j.dump(4);
+    }
+}
+
+void Debugger::loadBreakpointsFromFile()
+{
+    std::ifstream file(breakpointsFilePath);
+    if (file.is_open()) {
+        nlohmann::json j;
+        file >> j;
+        m_breakpoints = j.get<std::vector<Breakpoint>>();
+    }
 }
 
 void Debugger::setBreakpoint(uint32_t addr, BreakpointType type, const std::string &label, bool enabled, bool isRunTo)

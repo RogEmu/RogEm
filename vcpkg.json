@@ -4,6 +4,7 @@
     "gtest",
     "glfw3",
     "opengl",
+    "nlohmann-json",
     {
       "name": "imgui",
       "features": [
