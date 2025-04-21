@@ -101,18 +101,17 @@ void AssemblyWindow::drawContextMenu(uint32_t addr, bool isSelected, bool hasBre
 
     if (isSelected && ImGui::BeginPopupContextItem("BreakpointContextMenu"))
     {
-        if (ImGui::BeginMenu("Jump to memory address"))
+        if (ImGui::MenuItem("Jump to memory address"))
         {
+            std::string windowTitle = (addr < 0xBFC00000) ? "RAM" : "BIOS";
             for (auto& window : m_debugger->getWindows()) {
                 if (auto memWin = dynamic_cast<MemoryWindow*>(window.get())) {
-                    if (ImGui::MenuItem(fmt::format("Open in {}", memWin->getTitleChar()).c_str()))
-                    {
+                    if (memWin->getTitleString() == windowTitle) {
                         memWin->gotoAddress(addr);
                         memWin->requestFocus();
                     }
                 }
             }
-            ImGui::EndMenu();
         }
         ImGui::Separator();
         if (ImGui::MenuItem("Run to address"))

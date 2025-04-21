@@ -42,7 +42,7 @@ void MemoryWindow::requestFocus()
 
 void MemoryWindow::gotoAddress(uint32_t addr)
 {
-    m_memEdit.GotoAddr = addr - m_baseAddr;
+    m_memEdit.GotoAddrAndHighlight(addr - m_baseAddr, addr + 4 - m_baseAddr);
 }
 
 void MemoryWindow::drawEditor(const char *title, uint32_t baseAddr)
