@@ -52,6 +52,7 @@ class Debugger
         void setSpecialReg(uint8_t reg, uint32_t val);
         uint32_t getCop0Reg(uint8_t reg) const;
         void setCop0Reg(uint8_t reg, uint32_t val);
+        void CPUReset();
 
         // Memory Controls
         uint8_t readByte(uint32_t addr) const;

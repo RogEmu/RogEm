@@ -15,6 +15,7 @@
 #include "System.hpp"
 #include "BreakpointWindow.hpp"
 #include "LogWindow.hpp"
+#include "SettingsWindow.hpp"
 
 Debugger::Debugger(System *system) :
     m_system(system),
@@ -26,6 +27,7 @@ Debugger::Debugger(System *system) :
     m_windows.emplace_back(std::make_unique<AssemblyWindow>(this));
     m_windows.emplace_back(std::make_unique<BreakpointWindow>(this));
     m_windows.emplace_back(std::make_unique<LogWindow>(this));
+    m_windows.emplace_back(std::make_unique<SettingsWindow>(this));
     auto biosMemoryWindow = std::make_unique<MemoryWindow>(this);
     biosMemoryWindow->setBaseAddr(0xBFC00000);
     biosMemoryWindow->setTitle("BIOS");
@@ -92,6 +94,11 @@ uint32_t Debugger::getCop0Reg(uint8_t reg) const
 void Debugger::setCop0Reg(uint8_t reg, uint32_t val)
 {
     m_system->getCPU()->setCop0Reg(reg, val);
+}
+
+void Debugger::CPUReset()
+{
+    m_system->getCPU()->reset();
 }
 
 uint8_t Debugger::readByte(uint32_t addr) const
