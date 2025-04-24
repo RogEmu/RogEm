@@ -85,10 +85,6 @@ struct CPU
 
     void step();
     Instruction fetchInstruction();
-    void checkTtyOutput();
-    void setTtyOutputFlag(bool ttyOutput);
-    bool getTtyOutputFlag() const { return m_isTtyOutput; }
-    std::string getTtyOutput() const { return m_ttyOutput; }
     void executeInstruction(const Instruction &instruction);
     void reset();
 
@@ -208,8 +204,6 @@ struct CPU
     uint32_t m_branchSlotAddr;
     bool m_inBranchDelay;
     bool m_nextIsBranchDelay;
-    bool m_isTtyOutput;
-    std::string m_ttyOutput;
 
     // COP0 registers
     uint32_t m_cop0Reg[COP0_NB_REG];
