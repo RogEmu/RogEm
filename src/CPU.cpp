@@ -62,11 +62,39 @@ void CPU::reset()
     pc = RESET_VECTOR;
     std::memset(gpr, 0, NB_GPR * sizeof(gpr[0]));
     std::memset(m_cop0Reg, 0, COP0_NB_REG * sizeof(m_cop0Reg[0]));
+    m_isTtyOutput = false;
+}
+
+void CPU::setTtyOutputFlag(bool ttyOutput)
+{
+    m_isTtyOutput = ttyOutput;
+}
+
+void CPU::checkTtyOutput()
+{
+    static uint32_t lastSyscallPC = 0xFFFFFFFF;
+
+    uint32_t t1 = gpr[static_cast<uint8_t>(GprIndex::T1)];
+
+    if ((pc == 0xA0 && t1 == 0x3C) || (pc == 0xB0 && t1 == 0x3D))
+    {
+        if (pc != lastSyscallPC)
+        {
+            lastSyscallPC = pc;
+            m_ttyOutput = (static_cast<char>(gpr[static_cast<uint8_t>(GprIndex::A0)]) & 0xFF);
+            m_isTtyOutput = true;
+        }
+    }
+    else
+    {
+        lastSyscallPC = 0xFFFFFFFF; // reset so next valid syscall prints again
+    }
 }
 
 Instruction CPU::fetchInstruction()
 {
     uint32_t instruction = m_bus->loadWord(pc);
+    checkTtyOutput();
     return Instruction{.raw=instruction};
 }
 
