@@ -44,7 +44,7 @@ void RegisterWindow::displayPopup()
             uint32_t value = std::strtoul(label, &end, 16);
             if (!*end) {
                 if (m_registerIndex < NB_GPR)
-                    m_debugger->setGPR((uint8_t)m_registerIndex, value);
+                    m_debugger->setCpuReg(static_cast<CpuReg>(m_registerIndex), value);
             }
             m_editorOpen = false;
             ImGui::CloseCurrentPopup();
@@ -92,9 +92,9 @@ void RegisterWindow::drawSpecialRegs()
 {
     const char* extraRegisters[] = {"PC", "HI", "LO"};
     uint32_t extraValues[] = {
-        m_debugger->getSpecialReg((uint8_t)SpecialRegIndex::PC),
-        m_debugger->getSpecialReg((uint8_t)SpecialRegIndex::HI),
-        m_debugger->getSpecialReg((uint8_t)SpecialRegIndex::LO)
+        m_debugger->getCpuReg(CpuReg::PC),
+        m_debugger->getCpuReg(CpuReg::HI),
+        m_debugger->getCpuReg(CpuReg::LO)
     };
     for (int i = 0; i < 3; i++)
     {
@@ -154,7 +154,7 @@ void RegisterWindow::updateRegisterChanges()
 {
     for (uint8_t i = 0; i < NB_GPR; i++)
     {
-        m_currentGPR[i] = m_debugger->getGPR(i);
+        m_currentGPR[i] = m_debugger->getCpuReg(static_cast<CpuReg>(i));
     }
     if (isGPREqual(m_currentGPR, m_prevGPR) == false)
     {
@@ -177,7 +177,7 @@ void RegisterWindow::updateRegisterChanges()
 void RegisterWindow::drawRegister(uint8_t index)
 {
     ImColor textColor(ImGui::GetColorU32(ImGuiCol_Text));
-    auto value = m_debugger->getGPR(index);
+    auto value = m_debugger->getCpuReg(static_cast<CpuReg>(index));
     auto name = Disassembler::getRegisterName(index).c_str();
 
     if (value == 0)
@@ -187,7 +187,7 @@ void RegisterWindow::drawRegister(uint8_t index)
     }
     ImGui::Text("%s", name);
     ImGui::TableNextColumn();
-    ImGui::TextColored(textColor, "%08X", m_debugger->getGPR(index));
+    ImGui::TextColored(textColor, "%08X", m_debugger->getCpuReg(static_cast<CpuReg>(index)));
     addEditButton(name, index);
 }
 

@@ -2,9 +2,7 @@
 #include <fmt/format.h>
 
 #include "MemoryMap.hpp"
-#include "CPU.h"
 #include "Disassembler.h"
-#include "Debugger.hpp"
 #include "MemoryWindow.hpp"
 
 AssemblyWindow::AssemblyWindow(Debugger *debugger) :
@@ -33,7 +31,7 @@ void AssemblyWindow::drawTopBar()
 {
     bool paused = m_debugger->isPaused();
     float simSpeed = m_debugger->getSimulationSpeed();
-    uint32_t pc = m_debugger->getSpecialReg((uint8_t)SpecialRegIndex::PC);
+    uint32_t pc = m_debugger->getCpuReg(CpuReg::PC);
     bool isBreakpoint = (m_debugger->getBreakpointIndex(pc) != -1);
 
     ImGui::BeginGroup();
@@ -96,7 +94,7 @@ void AssemblyWindow::drawAssembly()
 
 void AssemblyWindow::drawContextMenu(uint32_t addr, bool isSelected, bool hasBreakpoint)
 {
-    uint32_t pc = m_debugger->getSpecialReg((uint8_t)SpecialRegIndex::PC);
+    uint32_t pc = m_debugger->getCpuReg(CpuReg::PC);
     bool isBreakpoint = (m_debugger->getBreakpointIndex(pc) != -1);
 
     if (isSelected && ImGui::BeginPopupContextItem("BreakpointContextMenu"))
@@ -158,7 +156,7 @@ void AssemblyWindow::drawContextMenu(uint32_t addr, bool isSelected, bool hasBre
 
 void AssemblyWindow::drawAssemblyLine(uint32_t addr)
 {
-    uint32_t pc = m_debugger->getSpecialReg((uint8_t)SpecialRegIndex::PC);
+    uint32_t pc = m_debugger->getCpuReg(CpuReg::PC);
     ImColor lineColor(IM_COL32_WHITE);
     uint32_t currentInstruction = m_debugger->readWord(addr);
 
@@ -267,7 +265,7 @@ void AssemblyWindow::jumpToPC()
 
 void AssemblyWindow::updatePcCursor(float itemHeight)
 {
-    auto pc = m_debugger->getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC));
+    auto pc = m_debugger->getCpuReg(CpuReg::PC);
     auto line = getLineFromAddress(pc);
     m_pcCursor = line * itemHeight;
 }

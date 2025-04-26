@@ -2,8 +2,6 @@
 #include <fmt/format.h>
 
 #include "BIOS.h"
-#include "Debugger.hpp"
-
 
 MemoryWindow::MemoryWindow(Debugger *debugger) :
     m_debugger(debugger),

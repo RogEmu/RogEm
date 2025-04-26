@@ -66,24 +66,14 @@ void Debugger::stepOver()
     m_system->getCPU()->step();
 }
 
-uint32_t Debugger::getGPR(uint8_t reg) const
+uint32_t Debugger::getCpuReg(CpuReg reg) const
 {
     return m_system->getCPU()->getReg(reg);
 }
 
-void Debugger::setGPR(uint8_t reg, uint32_t value)
+void Debugger::setCpuReg(CpuReg reg, uint32_t value)
 {
     m_system->getCPU()->setReg(reg, value);
-}
-
-uint32_t Debugger::getSpecialReg(uint8_t reg) const
-{
-    return m_system->getCPU()->getSpecialReg(reg);
-}
-
-void Debugger::setSpecialReg(uint8_t reg, uint32_t val)
-{
-    m_system->getCPU()->setSpecialReg(reg, val);
 }
 
 uint32_t Debugger::getCop0Reg(uint8_t reg) const
@@ -228,7 +218,7 @@ void Debugger::setResumeOnBreakpoint(bool resume)
 
 void Debugger::update()
 {
-    uint32_t pc = getSpecialReg((uint8_t)SpecialRegIndex::PC);
+    uint32_t pc = getCpuReg(CpuReg::PC);
 
     for (auto bp : m_breakpoints) {
         if (bp.enabled){

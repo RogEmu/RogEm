@@ -1,1022 +1,667 @@
 #include <gtest/gtest.h>
-#include "Utils.h"
 #include "BIOS.h"
 #include "RAM.h"
 #include "Bus.h"
 #include "CPU.h"
 
-TEST(CpuTest, LW_AlignedAddress)
+class CpuLoadTest : public testing::Test
 {
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
+    protected:
+        Bus bus;
+        BIOS bios;
+        RAM ram;
+        CPU cpu;
 
-    uint32_t base_address = 0x1000;
-    int16_t offset = 0x4;
-    uint32_t address = base_address + offset;
-    uint32_t expected_value = 0xDEADBEEF;
+        const uint32_t defaultRegVal = 0xDEADBEEF;
 
-    ram.storeWord(address, expected_value); // Store value in RAM
+        CpuLoadTest() :
+            bus(&bios, &ram),
+            cpu(&bus)
+        {
+            cpu.reset();
+            cpu.setReg(CpuReg::PC, 0x10000);
+        }
 
-    cpu.setReg(static_cast<uint8_t>(GprIndex::SP), base_address); // Set base register (SP)
-    i.i.rs = static_cast<uint8_t>(GprIndex::SP);  // rs = SP
-    i.i.rt = static_cast<uint8_t>(GprIndex::T0); // rt = T0
-    i.i.immediate = offset;
+        void runLoad(PrimaryOpCode opcode, CpuReg rs, CpuReg rt, int16_t imm)
+        {
+            Instruction i;
+            i.r.opcode = static_cast<uint8_t>(opcode);
+            i.i.rs = static_cast<uint8_t>(rs);
+            i.i.rt = static_cast<uint8_t>(rt);
+            i.i.immediate = static_cast<uint16_t>(imm);
 
-    cpu.loadWord(i);
+            auto pc = cpu.getReg(CpuReg::PC);
+            bus.storeWord(pc, i.raw);
+            cpu.setReg(rt, defaultRegVal);
+            cpu.step();
+        }
 
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T0)), expected_value); // Compare T0 register value
+        void runLW(CpuReg rt, CpuReg rs, int16_t imm)
+        {
+            runLoad(PrimaryOpCode::LW, rs, rt, imm);
+        }
+
+        void runLH(CpuReg rt, CpuReg rs, int16_t imm)
+        {
+            runLoad(PrimaryOpCode::LH, rs, rt, imm);
+        }
+
+        void runLB(CpuReg rt, CpuReg rs, int16_t imm)
+        {
+            runLoad(PrimaryOpCode::LB, rs, rt, imm);
+        }
+
+        void runLHU(CpuReg rt, CpuReg rs, int16_t imm)
+        {
+            runLoad(PrimaryOpCode::LHU, rs, rt, imm);
+        }
+
+        void runLBU(CpuReg rt, CpuReg rs, int16_t imm)
+        {
+            runLoad(PrimaryOpCode::LBU, rs, rt, imm);
+        }
+
+        void runLWL(CpuReg rt, CpuReg rs, int16_t imm)
+        {
+            runLoad(PrimaryOpCode::LWL, rs, rt, imm);
+        }
+
+        void runLWR(CpuReg rt, CpuReg rs, int16_t imm)
+        {
+            runLoad(PrimaryOpCode::LWR, rs, rt, imm);
+        }
+};
+
+TEST_F(CpuLoadTest, LW_AlignedAddress)
+{
+    uint32_t base = 0x1000;
+    int16_t offset = 0x10;
+    uint32_t value = 0x12345678;
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
+
+    cpu.setReg(rs, base);
+    bus.storeWord(base + offset, value);
+    runLW(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), value);
 }
 
-TEST(CpuTest, LW_UnalignedAddress)
+TEST_F(CpuLoadTest, LW_Unaligned_BaseRegister)
 {
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
+    uint32_t base = 0x1003;  // unaligned (not divisible by 4)
+    int16_t offset = 0;
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
 
-    uint32_t base_address = 0x1000;
-    int16_t offset = 0x3; // Unaligned
-    uint32_t initial_rt_value = 0xBADF00D;
+    cpu.setReg(rs, base);
+    runLW(rt, rs, offset);
 
-    cpu.setReg(static_cast<uint8_t>(GprIndex::SP), base_address); // Set base register (SP)
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T0), initial_rt_value); // Set initial value in T0
-
-    i.i.rs = static_cast<uint8_t>(GprIndex::SP);  // rs = SP
-    i.i.rt = static_cast<uint8_t>(GprIndex::T0); // rt = T0
-    i.i.immediate = offset;
-
-    cpu.loadWord(i);
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T0)), initial_rt_value); // Register should remain unchanged
+    // Expect an alignment exception or error flag due to unaligned base
+    EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
+    // Optionally, expect target register unchanged or zero
 }
 
-TEST(CpuTest, LW_NegativeOffset)
+TEST_F(CpuLoadTest, LW_Unaligned_Offset)
 {
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
+    uint32_t base = 0x1000;  // aligned
+    int16_t offset = 3;      // unaligned offset
+    CpuReg rs = CpuReg::T2;
+    CpuReg rt = CpuReg::T3;
 
-    uint32_t base_address = 0x2008;
-    int16_t offset = -4; // Negative offset
-    uint32_t target_address = base_address + offset;
-    uint32_t expected_value = 0x12345678;
+    cpu.setReg(rs, base);
+    runLW(rt, rs, offset);
 
-    ram.storeWord(target_address, expected_value); // Store word at target address
-
-    cpu.setReg(static_cast<uint8_t>(GprIndex::SP), base_address); // Set base register (SP)
-    i.i.rs = static_cast<uint8_t>(GprIndex::SP);  // rs = SP
-    i.i.rt = static_cast<uint8_t>(GprIndex::T0); // rt = T0
-    i.i.immediate = offset;
-
-    cpu.loadWord(i);
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T0)), expected_value); // Verify loaded value
+    // Expect alignment exception due to unaligned effective address
+    EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
 }
 
-TEST(CpuTest, LW_MaxAddress)
+TEST_F(CpuLoadTest, LW_Unaligned_BaseAndOffset)
 {
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
+    uint32_t base = 0x1003;  // unaligned base
+    int16_t offset = 3;      // unaligned offset
+    CpuReg rs = CpuReg::T4;
+    CpuReg rt = CpuReg::T5;
 
-    uint32_t base_address = 0x1FFFC;
-    int16_t offset = 0x0; // No offset
-    uint32_t address = base_address + offset;
-    uint32_t expected_value = 0xAABBCCDD;
+    cpu.setReg(rs, base);
+    runLW(rt, rs, offset);
 
-    ram.storeWord(address, expected_value);
-
-    cpu.setReg(static_cast<uint8_t>(GprIndex::SP), base_address); // Set base register (SP)
-    i.i.rs = static_cast<uint8_t>(GprIndex::SP);  // rs = SP
-    i.i.rt = static_cast<uint8_t>(GprIndex::T0); // rt = T0
-    i.i.immediate = offset;
-
-    cpu.loadWord(i);
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T0)), expected_value); // Verify loaded value
+    // Expect alignment exception due to combined unaligned address
+    EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
 }
 
-TEST(CpuTest, LW_ZeroRegister)
+TEST_F(CpuLoadTest, LW_PositiveOffset)
 {
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t base_address = 0x1000;
-    int16_t offset = 0x4;
-    uint32_t address = base_address + offset;
+    uint32_t base = 0x2000;
+    int16_t offset = 16;
     uint32_t value = 0xCAFEBABE;
+    CpuReg rs = CpuReg::T2;
+    CpuReg rt = CpuReg::T3;
 
-    ram.storeWord(address, value);
-
-    cpu.setReg(static_cast<uint8_t>(GprIndex::SP), base_address); // Set base register (SP)
-    i.i.rs = static_cast<uint8_t>(GprIndex::SP);  // rs = SP
-    i.i.rt = static_cast<uint8_t>(GprIndex::ZERO); // Writing to $zero
-    i.i.immediate = offset;
-
-    cpu.loadWord(i);
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::ZERO)), 0); // $zero must remain 0
+    cpu.setReg(rs, base);
+    bus.storeWord(base + offset, value);
+    runLW(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), value);
 }
 
-TEST(CpuTest, LH_BasicLoad_PositiveOffset)
+TEST_F(CpuLoadTest, LW_NegativeOffset)
 {
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
+    uint32_t base = 0x3000;
+    int16_t offset = -16;
+    uint32_t value = 0xDEADC0DE;
+    CpuReg rs = CpuReg::T4;
+    CpuReg rt = CpuReg::T5;
 
-    uint32_t base_address = 0x1000;  // Address in valid RAM space (KUSEG)
-    uint16_t halfword_value = 0x1234;  // A simple 16-bit value
-    int16_t offset = 4;  // A simple 16-bit value
-
-    ram.storeHalfWord(base_address + offset, halfword_value); // Store the halfword with positive offset
-
-    cpu.setReg(static_cast<uint8_t>(GprIndex::SP), base_address); // Set base register (SP)
-    i.i.rs = static_cast<uint8_t>(GprIndex::SP);  // rs = SP
-    i.i.rt = static_cast<uint8_t>(GprIndex::T0); // rt = T0
-    i.i.immediate = offset; // Positive offset
-
-    cpu.loadHalfWord(i); // Execute LH instruction
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T0)), static_cast<int32_t>(halfword_value)); // Verify the value is correctly loaded
+    cpu.setReg(rs, base);
+    bus.storeWord(base + offset, value);  // base - 16
+    runLW(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), value);
 }
 
-TEST(CpuTest, LH_BasicLoad_NegativeOffset)
+TEST_F(CpuLoadTest, LW_MaxOffset)
 {
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
+    uint32_t base = 0x4001;
+    int16_t offset = INT16_MAX; // Offset leads to misaligned address but compensated by base address
+    uint32_t value = 0xFEEDFACE;
+    CpuReg rs = CpuReg::T6;
+    CpuReg rt = CpuReg::T7;
 
-    uint32_t base_address = 0x1000;  // Address in valid RAM space (KUSEG)
-    uint16_t halfword_value = 0x5678;  // Another simple 16-bit value
-    int16_t offset = -4;  // Negative 16-bit value
-
-    ram.storeHalfWord(base_address + offset, halfword_value); // Store the halfword with negative offset
-
-    cpu.setReg(static_cast<uint8_t>(GprIndex::SP), base_address); // Set base register (SP)
-    i.i.rs = static_cast<uint8_t>(GprIndex::SP);  // rs = SP
-    i.i.rt = static_cast<uint8_t>(GprIndex::T0); // rt = T0
-    i.i.immediate = (uint16_t)offset; // Negative offset
-
-    cpu.loadHalfWord(i); // Execute LH instruction
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T0)), static_cast<int32_t>(halfword_value)); // Verify the value is correctly loaded
+    cpu.setReg(rs, base);
+    bus.storeWord(base + offset, value);
+    runLW(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), value);
 }
 
-TEST(CpuTest, LH_NegativeLoad_PositiveOffset)
+TEST_F(CpuLoadTest, LW_MinOffset)
 {
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t base_address = 0x1000;  // Address in valid RAM space (KUSEG)
-    int16_t halfword_value = -32768;  // Smallest possible 16-bit signed value (-32768 = 0x8000)
-    int16_t offset = 2;  // Positive offset
-
-    ram.storeHalfWord(base_address + offset, halfword_value); // Store the negative value with positive offset
-
-    cpu.setReg(static_cast<uint8_t>(GprIndex::SP), base_address); // Set base register (SP)
-    i.i.rs = static_cast<uint8_t>(GprIndex::SP);  // rs = SP
-    i.i.rt = static_cast<uint8_t>(GprIndex::T0); // rt = T0
-    i.i.immediate = (uint16_t)offset;
-
-    cpu.loadHalfWord(i); // Execute LH instruction
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T0)), static_cast<int32_t>(halfword_value)); // Verify the negative value is correctly sign-extended
-}
-
-TEST(CpuTest, LH_NegativeLoad_NegativeOffset)
-{
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t base_address = 0x1000;  // Address in valid RAM space (KUSEG)
-    int16_t halfword_value = -32768;  // Smallest possible 16-bit signed value (-32768 = 0x8000)
-    int16_t offset = -2;  // Negative offset
-
-    ram.storeHalfWord(base_address + offset, halfword_value); // Store the negative value with negative offset
-
-    cpu.setReg(static_cast<uint8_t>(GprIndex::SP), base_address); // Set base register (SP)
-    i.i.rs = static_cast<uint8_t>(GprIndex::SP);  // rs = SP
-    i.i.rt = static_cast<uint8_t>(GprIndex::T0); // rt = T0
-    i.i.immediate = (uint16_t)offset; // Negative offset
-
-    cpu.loadHalfWord(i); // Execute LH instruction
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T0)), static_cast<int32_t>(halfword_value)); // Verify the negative value is correctly sign-extended
-}
-
-TEST(CpuTest, LH_UnalignedLoad_PositiveOffset)
-{
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t base_address = 0x1001;  // Unaligned base address
-    int16_t offset = 130;  // Positive offset
-
-    // Store an initial value in the destination register (T0) to check if it's untouched
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T0), 0xDEADBEEF);  // Set T0 to a known value
-
-    // Set the base register (SP) to the unaligned address
-    cpu.setReg(static_cast<uint8_t>(GprIndex::SP), base_address); // Set base register (SP)
-    i.i.rs = static_cast<uint8_t>(GprIndex::SP);  // rs = SP
-    i.i.rt = static_cast<uint8_t>(GprIndex::T0); // rt = T0
-    i.i.immediate = static_cast<int16_t>(offset); // Positive unaligned offset
-
-    // Attempt to execute LH instruction with an unaligned base address
-    cpu.loadHalfWord(i);  // Execute LH instruction
-
-    // Check if the value of T0 is unchanged (it should remain 0xDEADBEEF)
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T0)), 0xDEADBEEF);
-}
-
-TEST(CpuTest, LH_UnalignedLoad_NegativeOffset)
-{
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t base_address = 0x1001;  // Unaligned base address
-    int16_t offset = -130;  // Positive offset
-
-    // Store an initial value in the destination register (T0) to check if it's untouched
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T0), 0xDEADBEEF);  // Set T0 to a known value
-
-    // Set the base register (SP) to the unaligned address
-    cpu.setReg(static_cast<uint8_t>(GprIndex::SP), base_address); // Set base register (SP)
-    i.i.rs = static_cast<uint8_t>(GprIndex::SP);  // rs = SP
-    i.i.rt = static_cast<uint8_t>(GprIndex::T0); // rt = T0
-    i.i.immediate = static_cast<int16_t>(offset); // Positive unaligned offset
-
-    // Attempt to execute LH instruction with an unaligned base address
-    cpu.loadHalfWord(i);  // Execute LH instruction
-
-    // Check if the value of T0 is unchanged (it should remain 0xDEADBEEF)
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T0)), 0xDEADBEEF);
-}
-
-TEST(CpuTest, LH_MaxPositiveOffset)
-{
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t base_address = 0x1001;  // Address in valid RAM space (KUSEG)
-    uint16_t halfword_value = 0x1234;  // A simple 16-bit value
-
-    // Store with the max positive offset (INT16_MAX)
-    ram.storeHalfWord(base_address + INT16_MAX, halfword_value);
-
-    cpu.setReg(static_cast<uint8_t>(GprIndex::SP), base_address); // Set base register (SP)
-    i.i.rs = static_cast<uint8_t>(GprIndex::SP);  // rs = SP
-    i.i.rt = static_cast<uint8_t>(GprIndex::T0); // rt = T0
-    i.i.immediate = (uint16_t)INT16_MAX; // Maximum positive offset
-
-    cpu.loadHalfWord(i); // Execute LH instruction
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T0)), static_cast<int32_t>(halfword_value)); // Verify the value is correctly loaded
-}
-
-TEST(CpuTest, LH_MaxNegativeOffset)
-{
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t base_address = 0x1FFFF0;  // Address in valid RAM space (KUSEG)
-    uint16_t halfword_value = 0x5678;  // Another simple 16-bit value
-
-    // Store with the max negative offset (INT16_MIN)
-    ram.storeHalfWord(base_address + INT16_MIN, halfword_value);
-
-    cpu.setReg(static_cast<uint8_t>(GprIndex::SP), base_address); // Set base register (SP)
-    i.i.rs = static_cast<uint8_t>(GprIndex::SP);  // rs = SP
-    i.i.rt = static_cast<uint8_t>(GprIndex::T0); // rt = T0
-    i.i.immediate = (uint16_t)INT16_MIN; // Maximum negative offset
-
-    cpu.loadHalfWord(i); // Execute LH instruction
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T0)), static_cast<int32_t>(halfword_value)); // Verify the value is correctly loaded
-}
-
-TEST(CpuTest, LH_NegativeOffset_SignExtension)
-{
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t base_address = 0x1000;  // Address in valid RAM space (KUSEG)
-    uint16_t halfword_value = 0xFABC;  // A negative value in 16-bit (sign bit set)
-    int16_t offset = -2424;  // A negative value in 16-bit (sign bit set)
-
-    // Store a negative value with a negative offset
-    ram.storeHalfWord(base_address + offset, halfword_value);
-
-    cpu.setReg(static_cast<uint8_t>(GprIndex::SP), base_address); // Set base register (SP)
-    i.i.rs = static_cast<uint8_t>(GprIndex::SP);  // rs = SP
-    i.i.rt = static_cast<uint8_t>(GprIndex::T0); // rt = T0
-    i.i.immediate = (uint16_t)offset; // Maximum negative offset
-
-    cpu.loadHalfWord(i); // Execute LH instruction
-
-    // Check if the value was correctly sign-extended into a 32-bit register
-    // The 16-bit value 0xFABC should be sign-extended to 0xFFFFFABC (32-bit value)
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T0)), 0xFFFFFABC); // Verify the sign extension
-}
-
-TEST(CpuTest, LB_RegularLoad)
-{
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t base_address = 0x1000;  // Aligned base address
-    uint8_t byte_value = 0x17;  // Byte value to store
-    int16_t offset = 0x131;
-
-    ram.storeByte(base_address + offset, byte_value);  // Store the byte at the base address
-
-    cpu.setReg(static_cast<uint8_t>(GprIndex::SP), base_address);  // Set base register (SP)
-    i.i.rs = static_cast<uint8_t>(GprIndex::SP);  // rs = SP
-    i.i.rt = static_cast<uint8_t>(GprIndex::T0); // rt = T0
-    i.i.immediate = (uint16_t)offset;
-
-    cpu.loadByte(i);  // Execute LB instruction
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T0)), 0x00000017);  // Verify byte value is correctly loaded
-}
-
-TEST(CpuTest, LB_SignExtension_NegativeValue)
-{
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t base_address = 0x1000;
-    uint8_t byte_value = 0xAB;  // Negative byte value
-    int16_t offset = 0x87;
-
-    ram.storeByte(base_address + offset, byte_value);  // Store negative byte
-
-    cpu.setReg(static_cast<uint8_t>(GprIndex::SP), base_address);  // Set base register (SP)
-    i.i.rs = static_cast<uint8_t>(GprIndex::SP);  // rs = SP
-    i.i.rt = static_cast<uint8_t>(GprIndex::T0); // rt = T0
-    i.i.immediate = (uint16_t)offset;
-
-    cpu.loadByte(i);  // Execute LB instruction
-
-    // The byte -0x10 (0xF0) should be sign-extended to 32 bits
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T0)), static_cast<int32_t>(0xFFFFFFAB));  // Verify sign extension
-}
-
-TEST(CpuTest, LB_SignExtension_PositiveValue)
-{
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t base_address = 0x1000;
-    uint8_t byte_value = 0x7F;  // Positive byte value
-    int16_t offset = 0xAB;
-
-    ram.storeByte(base_address + offset, byte_value);  // Store positive byte
-
-    cpu.setReg(static_cast<uint8_t>(GprIndex::SP), base_address);  // Set base register (SP)
-    i.i.rs = static_cast<uint8_t>(GprIndex::SP);  // rs = SP
-    i.i.rt = static_cast<uint8_t>(GprIndex::T0); // rt = T0
-    i.i.immediate = (uint16_t)offset;
-
-    cpu.loadByte(i);  // Execute LB instruction
-
-    // The byte 0x7F should be zero-extended to 32 bits
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T0)), static_cast<int32_t>(0x0000007F));  // Verify zero extension
-}
-
-TEST(CpuTest, LB_SignExtension_NegativeOffset)
-{
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t base_address = 0x1005;
-    uint8_t byte_value = 0xAB;
-    int16_t offset = -0x131;
-
-    ram.storeByte(base_address + offset, byte_value);  // Store byte at base address
-
-    cpu.setReg(static_cast<uint8_t>(GprIndex::SP), base_address);  // Set base register (SP)
-    i.i.rs = static_cast<uint8_t>(GprIndex::SP);  // rs = SP
-    i.i.rt = static_cast<uint8_t>(GprIndex::T0); // rt = T0
-    i.i.immediate = (uint16_t)offset;  // Negative offset
-
-    cpu.loadByte(i);  // Execute LB instruction
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T0)), static_cast<int32_t>(0xFFFFFFAB));  // Verify the byte is correctly loaded
-}
-
-TEST(CpuTest, LHU_PositiveOffset)
-{
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t base_address = 0x2000;
-    uint16_t halfword_value = 0x1234;
-    int16_t offset = 0x1368; // Positive aligned offset
-
-    ram.storeHalfWord(base_address + offset, halfword_value);
-
-    cpu.setReg(static_cast<uint8_t>(GprIndex::A0), base_address);
-
-    i.i.rs = static_cast<uint8_t>(GprIndex::A0);
-    i.i.rt = static_cast<uint8_t>(GprIndex::V0);
-    i.i.immediate = offset;
-
-    cpu.loadHalfWordUnsigned(i);
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::V0)), static_cast<uint32_t>(halfword_value));
-}
-
-TEST(CpuTest, LHU_NegativeOffset)
-{
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t base_address = 0x3004;
-    uint16_t halfword_value = 0x5678;
-    int16_t offset = -1738; // Negative offset, ensuring correct address calculation
-
-    ram.storeHalfWord(base_address + offset, halfword_value);
-
-    cpu.setReg(static_cast<uint8_t>(GprIndex::A1), base_address);
-
-    i.i.rs = static_cast<uint8_t>(GprIndex::A1);
-    i.i.rt = static_cast<uint8_t>(GprIndex::V1);
-    i.i.immediate = offset;
-
-    cpu.loadHalfWordUnsigned(i);
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::V1)), static_cast<uint32_t>(halfword_value));
-}
-
-TEST(CpuTest, LHU_ZeroOffset)
-{
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t base_address = 0x4000;
-    uint16_t halfword_value = 0x9ABC;
-    int16_t offset = 0; // Zero offset
-
-    ram.storeHalfWord(base_address + offset, halfword_value);
-
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T1), base_address);
-
-    i.i.rs = static_cast<uint8_t>(GprIndex::T1);
-    i.i.rt = static_cast<uint8_t>(GprIndex::S1);
-    i.i.immediate = offset;
-
-    cpu.loadHalfWordUnsigned(i);
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::S1)), static_cast<uint32_t>(halfword_value));
-}
-
-TEST(CpuTest, LHU_MaxOffset)
-{
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t base_address = 0x5001;
-    uint16_t halfword_value = 0xDEAD;
-    int16_t offset = INT16_MAX; // Maximum positive offset
-
-    ram.storeHalfWord(base_address + offset, halfword_value);
-
-    cpu.setReg(static_cast<uint8_t>(GprIndex::S2), base_address);
-
-    i.i.rs = static_cast<uint8_t>(GprIndex::S2);
-    i.i.rt = static_cast<uint8_t>(GprIndex::T2);
-    i.i.immediate = offset;
-
-    cpu.loadHalfWordUnsigned(i);
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T2)), static_cast<uint32_t>(halfword_value));
-}
-
-TEST(CpuTest, LHU_MinOffset)
-{
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t base_address = 0xF080;
-    uint16_t halfword_value = 0xBEEF;
-    int16_t offset = INT16_MIN; // Minimum negative offset
-
-    ram.storeHalfWord(base_address + offset, halfword_value);
-
-    cpu.setReg(static_cast<uint8_t>(GprIndex::S3), base_address);
-
-    i.i.rs = static_cast<uint8_t>(GprIndex::S3);
-    i.i.rt = static_cast<uint8_t>(GprIndex::T3);
-    i.i.immediate = offset;
-
-    cpu.loadHalfWordUnsigned(i);
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T3)), static_cast<uint32_t>(halfword_value));
-}
-
-TEST(CpuTest, LHU_UnalignedAddress_PositiveOffset)
-{
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t base_address = 0x7008;
-    int16_t offset = 0xB;
-    uint16_t halfword_value = 0x1234;
-
-    ram.storeHalfWord(base_address + offset, halfword_value);
-
-    cpu.setReg(static_cast<uint8_t>(GprIndex::S4), base_address);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T4), 0xFFFFFFFF); // Ensure the value is not modified
-
-    i.i.rs = static_cast<uint8_t>(GprIndex::S4);
-    i.i.rt = static_cast<uint8_t>(GprIndex::T4);
-    i.i.immediate = offset;
-
-    cpu.loadHalfWordUnsigned(i);
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T4)), 0xFFFFFFFF); // Should remain unchanged
-}
-
-TEST(CpuTest, LHU_UnalignedAddress_NegativeOffset)
-{
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t base_address = 0x7008;
-    int16_t offset = -0xB;
-    uint16_t halfword_value = 0x1234;
-
-    ram.storeHalfWord(base_address + offset, halfword_value);
-
-    cpu.setReg(static_cast<uint8_t>(GprIndex::S4), base_address);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T4), 0xFFFFFFFF); // Ensure the value is not modified
-
-    i.i.rs = static_cast<uint8_t>(GprIndex::S4);
-    i.i.rt = static_cast<uint8_t>(GprIndex::T4);
-    i.i.immediate = offset;
-
-    cpu.loadHalfWordUnsigned(i);
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T4)), 0xFFFFFFFF); // Should remain unchanged
-}
-
-TEST(CpuTest, LHU_ZeroExtension)
-{
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t base_address = 0x8000;
-    uint16_t halfword_value = 0xABCD;
-    int16_t offset = 2;
-
-    ram.storeHalfWord(base_address + offset, halfword_value);
-
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T5), base_address);
-
-    i.i.rs = static_cast<uint8_t>(GprIndex::T5);
-    i.i.rt = static_cast<uint8_t>(GprIndex::S5);
-    i.i.immediate = offset;
-
-    cpu.loadHalfWordUnsigned(i);
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::S5)), static_cast<uint32_t>(halfword_value));
-    // Must be zero-extended: 0x0000ABCD
-}
-
-TEST(CpuTest, LBU_PositiveOffset)
-{
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t base_address = 0xA000;
-    uint8_t byte_value = 0xBB;
-    int16_t offset = 0x0AF4;
-
-    ram.storeByte(base_address + offset, byte_value);
-
-    cpu.setReg(static_cast<uint8_t>(GprIndex::A0), base_address);
-
-    i.i.rs = static_cast<uint8_t>(GprIndex::A0);
-    i.i.rt = static_cast<uint8_t>(GprIndex::V0);
-    i.i.immediate = offset;
-
-    cpu.loadByteUnsigned(i);
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::V0)), static_cast<uint32_t>(byte_value));
-}
-
-TEST(CpuTest, LBU_NegativeOffset)
-{
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t base_address = 0x3004;
-    uint8_t byte_value = 0x56;
-    int16_t offset = -478;
-
-    ram.storeByte(base_address + offset, byte_value);
-
-    cpu.setReg(static_cast<uint8_t>(GprIndex::A1), base_address);
-
-    i.i.rs = static_cast<uint8_t>(GprIndex::A1);
-    i.i.rt = static_cast<uint8_t>(GprIndex::V1);
-    i.i.immediate = offset;
-
-    cpu.loadByteUnsigned(i);
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::V1)), static_cast<uint32_t>(byte_value));
-}
-
-TEST(CpuTest, LBU_ZeroOffset)
-{
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t base_address = 0x4000;
-    uint8_t byte_value = 0x9A;
-    int16_t offset = 0; // Zero offset
-
-    ram.storeByte(base_address + offset, byte_value);
-
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T1), base_address);
-
-    i.i.rs = static_cast<uint8_t>(GprIndex::T1);
-    i.i.rt = static_cast<uint8_t>(GprIndex::S1);
-    i.i.immediate = offset;
-
-    cpu.loadByteUnsigned(i);
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::S1)), static_cast<uint32_t>(byte_value));
-}
-
-TEST(CpuTest, LBU_MaxOffset)
-{
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t base_address = 0x5000;
-    uint8_t byte_value = 0xDE;
-    int16_t offset = INT16_MAX;
-
-    ram.storeByte(base_address + offset, byte_value);
-
-    cpu.setReg(static_cast<uint8_t>(GprIndex::S2), base_address);
-
-    i.i.rs = static_cast<uint8_t>(GprIndex::S2);
-    i.i.rt = static_cast<uint8_t>(GprIndex::T2);
-    i.i.immediate = offset;
-
-    cpu.loadByteUnsigned(i);
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T2)), static_cast<uint32_t>(byte_value));
-}
-
-TEST(CpuTest, LBU_MinOffset)
-{
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t base_address = 0xF0F0;
-    uint8_t byte_value = 0xBE;
+    uint32_t base = 0x8000;
     int16_t offset = INT16_MIN;
+    uint32_t value = 0xBAADF00D;
+    CpuReg rs = CpuReg::S0;
+    CpuReg rt = CpuReg::S1;
 
-    ram.storeByte(base_address + offset, byte_value);
-
-    cpu.setReg(static_cast<uint8_t>(GprIndex::S3), base_address);
-
-    i.i.rs = static_cast<uint8_t>(GprIndex::S3);
-    i.i.rt = static_cast<uint8_t>(GprIndex::T3);
-    i.i.immediate = offset;
-
-    cpu.loadByteUnsigned(i);
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T3)), static_cast<uint32_t>(byte_value));
+    cpu.setReg(rs, base);
+    bus.storeWord(base + offset, value);  // base - 32768
+    runLW(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), value);
 }
 
-TEST(CpuTest, LBU_ZeroExtension)
+TEST_F(CpuLoadTest, LW_BaseRegisterZero)
 {
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
+    uint32_t base = 0;     // $zero register always contains 0
+    int16_t offset = 0x20;
+    uint32_t value = 0xDEADBEEF;
+    CpuReg rs = CpuReg::ZERO;
+    CpuReg rt = CpuReg::T0;
 
-    uint32_t base_address = 0x7000;
-    uint8_t byte_value = 0xAB;
-    int16_t offset = 3;
-
-    ram.storeByte(base_address + offset, byte_value);
-
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T4), base_address);
-
-    i.i.rs = static_cast<uint8_t>(GprIndex::T4);
-    i.i.rt = static_cast<uint8_t>(GprIndex::S4);
-    i.i.immediate = offset;
-
-    cpu.loadByteUnsigned(i);
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::S4)), static_cast<uint32_t>(byte_value)); // Must be zero-extended: 0x000000AB
+    bus.storeWord(base + offset, value);
+    runLW(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), value);
 }
 
-TEST(CpuTest, LWL_AlignedLoad)
+TEST_F(CpuLoadTest, LW_TargetRegisterZero)
 {
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
+    uint32_t base = 0x1000;
+    int16_t offset = 0x20;
+    uint32_t value = 0xDEADBEEF;
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::ZERO;
 
-    uint32_t base_address = 0x1000;
-    uint32_t word_value = 0xAABBCCDD;  // Full word in memory
+    cpu.setReg(rs, base);
+    bus.storeWord(base + offset, value);
+    runLW(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), 0);
+}
+
+TEST_F(CpuLoadTest, LH_PositiveOffset)
+{
+    uint32_t base = 0x1000;
+    int16_t offset = 0x4;
+    uint16_t value = 0x1234;
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
+
+    cpu.setReg(rs, base);
+    bus.storeHalfWord(base + offset, value);
+    runLH(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), static_cast<uint32_t>(value));
+}
+
+TEST_F(CpuLoadTest, LH_NegativeOffset)
+{
+    uint32_t base = 0x1000;
+    uint16_t value = 0x5678;
+    int16_t offset = -42;
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
+
+    cpu.setReg(rs, base);
+    bus.storeHalfWord(base + offset, value);
+    runLH(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), static_cast<uint32_t>(value));
+}
+
+TEST_F(CpuLoadTest, LH_MinNegativeValue)
+{
+    uint32_t base = 0xF000;
+    uint16_t value = static_cast<uint16_t>(INT16_MIN);
+    int16_t offset = 0x24;
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
+
+    cpu.setReg(rs, base);
+    bus.storeHalfWord(base + offset, value);
+    runLH(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), 0xFFFF8000);
+}
+
+TEST_F(CpuLoadTest, LH_UnalignedLoad_PositiveOffset)
+{
+    uint32_t base = 0x1001;
+    int16_t offset = 130;
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
+
+    cpu.setReg(rs, base);
+    runLH(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
+}
+
+TEST_F(CpuLoadTest, LH_UnalignedLoad_NegativeOffset)
+{
+    uint32_t base = 0x1001;
+    int16_t offset = -130;
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
+
+    cpu.setReg(rs, base);
+    runLH(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
+}
+
+TEST_F(CpuLoadTest, LH_MaxPositiveOffset)
+{
+    uint32_t base = 0x1001;
+    uint16_t value = 0x1234;
+    int16_t offset = INT16_MAX;
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
+
+    cpu.setReg(rs, base);
+    bus.storeHalfWord(base + offset, value);
+    runLH(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), static_cast<uint32_t>(value));
+}
+
+TEST_F(CpuLoadTest, LH_MaxNegativeOffset)
+{
+    uint32_t base = 0x1FFFF0;
+    uint16_t value = 0x5678;
+    int16_t offset = INT16_MIN;
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
+
+    cpu.setReg(rs, base);
+    bus.storeHalfWord(base + offset, value);
+    runLH(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), static_cast<uint32_t>(value));
+}
+
+TEST_F(CpuLoadTest, LH_SignExtension)
+{
+    uint32_t base = 0x1000;
+    uint16_t value = 0xFABC;
+    int16_t offset = 2424;
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
+
+    cpu.setReg(rs, base);
+    bus.storeHalfWord(base + offset, value);
+    runLH(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), 0xFFFFFABC);
+}
+
+TEST_F(CpuLoadTest, LB_RegularLoad)
+{
+    uint32_t base = 0x1000;
+    int16_t offset = 0x131;
+    uint8_t value = 0x17;
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
+
+    cpu.setReg(rs, base);
+    bus.storeByte(base + offset, value);
+    runLB(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), static_cast<uint32_t>(value));
+}
+
+TEST_F(CpuLoadTest, LB_SignExtension_NegativeValue)
+{
+    uint32_t base = 0x1000;
+    uint8_t value = 0xAB;
+    int16_t offset = 0x87;
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
+
+    cpu.setReg(rs, base);
+    bus.storeByte(base + offset, value);
+    runLB(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), 0xFFFFFFAB);
+}
+
+TEST_F(CpuLoadTest, LB_SignExtension_PositiveValue)
+{
+    uint32_t base = 0x1000;
+    uint8_t value = 0x7F;
+    int16_t offset = 0xAB;
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
+
+    cpu.setReg(rs, base);
+    bus.storeByte(base + offset, value);
+    runLB(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), 0x0000007F);
+}
+
+TEST_F(CpuLoadTest, LHU_PositiveOffset)
+{
+    uint32_t base = 0x2000;
+    uint16_t value = 0x1234;
+    int16_t offset = 0x136;
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
+
+    cpu.setReg(rs, base);
+    bus.storeHalfWord(base + offset, value);
+    runLHU(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), static_cast<uint32_t>(value));
+}
+
+TEST_F(CpuLoadTest, LHU_NegativeOffset)
+{
+    uint32_t base = 0x3004;
+    uint16_t value = 0x5678;
+    int16_t offset = -1738;
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
+
+    cpu.setReg(rs, base);
+    bus.storeHalfWord(base + offset, value);
+    runLHU(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), static_cast<uint32_t>(value));
+}
+
+TEST_F(CpuLoadTest, LHU_ZeroOffset)
+{
+    uint32_t base = 0x4000;
+    uint16_t value = 0x9ABC;
     int16_t offset = 0;
-    uint32_t initial_register = 0x11223344; // Known initial value
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
 
-    ram.storeWord(base_address, word_value);
-
-    cpu.setReg(static_cast<uint8_t>(GprIndex::A0), base_address);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::V0), initial_register); // Initialize target register
-
-    i.i.rs = static_cast<uint8_t>(GprIndex::A0);
-    i.i.rt = static_cast<uint8_t>(GprIndex::V0);
-    i.i.immediate = offset;
-
-    cpu.loadWordLeft(i);
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::V0)), 0xAA223344);
+    cpu.setReg(rs, base);
+    bus.storeHalfWord(base + offset, value);
+    runLHU(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), static_cast<uint32_t>(value));
 }
 
-TEST(CpuTest, LWL_UnalignedLoad_Offset1)
+TEST_F(CpuLoadTest, LHU_MaxOffset)
 {
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
+    uint32_t base = 0x5001;
+    uint16_t value = 0xDEAD;
+    int16_t offset = INT16_MAX;
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
 
-    uint32_t base_address = 0x1000;
-    uint32_t word_value = 0xAABBCCDD;
-    int16_t offset = 1;
-    uint32_t initial_register = 0x11223344; // Known initial value
-
-    ram.storeWord(base_address, word_value);
-
-    cpu.setReg(static_cast<uint8_t>(GprIndex::A0), base_address);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::V0), initial_register); // Initialize target register
-
-    i.i.rs = static_cast<uint8_t>(GprIndex::A0);
-    i.i.rt = static_cast<uint8_t>(GprIndex::V0);
-    i.i.immediate = offset;
-
-    cpu.loadWordLeft(i);
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::V0)), 0xAABB3344);
+    cpu.setReg(rs, base);
+    bus.storeHalfWord(base + offset, value);
+    runLHU(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), static_cast<uint32_t>(value));
 }
 
-TEST(CpuTest, LWL_UnalignedLoad_Offset2)
+TEST_F(CpuLoadTest, LHU_MinOffset)
 {
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
+    uint32_t base = 0xF080;
+    uint16_t value = 0xBEEF;
+    int16_t offset = INT16_MIN;
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
 
-    uint32_t base_address = 0x1000;
-    uint32_t word_value = 0xAABBCCDD;
+    cpu.setReg(rs, base);
+    bus.storeHalfWord(base + offset, value);
+    runLHU(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), static_cast<uint32_t>(value));
+}
+
+TEST_F(CpuLoadTest, LHU_UnalignedAddress_PositiveOffset)
+{
+    uint32_t base = 0x7008;
+    int16_t offset = 0xB;
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
+
+    cpu.setReg(rs, base);
+    runLHU(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
+}
+
+TEST_F(CpuLoadTest, LHU_UnalignedAddress_NegativeOffset)
+{
+    uint32_t base = 0x7008;
+    int16_t offset = -0xB;
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
+
+    cpu.setReg(rs, base);
+    runLHU(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
+}
+
+TEST_F(CpuLoadTest, LHU_ZeroExtension)
+{
+    uint32_t base = 0x8000;
+    uint16_t value = 0xABCD;
     int16_t offset = 2;
-    uint32_t initial_register = 0x11223344; // Known initial value
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
 
-    ram.storeWord(base_address, word_value);
-
-    cpu.setReg(static_cast<uint8_t>(GprIndex::A0), base_address);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::V0), initial_register); // Initialize target register
-
-    i.i.rs = static_cast<uint8_t>(GprIndex::A0);
-    i.i.rt = static_cast<uint8_t>(GprIndex::V0);
-    i.i.immediate = offset;
-
-    cpu.loadWordLeft(i);
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::V0)), 0xAABBCC44);
+    cpu.setReg(rs, base);
+    bus.storeHalfWord(base + offset, value);
+    runLHU(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), 0X0000ABCD);
 }
 
-TEST(CpuTest, LWL_UnalignedLoad_Offset3)
+TEST_F(CpuLoadTest, LBU_PositiveOffset)
 {
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
+    uint32_t base = 0xA000;
+    uint8_t value = 0xBB;
+    int16_t offset = 0x0AF4;
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
 
-    uint32_t base_address = 0x1000;
-    uint32_t word_value = 0xAABBCCDD;
+    cpu.setReg(rs, base);
+    bus.storeByte(base + offset, value);
+    runLBU(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), static_cast<uint32_t>(value));
+}
+
+TEST_F(CpuLoadTest, LBU_NegativeOffset)
+{
+    uint32_t base = 0x3004;
+    uint8_t value = 0x56;
+    int16_t offset = -478;
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
+
+    cpu.setReg(rs, base);
+    bus.storeByte(base + offset, value);
+    runLBU(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), static_cast<uint32_t>(value));
+}
+
+TEST_F(CpuLoadTest, LBU_ZeroOffset)
+{
+    uint32_t base = 0x4000;
+    uint8_t value = 0x9A;
+    int16_t offset = 0; // Zero offset
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
+
+    cpu.setReg(rs, base);
+    bus.storeByte(base + offset, value);
+    runLBU(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), static_cast<uint32_t>(value));
+}
+
+TEST_F(CpuLoadTest, LBU_MaxOffset)
+{
+    uint32_t base = 0x5000;
+    uint8_t value = 0xDE;
+    int16_t offset = INT16_MAX;
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
+
+    cpu.setReg(rs, base);
+    bus.storeByte(base + offset, value);
+    runLBU(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), static_cast<uint32_t>(value));
+}
+
+TEST_F(CpuLoadTest, LBU_MinOffset)
+{
+    uint32_t base = 0xF0F0;
+    uint8_t value = 0xBE;
+    int16_t offset = INT16_MIN;
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
+
+    cpu.setReg(rs, base);
+    bus.storeByte(base + offset, value);
+    runLBU(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), static_cast<uint32_t>(value));
+}
+
+TEST_F(CpuLoadTest, LBU_ZeroExtension)
+{
+    uint32_t base = 0x7000;
+    uint8_t value = 0xAB;
     int16_t offset = 3;
-    uint32_t initial_register = 0x11223344; // Known initial value
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
 
-    ram.storeWord(base_address, word_value);
-
-    cpu.setReg(static_cast<uint8_t>(GprIndex::A0), base_address);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::V0), initial_register); // Initialize target register
-
-    i.i.rs = static_cast<uint8_t>(GprIndex::A0);
-    i.i.rt = static_cast<uint8_t>(GprIndex::V0);
-    i.i.immediate = offset;
-
-    cpu.loadWordLeft(i);
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::V0)), 0xAABBCCDD);
+    cpu.setReg(rs, base);
+    bus.storeByte(base + offset, value);
+    runLBU(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), 0x000000AB);
 }
 
-TEST(CpuTest, LWR_AlignedLoad)
+TEST_F(CpuLoadTest, LWL_AlignedLoad)
 {
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t base_address = 0x1000;
-    uint32_t word_value = 0xAABBCCDD;  // Full word in memory
+    uint32_t base = 0x1000;
+    uint32_t value = 0xAABBCCDD;
     int16_t offset = 0;
-    uint32_t initial_register = 0x11223344; // Known initial value
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
 
-    ram.storeWord(base_address, word_value);
-
-    cpu.setReg(static_cast<uint8_t>(GprIndex::A0), base_address);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::V0), initial_register); // Initialize target register
-
-    i.i.rs = static_cast<uint8_t>(GprIndex::A0);
-    i.i.rt = static_cast<uint8_t>(GprIndex::V0);
-    i.i.immediate = offset;
-
-    cpu.loadWordRight(i);
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::V0)), 0xAABBCCDD);
+    cpu.setReg(rs, base);
+    bus.storeWord(base, value);
+    runLWL(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), (value & 0xFF << 24) | (defaultRegVal & 0xFFFFFF));
 }
 
-TEST(CpuTest, LWR_UnalignedLoad_Offset1)
+TEST_F(CpuLoadTest, LWL_Offset1)
 {
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t base_address = 0x1000;
-    uint32_t word_value = 0xAABBCCDD;
+    uint32_t base = 0x1000;
+    uint32_t value = 0xAABBCCDD;
     int16_t offset = 1;
-    uint32_t initial_register = 0x11223344; // Known initial value
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
 
-    ram.storeWord(base_address, word_value);
-
-    cpu.setReg(static_cast<uint8_t>(GprIndex::A0), base_address);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::V0), initial_register); // Initialize target register
-
-    i.i.rs = static_cast<uint8_t>(GprIndex::A0);
-    i.i.rt = static_cast<uint8_t>(GprIndex::V0);
-    i.i.immediate = offset;
-
-    cpu.loadWordRight(i);
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::V0)), 0x11BBCCDD);
+    cpu.setReg(rs, base);
+    bus.storeWord(base, value);
+    runLWL(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), (value & 0xFFFF << 16) | (defaultRegVal & 0xFFFF));
 }
 
-TEST(CpuTest, LWR_UnalignedLoad_Offset2)
+TEST_F(CpuLoadTest, LWL_Offset2)
 {
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t base_address = 0x1000;
-    uint32_t word_value = 0xAABBCCDD;
+    uint32_t base = 0x1000;
+    uint32_t value = 0xAABBCCDD;
     int16_t offset = 2;
-    uint32_t initial_register = 0x11223344; // Known initial value
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
 
-    ram.storeWord(base_address, word_value);
-
-    cpu.setReg(static_cast<uint8_t>(GprIndex::A0), base_address);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::V0), initial_register); // Initialize target register
-
-    i.i.rs = static_cast<uint8_t>(GprIndex::A0);
-    i.i.rt = static_cast<uint8_t>(GprIndex::V0);
-    i.i.immediate = offset;
-
-    cpu.loadWordRight(i);
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::V0)), 0x1122CCDD);
+    cpu.setReg(rs, base);
+    bus.storeWord(base, value);
+    runLWL(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), (value & 0xFFFFFF << 8) | (defaultRegVal & 0xFF));
 }
 
-TEST(CpuTest, LWR_UnalignedLoad_Offset3)
+TEST_F(CpuLoadTest, LWL_Offset3)
 {
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t base_address = 0x1000;
-    uint32_t word_value = 0xAABBCCDD;
+    uint32_t base = 0x1000;
+    uint32_t value = 0xAABBCCDD;
     int16_t offset = 3;
-    uint32_t initial_register = 0x11223344; // Known initial value
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
 
-    ram.storeWord(base_address, word_value);
+    cpu.setReg(rs, base);
+    bus.storeWord(base, value);
+    runLWL(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), value);
+}
 
-    cpu.setReg(static_cast<uint8_t>(GprIndex::A0), base_address);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::V0), initial_register); // Initialize target register
+TEST_F(CpuLoadTest, LWR_AlignedLoad)
+{
+    uint32_t base = 0x1000;
+    uint32_t value = 0xAABBCCDD;  // Full word in memory
+    int16_t offset = 0;
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
 
-    i.i.rs = static_cast<uint8_t>(GprIndex::A0);
-    i.i.rt = static_cast<uint8_t>(GprIndex::V0);
-    i.i.immediate = offset;
+    cpu.setReg(rs, base);
+    bus.storeWord(base, value);
+    runLWR(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), value);
+}
 
-    cpu.loadWordRight(i);
+TEST_F(CpuLoadTest, LWR_Offset1)
+{
+    uint32_t base = 0x1000;
+    uint32_t value = 0xAABBCCDD;
+    int16_t offset = 1;
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
 
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::V0)), 0x112233DD);
+    cpu.setReg(rs, base);
+    bus.storeWord(base, value);
+    runLWR(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), (defaultRegVal & 0xFF << 24) | (value & 0xFFFFFF));
+}
+
+TEST_F(CpuLoadTest, LWR_Offset2)
+{
+    uint32_t base = 0x1000;
+    uint32_t value = 0xAABBCCDD;
+    int16_t offset = 2;
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
+
+    cpu.setReg(rs, base);
+    bus.storeWord(base, value);
+    runLWR(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), (defaultRegVal & 0xFFFF << 16) | (value & 0xFFFF));
+}
+
+TEST_F(CpuLoadTest, LWR_Offset3)
+{
+    uint32_t base = 0x1000;
+    uint32_t value = 0xAABBCCDD;
+    int16_t offset = 3;
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
+
+    cpu.setReg(rs, base);
+    bus.storeWord(base, value);
+    runLWR(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), (defaultRegVal & 0xFFFFFF << 8) | (value & 0xFF));
 }

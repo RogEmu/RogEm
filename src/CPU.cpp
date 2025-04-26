@@ -39,7 +39,7 @@ CPU::CPU(Bus *bus) :
 void CPU::step()
 {
     Instruction instruction = fetchInstruction();
-    m_nextPc = pc;
+    m_nextPc = m_pc;
     m_inBranchDelay = m_nextIsBranchDelay;
     if (m_nextIsBranchDelay)
     {
@@ -51,7 +51,7 @@ void CPU::step()
         m_nextPc += 4;
     }
     executeInstruction(instruction);
-    pc = m_nextPc;
+    m_pc = m_nextPc;
     m_inBranchDelay = false;
 }
 
@@ -59,14 +59,14 @@ void CPU::reset()
 {
     m_nextIsBranchDelay = false;
     m_inBranchDelay = false;
-    pc = RESET_VECTOR;
-    std::memset(gpr, 0, NB_GPR * sizeof(gpr[0]));
+    m_pc = RESET_VECTOR;
+    std::memset(m_gpr, 0, NB_GPR * sizeof(m_gpr[0]));
     std::memset(m_cop0Reg, 0, COP0_NB_REG * sizeof(m_cop0Reg[0]));
 }
 
 Instruction CPU::fetchInstruction()
 {
-    uint32_t instruction = m_bus->loadWord(pc);
+    uint32_t instruction = m_bus->loadWord(m_pc);
     return Instruction{.raw=instruction};
 }
 
@@ -280,45 +280,37 @@ void CPU::specialInstruction(const Instruction &instruction)
     }
 }
 
-uint32_t CPU::getReg(uint8_t reg) const
+uint32_t CPU::getReg(CpuReg reg) const
 {
-    return gpr[reg];
-}
-
-void CPU::setReg(uint8_t reg, uint32_t val)
-{
-    gpr[reg] = val;
-    gpr[0] = 0;
-}
-
-uint32_t CPU::getSpecialReg(uint8_t reg) const
-{
-    switch (static_cast<SpecialRegIndex>(reg))
+    switch (reg)
     {
-    case SpecialRegIndex::PC: return pc;
-    case SpecialRegIndex::HI: return hi;
-    case SpecialRegIndex::LO: return lo;
+    case CpuReg::PC:
+        return m_pc;
+    case CpuReg::HI:
+        return m_hi;
+    case CpuReg::LO:
+        return m_lo;
     default:
-        break;
+        return m_gpr[static_cast<uint8_t>(reg)];
     }
-    return 0;
 }
 
-void CPU::setSpecialReg(uint8_t reg, uint32_t val)
+void CPU::setReg(CpuReg reg, uint32_t val)
 {
-    switch (static_cast<SpecialRegIndex>(reg))
+    switch (reg)
     {
-    case SpecialRegIndex::PC:
-        pc = val;
+    case CpuReg::PC:
+        m_pc = val;
         break;
-    case SpecialRegIndex::HI:
-        hi = val;
+    case CpuReg::HI:
+        m_hi = val;
         break;
-    case SpecialRegIndex::LO:
-        lo = val;
+    case CpuReg::LO:
+        m_lo = val;
         break;
     default:
-        break;
+        m_gpr[static_cast<uint8_t>(reg)] = val;
+        m_gpr[0] = 0;
     }
 }
 
@@ -340,12 +332,12 @@ void CPU::loadUpperImmediate(const Instruction &instruction)
 {
     uint32_t res = instruction.i.immediate;
     res = res << 16;
-    setReg(instruction.i.rt, res);
+    setReg(static_cast<CpuReg>(instruction.i.rt), res);
 }
 
 void CPU::storeWord(const Instruction &instruction)
 {
-    auto sr = getCop0Reg(static_cast<uint8_t>(CP0RegIndex::SR));
+    auto sr = getCop0Reg(static_cast<uint8_t>(CP0Reg::SR));
 
     // Check if cache is isolated
     // TODO: Implement the REAL cache
@@ -355,15 +347,15 @@ void CPU::storeWord(const Instruction &instruction)
     }
 
     int32_t imm = (int16_t)instruction.i.immediate;
-    uint32_t address = getReg(instruction.i.rs) + imm;
-    uint32_t value = getReg(instruction.i.rt);
+    uint32_t address = getReg(static_cast<CpuReg>(instruction.i.rs)) + imm;
+    uint32_t value = getReg(static_cast<CpuReg>(instruction.i.rt));
 
     m_bus->storeWord(address, value);
 }
 
 void CPU::storeHalfWord(const Instruction &instruction)
 {
-    auto sr = getCop0Reg(static_cast<uint8_t>(CP0RegIndex::SR));
+    auto sr = getCop0Reg(static_cast<uint8_t>(CP0Reg::SR));
 
     // Check if cache is isolated
     // TODO: Implement the REAL cache
@@ -373,15 +365,15 @@ void CPU::storeHalfWord(const Instruction &instruction)
     }
 
     int32_t imm = (int16_t)instruction.i.immediate;
-    uint32_t address = getReg(instruction.i.rs) + imm;
-    uint16_t value = static_cast<uint16_t>(getReg(instruction.i.rt));
+    uint32_t address = getReg(static_cast<CpuReg>(instruction.i.rs)) + imm;
+    uint16_t value = static_cast<uint16_t>(getReg(static_cast<CpuReg>(instruction.i.rt)));
 
     m_bus->storeHalfWord(address, value);
 }
 
 void CPU::storeByte(const Instruction &instruction)
 {
-    auto sr = getCop0Reg(static_cast<uint8_t>(CP0RegIndex::SR));
+    auto sr = getCop0Reg(static_cast<uint8_t>(CP0Reg::SR));
 
     // Check if cache is isolated
     // TODO: Implement the REAL cache
@@ -391,41 +383,41 @@ void CPU::storeByte(const Instruction &instruction)
     }
 
     int32_t imm = (int16_t)instruction.i.immediate;
-    uint32_t address = getReg(instruction.i.rs) + imm;
-    uint8_t value = static_cast<uint8_t>(getReg(instruction.i.rt));
+    uint32_t address = getReg(static_cast<CpuReg>(instruction.i.rs)) + imm;
+    uint8_t value = static_cast<uint8_t>(getReg(static_cast<CpuReg>(instruction.i.rt)));
 
     m_bus->storeByte(address, value);
 }
 
 void CPU::shiftLeftLogical(const Instruction &instruction)
 {
-    uint32_t res = getReg(instruction.r.rt) << instruction.r.shamt;
+    uint32_t res = getReg(static_cast<CpuReg>(instruction.r.rt)) << instruction.r.shamt;
 
-    setReg(instruction.r.rd, res);
+    setReg(static_cast<CpuReg>(instruction.r.rd), res);
 }
 
 void CPU::addImmediateUnsigned(const Instruction &instruction)
 {
     uint32_t imm = static_cast<int16_t>(instruction.i.immediate);
-    uint32_t val = getReg(instruction.i.rs);
+    uint32_t val = getReg(static_cast<CpuReg>(instruction.i.rs));
     uint32_t res = val + imm;
 
-    setReg(instruction.i.rt, res);
+    setReg(static_cast<CpuReg>(instruction.i.rt), res);
 }
 
 void CPU::substractWordUnsigned(const Instruction &instruction)
 {
-    uint32_t left = getReg(instruction.r.rs);
-    uint32_t right = getReg(instruction.r.rt);
+    uint32_t left = getReg(static_cast<CpuReg>(instruction.r.rs));
+    uint32_t right = getReg(static_cast<CpuReg>(instruction.r.rt));
     uint32_t tmp = left - right;
 
-    setReg(instruction.r.rd, tmp);
+    setReg(static_cast<CpuReg>(instruction.r.rd), tmp);
 }
 
 void CPU::substractWord(const Instruction &instruction)
 {
-    uint32_t left = getReg(instruction.r.rs);
-    uint32_t right = getReg(instruction.r.rt);
+    uint32_t left = getReg(static_cast<CpuReg>(instruction.r.rs));
+    uint32_t right = getReg(static_cast<CpuReg>(instruction.r.rt));
     uint32_t tmp = left - right;
 
     if (subOverflow(left, right))
@@ -434,13 +426,13 @@ void CPU::substractWord(const Instruction &instruction)
         std::cerr << "Substraction overflow! : TODO Raise Exception" << std::endl;
         return;
     }
-    setReg(instruction.r.rd, tmp);
+    setReg(static_cast<CpuReg>(instruction.r.rd), tmp);
 }
 
 void CPU::addWord(const Instruction &instruction)
 {
-    uint32_t left = getReg(instruction.r.rs);
-    uint32_t right = getReg(instruction.r.rt);
+    uint32_t left = getReg(static_cast<CpuReg>(instruction.r.rs));
+    uint32_t right = getReg(static_cast<CpuReg>(instruction.r.rt));
     uint32_t tmp = left + right;
 
     if (addOverflow(left, right))
@@ -449,21 +441,21 @@ void CPU::addWord(const Instruction &instruction)
         std::cerr << "Addition overflow! : TODO Raise Exception : TODO Raise Exception" << std::endl;
         return;
     }
-    setReg(instruction.r.rd, tmp);
+    setReg(static_cast<CpuReg>(instruction.r.rd), tmp);
 }
 
 void CPU::addWordUnsigned(const Instruction &instruction)
 {
-    uint32_t left = getReg(instruction.r.rs);
-    uint32_t right = getReg(instruction.r.rt);
+    uint32_t left = getReg(static_cast<CpuReg>(instruction.r.rs));
+    uint32_t right = getReg(static_cast<CpuReg>(instruction.r.rt));
     uint32_t tmp = left + right;
 
-    setReg(instruction.r.rd, tmp);
+    setReg(static_cast<CpuReg>(instruction.r.rd), tmp);
 }
 
 void CPU::addImmediate(const Instruction &instruction)
 {
-    uint32_t left = getReg(instruction.i.rs);
+    uint32_t left = getReg(static_cast<CpuReg>(instruction.i.rs));
     uint32_t imm = static_cast<int16_t>(instruction.i.immediate);
     uint32_t tmp = left + imm;
 
@@ -474,70 +466,70 @@ void CPU::addImmediate(const Instruction &instruction)
         std::cerr << "Addition overflow! : TODO Raise Exception" << std::endl;
         return;
     }
-    setReg(instruction.i.rt, tmp);
+    setReg(static_cast<CpuReg>(instruction.i.rt), tmp);
 }
 
 void CPU::andWord(const Instruction &instruction)
 {
-    uint32_t left = getReg(instruction.r.rs);
-    uint32_t right = getReg(instruction.r.rt);
+    uint32_t left = getReg(static_cast<CpuReg>(instruction.r.rs));
+    uint32_t right = getReg(static_cast<CpuReg>(instruction.r.rt));
     uint32_t res = left & right;
 
-    setReg(instruction.r.rd, res);
+    setReg(static_cast<CpuReg>(instruction.r.rd), res);
 }
 
 void CPU::orWord(const Instruction &instruction)
 {
-    uint32_t left = getReg(instruction.r.rs);
-    uint32_t right = getReg(instruction.r.rt);
+    uint32_t left = getReg(static_cast<CpuReg>(instruction.r.rs));
+    uint32_t right = getReg(static_cast<CpuReg>(instruction.r.rt));
     uint32_t res = left | right;
 
-    setReg(instruction.r.rd, res);
+    setReg(static_cast<CpuReg>(instruction.r.rd), res);
 }
 
 void CPU::xorWord(const Instruction &instruction)
 {
-    uint32_t left = getReg(instruction.r.rs);
-    uint32_t right = getReg(instruction.r.rt);
+    uint32_t left = getReg(static_cast<CpuReg>(instruction.r.rs));
+    uint32_t right = getReg(static_cast<CpuReg>(instruction.r.rt));
     uint32_t res = left ^ right;
 
-    setReg(instruction.r.rd, res);
+    setReg(static_cast<CpuReg>(instruction.r.rd), res);
 }
 
 void CPU::norWord(const Instruction &instruction)
 {
-    uint32_t left = getReg(instruction.r.rs);
-    uint32_t right = getReg(instruction.r.rt);
+    uint32_t left = getReg(static_cast<CpuReg>(instruction.r.rs));
+    uint32_t right = getReg(static_cast<CpuReg>(instruction.r.rt));
     uint32_t res = ~(left | right);
 
-    setReg(instruction.r.rd, res);
+    setReg(static_cast<CpuReg>(instruction.r.rd), res);
 }
 
 void CPU::andImmediateWord(const Instruction &instruction)
 {
-    uint32_t res = getReg(instruction.i.rs) & (int32_t)instruction.i.immediate;
+    uint32_t res = getReg(static_cast<CpuReg>(instruction.i.rs)) & (int32_t)instruction.i.immediate;
 
-    setReg(instruction.i.rt, res);
+    setReg(static_cast<CpuReg>(instruction.i.rt), res);
 }
 
 void CPU::orImmediateWord(const Instruction &instruction)
 {
-    uint32_t res = getReg(instruction.i.rs) | (int32_t)instruction.i.immediate;
+    uint32_t res = getReg(static_cast<CpuReg>(instruction.i.rs)) | (int32_t)instruction.i.immediate;
 
-    setReg(instruction.i.rt, res);
+    setReg(static_cast<CpuReg>(instruction.i.rt), res);
 }
 
 void CPU::xorImmediateWord(const Instruction &instruction)
 {
-    uint32_t res = getReg(instruction.i.rs) ^ (int32_t)instruction.i.immediate;
+    uint32_t res = getReg(static_cast<CpuReg>(instruction.i.rs)) ^ (int32_t)instruction.i.immediate;
 
-    setReg(instruction.i.rt, res);
+    setReg(static_cast<CpuReg>(instruction.i.rt), res);
 }
 
 void CPU::loadWord(const Instruction &instruction)
 {
     int32_t imm = static_cast<int16_t>(instruction.i.immediate);
-    uint32_t address = getReg(instruction.i.rs) + imm;
+    uint32_t address = getReg(static_cast<CpuReg>(instruction.i.rs)) + imm;
 
     if (address % 4 != 0) {
         // Misaligned: need to raise exception on the system
@@ -546,13 +538,13 @@ void CPU::loadWord(const Instruction &instruction)
     }
 
     uint32_t value = m_bus->loadWord(address);
-    setReg(instruction.i.rt, value);  // No sign extension needed for 32-bit word load
+    setReg(static_cast<CpuReg>(instruction.i.rt), value);  // No sign extension needed for 32-bit word load
 }
 
 void CPU::loadHalfWord(const Instruction &instruction)
 {
     int32_t imm = static_cast<int16_t>(instruction.i.immediate);
-    uint32_t address = getReg(instruction.i.rs) + imm;
+    uint32_t address = getReg(static_cast<CpuReg>(instruction.i.rs)) + imm;
 
     if (address % 2 != 0) {
         // Misaligned: need to raise exception on the system
@@ -561,13 +553,13 @@ void CPU::loadHalfWord(const Instruction &instruction)
     }
 
     int16_t value = static_cast<int16_t>(m_bus->loadHalfWord(address));  // Sign-extend
-    setReg(instruction.i.rt, static_cast<int32_t>(value));
+    setReg(static_cast<CpuReg>(instruction.i.rt), static_cast<int32_t>(value));
 }
 
 void CPU::loadHalfWordUnsigned(const Instruction &instruction)
 {
     int32_t imm = static_cast<int16_t>(instruction.i.immediate);
-    uint32_t address = getReg(instruction.i.rs) + imm;
+    uint32_t address = getReg(static_cast<CpuReg>(instruction.i.rs)) + imm;
 
     if (address % 2 != 0) {
         // Misaligned: need to raise exception on the system
@@ -576,60 +568,60 @@ void CPU::loadHalfWordUnsigned(const Instruction &instruction)
     }
 
     uint16_t value = m_bus->loadHalfWord(address);
-    setReg(instruction.i.rt, static_cast<uint32_t>(value));
+    setReg(static_cast<CpuReg>(instruction.i.rt), static_cast<uint32_t>(value));
 }
 
 void CPU::loadByte(const Instruction &instruction)
 {
     int32_t imm = static_cast<int16_t>(instruction.i.immediate);
-    uint32_t address = getReg(instruction.i.rs) + imm;
+    uint32_t address = getReg(static_cast<CpuReg>(instruction.i.rs)) + imm;
 
     int8_t value = static_cast<int8_t>(m_bus->loadByte(address));
-    setReg(instruction.i.rt, static_cast<int32_t>(value));
+    setReg(static_cast<CpuReg>(instruction.i.rt), static_cast<int32_t>(value));
 }
 
 void CPU::loadByteUnsigned(const Instruction &instruction)
 {
     int32_t imm = static_cast<int16_t>(instruction.i.immediate);
-    uint32_t address = getReg(instruction.i.rs) + imm;
+    uint32_t address = getReg(static_cast<CpuReg>(instruction.i.rs)) + imm;
 
     uint8_t value = m_bus->loadByte(address);
-    setReg(instruction.i.rt, static_cast<uint32_t>(value));
+    setReg(static_cast<CpuReg>(instruction.i.rt), static_cast<uint32_t>(value));
 }
 
 void CPU::loadWordRight(const Instruction &instruction)
 {
     int32_t imm = static_cast<int16_t>(instruction.i.immediate);
-    uint32_t address = getReg(instruction.i.rs) + imm;
+    uint32_t address = getReg(static_cast<CpuReg>(instruction.i.rs)) + imm;
     uint32_t value = m_bus->loadWord(address & ~3);
 
     uint32_t shift = (address & 3) * 8;
     uint32_t mask = 0xFFFFFFFF >> shift;
     uint32_t right = value & mask;
 
-    uint32_t res = (getReg(instruction.i.rt) & ~mask) | right;
-    setReg(instruction.i.rt, res);
+    uint32_t res = (getReg(static_cast<CpuReg>(instruction.i.rt)) & ~mask) | right;
+    setReg(static_cast<CpuReg>(instruction.i.rt), res);
 }
 
 void CPU::loadWordLeft(const Instruction &instruction)
 {
     int32_t imm = static_cast<int16_t>(instruction.i.immediate);
-    uint32_t address = getReg(instruction.i.rs) + imm;
+    uint32_t address = getReg(static_cast<CpuReg>(instruction.i.rs)) + imm;
     uint32_t value = m_bus->loadWord(address & ~3);
 
     uint32_t shift = (3 - (address & 3)) * 8;
     uint32_t mask = 0xFFFFFFFF << shift;
 
     value &= mask;
-    uint32_t res = (getReg(instruction.i.rt) & ~mask) | value;
-    setReg(instruction.i.rt, res);
+    uint32_t res = (getReg(static_cast<CpuReg>(instruction.i.rt)) & ~mask) | value;
+    setReg(static_cast<CpuReg>(instruction.i.rt), res);
 }
 
 void CPU::storeWordRight(const Instruction &instruction)
 {
     int32_t imm = static_cast<int16_t>(instruction.i.immediate);
-    uint32_t address = getReg(instruction.i.rs) + imm;
-    uint32_t value = getReg(instruction.i.rt);
+    uint32_t address = getReg(static_cast<CpuReg>(instruction.i.rs)) + imm;
+    uint32_t value = getReg(static_cast<CpuReg>(instruction.i.rt));
 
     uint32_t shift = (address & 3) * 8;
     uint32_t mask = 0xFFFFFFFF >> shift;
@@ -642,8 +634,8 @@ void CPU::storeWordRight(const Instruction &instruction)
 void CPU::storeWordLeft(const Instruction &instruction)
 {
     int32_t imm = static_cast<int16_t>(instruction.i.immediate);
-    uint32_t address = getReg(instruction.i.rs) + imm;
-    uint32_t value = getReg(instruction.i.rt);
+    uint32_t address = getReg(static_cast<CpuReg>(instruction.i.rs)) + imm;
+    uint32_t value = getReg(static_cast<CpuReg>(instruction.i.rt));
 
     uint32_t shift = (3 - (address & 3)) * 8;
     uint32_t mask = 0xFFFFFFFF << shift;
@@ -655,248 +647,258 @@ void CPU::storeWordLeft(const Instruction &instruction)
 
 void CPU::setOnLessThan(const Instruction &instruction)
 {
-    int32_t left = getReg(instruction.r.rs);
-    int32_t right = getReg(instruction.r.rt);
+    int32_t left = getReg(static_cast<CpuReg>(instruction.r.rs));
+    int32_t right = getReg(static_cast<CpuReg>(instruction.r.rt));
     int32_t res = left < right ? 1 : 0;
 
-    setReg(instruction.r.rd, res);
+    setReg(static_cast<CpuReg>(instruction.r.rd), res);
 }
 
 void CPU::setOnLessThanUnsigned(const Instruction &instruction)
 {
-    uint32_t left = getReg(instruction.r.rs);
-    uint32_t right = getReg(instruction.r.rt);
-    int32_t res = left < right ? 1 : 0;
+    uint32_t left = getReg(static_cast<CpuReg>(instruction.r.rs));
+    uint32_t right = getReg(static_cast<CpuReg>(instruction.r.rt));
+    uint32_t res = left < right ? 1 : 0;
 
-    setReg(instruction.r.rd, res);
+    setReg(static_cast<CpuReg>(instruction.r.rd), res);
 }
 
 void CPU::setOnLessThanImmediate(const Instruction &instruction)
 {
-    int32_t left = getReg(instruction.i.rs);
+    int32_t left = getReg(static_cast<CpuReg>(instruction.i.rs));
     int32_t right = static_cast<int16_t>(instruction.i.immediate);
     int32_t res = left < right ? 1 : 0;
 
-    setReg(instruction.i.rt, res);
+    setReg(static_cast<CpuReg>(instruction.i.rt), res);
 }
 
 void CPU::setOnLessThanImmediateUnsigned(const Instruction &instruction)
 {
-    uint32_t left = getReg(instruction.i.rs);
-    uint32_t right = static_cast<uint32_t>(static_cast<int16_t>(instruction.i.immediate));
-    int32_t res = left < right ? 1 : 0;
+    uint32_t left = getReg(static_cast<CpuReg>(instruction.i.rs));
+    uint32_t right = static_cast<int16_t>(instruction.i.immediate);
+    uint32_t res = left < right ? 1 : 0;
 
-    setReg(instruction.i.rt, res);
+    setReg(static_cast<CpuReg>(instruction.i.rt), res);
 }
 
 void CPU::shiftLeftLogicalVariable(const Instruction &instruction)
 {
-    uint32_t res = getReg(instruction.r.rt) << (getReg(instruction.r.rs) & 0x1F);
+    uint8_t shiftAmount = getReg(static_cast<CpuReg>(instruction.r.rs)) & 0x1F;
+    uint32_t value = getReg(static_cast<CpuReg>(instruction.r.rt));
+    uint32_t res = value << shiftAmount;
 
-    setReg(instruction.r.rd, res);
+    setReg(static_cast<CpuReg>(instruction.r.rd), res);
 }
 
 void CPU::shiftRightLogical(const Instruction &instruction)
 {
-    uint32_t res = getReg(instruction.r.rt) >> instruction.r.shamt;
+    uint32_t value = getReg(static_cast<CpuReg>(instruction.r.rt));
+    uint32_t res = value >> instruction.r.shamt;
 
-    setReg(instruction.r.rd, res);
+    setReg(static_cast<CpuReg>(instruction.r.rd), res);
 }
 
 void CPU::shiftRightLogicalVariable(const Instruction &instruction)
 {
-    uint32_t res = getReg(instruction.r.rt) >> (getReg(instruction.r.rs) & 0x1F);
+    uint32_t value = getReg(static_cast<CpuReg>(instruction.r.rt));
+    uint8_t shiftAmount = getReg(static_cast<CpuReg>(instruction.r.rs)) & 0x1F;
+    uint32_t res =  value >> shiftAmount;
 
-    setReg(instruction.r.rd, res);
+    setReg(static_cast<CpuReg>(instruction.r.rd), res);
 }
 
 void CPU::shiftRightArithmetic(const Instruction &instruction)
 {
-    int32_t value = getReg(instruction.r.rt);
+    int32_t value = getReg(static_cast<CpuReg>(instruction.r.rt));
     int32_t res = value >> instruction.r.shamt;
 
-    setReg(instruction.r.rd, res);
+    setReg(static_cast<CpuReg>(instruction.r.rd), res);
 }
 
 void CPU::shiftRightArithmeticVariable(const Instruction &instruction)
 {
-    int32_t value = getReg(instruction.r.rt);
-    uint32_t shiftAmount = getReg(instruction.r.rs) & 0x1F;
+    int32_t value = getReg(static_cast<CpuReg>(instruction.r.rt));
+    uint32_t shiftAmount = getReg(static_cast<CpuReg>(instruction.r.rs)) & 0x1F;
     uint32_t res =  value >> shiftAmount;
 
-    setReg(instruction.r.rd, res);
+    setReg(static_cast<CpuReg>(instruction.r.rd), res);
 }
 
 void CPU::multiply(const Instruction &instruction)
 {
-    int32_t left = static_cast<int32_t>(getReg(instruction.r.rs));
-    int32_t right = static_cast<int32_t>(getReg(instruction.r.rt));
+    int32_t left = static_cast<int32_t>(getReg(static_cast<CpuReg>(instruction.r.rs)));
+    int32_t right = static_cast<int32_t>(getReg(static_cast<CpuReg>(instruction.r.rt)));
 
     int64_t res = static_cast<int64_t>(left) * static_cast<int64_t>(right);
 
-    lo = static_cast<int32_t>(res & 0xFFFFFFFF);
-    hi = static_cast<int32_t>(res >> 32);
+    m_lo = static_cast<int32_t>(res & 0xFFFFFFFF);
+    m_hi = static_cast<int32_t>(res >> 32);
 }
 
 void CPU::multiplyUnsigned(const Instruction &instruction)
 {
-    uint32_t left = static_cast<int32_t>(getReg(instruction.r.rs));
-    uint32_t right = static_cast<int32_t>(getReg(instruction.r.rt));
+    uint32_t left = getReg(static_cast<CpuReg>(instruction.r.rs));
+    uint32_t right = getReg(static_cast<CpuReg>(instruction.r.rt));
 
     uint64_t res = static_cast<uint64_t>(left) * static_cast<uint64_t>(right);
 
-    lo = static_cast<uint32_t>(res & 0xFFFFFFFF);
-    hi = static_cast<uint32_t>(res >> 32);
+    m_lo = static_cast<uint32_t>(res & 0xFFFFFFFF);
+    m_hi = static_cast<uint32_t>(res >> 32);
 }
 
 void CPU::divide(const Instruction &instruction)
 {
-    int32_t left = static_cast<int32_t>(getReg(instruction.r.rs));
-    int32_t right = static_cast<int32_t>(getReg(instruction.r.rt));
+    int32_t left = static_cast<int32_t>(getReg(static_cast<CpuReg>(instruction.r.rs)));
+    int32_t right = static_cast<int32_t>(getReg(static_cast<CpuReg>(instruction.r.rt)));
 
     if (right == 0)
     {
-        lo = 0;
-        hi = left;
+        m_lo = left >= 0 ? -1 : 1;
+        m_hi = left;
+    }
+    else if (left == INT32_MIN && right == -1)
+    {
+        m_lo = static_cast<uint32_t>(INT32_MIN);
+        m_hi = 0;
     }
     else
     {
-        lo = left / right;
-        hi = left % right;
+        m_lo = left / right;
+        m_hi = left % right;
     }
 }
 
 void CPU::divideUnsigned(const Instruction &instruction)
 {
-    uint32_t left = getReg(instruction.r.rs);
-    uint32_t right = getReg(instruction.r.rt);
+    uint32_t left = getReg(static_cast<CpuReg>(instruction.r.rs));
+    uint32_t right = getReg(static_cast<CpuReg>(instruction.r.rt));
 
     if (right == 0)
     {
-        lo = 0;
-        hi = left;
+        m_lo = UINT32_MAX;
+        m_hi = left;
     }
     else
     {
-        lo = left / right;
-        hi = left % right;
+        m_lo = left / right;
+        m_hi = left % right;
     }
 }
 
 void CPU::moveFromHi(const Instruction &instruction)
 {
-    setReg(instruction.r.rd, hi);
+    setReg(static_cast<CpuReg>(instruction.r.rd), m_hi);
 }
 
 void CPU::moveFromLo(const Instruction &instruction)
 {
-    setReg(instruction.r.rd, lo);
+    setReg(static_cast<CpuReg>(instruction.r.rd), m_lo);
 }
 
 void CPU::moveToHi(const Instruction &instruction)
 {
-    hi = getReg(instruction.r.rs);
+    m_hi = getReg(static_cast<CpuReg>(instruction.r.rs));
 }
 
 void CPU::moveToLo(const Instruction &instruction)
 {
-    lo = getReg(instruction.r.rs);
+    m_lo = getReg(static_cast<CpuReg>(instruction.r.rs));
 }
 
 void CPU::jump(const Instruction &instruction)
 {
-    m_branchSlotAddr = (pc & 0xF0000000) | (((uint32_t)instruction.j.address) << 2);
+    m_branchSlotAddr = (m_pc & 0xF0000000) | (((uint32_t)instruction.j.address) << 2);
     m_nextIsBranchDelay = true;
 }
 
 void CPU::jumpAndLink(const Instruction &instruction)
 {
-    setReg(31, pc + 8);
+    setReg(CpuReg::RA, m_pc + 8);
     jump(instruction);
 }
 
 void CPU::jumpRegister(const Instruction &instruction)
 {
-    m_branchSlotAddr = getReg(instruction.r.rs);
+    m_branchSlotAddr = getReg(static_cast<CpuReg>(instruction.r.rs));
     m_nextIsBranchDelay = true;
 }
 
 void CPU::jumpAndLinkRegister(const Instruction &instruction)
 {
-    setReg(instruction.r.rd, pc + 8);
+    setReg(static_cast<CpuReg>(instruction.r.rd), m_pc + 8);
     jumpRegister(instruction);
 }
 
 void CPU::executeBranch(const Instruction &instruction)
 {
-    m_branchSlotAddr = pc + 4 + ((int16_t)instruction.i.immediate << 2);
+    m_branchSlotAddr = m_pc + 4 + ((int16_t)instruction.i.immediate << 2);
     m_nextIsBranchDelay = true;
 }
 
 void CPU::branchOnEqual(const Instruction &instruction)
 {
-    if (getReg(instruction.i.rs) == getReg(instruction.i.rt))
+    if (getReg(static_cast<CpuReg>(instruction.i.rs)) == getReg(static_cast<CpuReg>(instruction.i.rt)))
         executeBranch(instruction);
 }
 
 void CPU::branchOnNotEqual(const Instruction &instruction)
 {
-    if (getReg(instruction.i.rs) != getReg(instruction.i.rt))
+    if (getReg(static_cast<CpuReg>(instruction.i.rs)) != getReg(static_cast<CpuReg>(instruction.i.rt)))
         executeBranch(instruction);
 }
 
 void CPU::branchOnLessThanZero(const Instruction &instruction)
 {
-    if (static_cast<int32_t>(getReg(instruction.i.rs)) < 0)
+    if (static_cast<int32_t>(getReg(static_cast<CpuReg>(instruction.i.rs))) < 0)
         executeBranch(instruction);
 }
 
 void CPU::branchOnGreaterThanOrEqualToZero(const Instruction &instruction)
 {
-    if (static_cast<int32_t>(getReg(instruction.i.rs)) >= 0)
+    if (static_cast<int32_t>(getReg(static_cast<CpuReg>(instruction.i.rs))) >= 0)
         executeBranch(instruction);
 }
 
 void CPU::branchOnGreaterThanZero(const Instruction &instruction)
 {
-    if (static_cast<int32_t>(getReg(instruction.i.rs)) > 0)
+    if (static_cast<int32_t>(getReg(static_cast<CpuReg>(instruction.i.rs))) > 0)
         executeBranch(instruction);
 }
 
 void CPU::branchOnLessThanOrEqualToZero(const Instruction &instruction)
 {
-    if (static_cast<int32_t>(getReg(instruction.i.rs)) <= 0)
+    if (static_cast<int32_t>(getReg(static_cast<CpuReg>(instruction.i.rs))) <= 0)
         executeBranch(instruction);
 }
 
 void CPU::branchOnLessThanZeroAndLink(const Instruction &instruction)
 {
-    if (static_cast<int32_t>(getReg(instruction.i.rs)) < 0)
+    if (static_cast<int32_t>(getReg(static_cast<CpuReg>(instruction.i.rs))) < 0)
     {
-        setReg(31, pc + 8);
+        setReg(CpuReg::RA, m_pc + 8);
         executeBranch(instruction);
     }
 }
 
 void CPU::branchOnGreaterThanOrEqualToZeroAndLink(const Instruction &instruction)
 {
-    if (static_cast<int32_t>(getReg(instruction.i.rs)) >= 0)
+    if (static_cast<int32_t>(getReg(static_cast<CpuReg>(instruction.i.rs))) >= 0)
     {
-        setReg(31, pc + 8);
+        setReg(CpuReg::RA, m_pc + 8);
         executeBranch(instruction);
     }
 }
 
 void CPU::executeCop0(const Instruction &instruction)
 {
-    auto code = static_cast<CoprocessorOpcodes>(instruction.r.rs);
+    auto code = static_cast<CoprocessorOpcode>(instruction.r.rs);
 
     switch (code)
     {
-    case CoprocessorOpcodes::MTC:
+    case CoprocessorOpcode::MTC:
         mtc0(instruction);
         break;
-    case CoprocessorOpcodes::MFC:
+    case CoprocessorOpcode::MFC:
         mfc0(instruction);
         break;
     default:
@@ -913,14 +915,14 @@ void CPU::executeCop0(const Instruction &instruction)
 void CPU::mtc0(const Instruction &instruction)
 {
     uint8_t reg = instruction.r.rd;
-    uint32_t data = getReg(instruction.r.rt);
+    uint32_t data = getReg(static_cast<CpuReg>(instruction.r.rt));
 
     setCop0Reg(reg, data);
 }
 
 void CPU::mfc0(const Instruction &instruction)
 {
-    uint8_t reg = instruction.r.rt;
+    CpuReg reg = static_cast<CpuReg>(instruction.r.rt);
     uint32_t data = getCop0Reg(instruction.r.rd);
 
     setReg(reg, data);
@@ -935,11 +937,11 @@ void CPU::executeSyscall(const Instruction &instruction)
 void CPU::returnFromException(const Instruction &instruction)
 {
     (void)instruction;
-    uint32_t status = getCop0Reg(static_cast<uint8_t>(CP0RegIndex::SR));
+    uint32_t status = getCop0Reg(static_cast<uint8_t>(CP0Reg::SR));
     uint8_t stack = (status >> 2) & 0b111111;
     status &= ~0b111111;
     status |= stack;
-    setCop0Reg(static_cast<uint8_t>(CP0RegIndex::SR), status);
+    setCop0Reg(static_cast<uint8_t>(CP0Reg::SR), status);
 }
 
 void CPU::triggerException(ExceptionType exception)
@@ -949,16 +951,16 @@ void CPU::triggerException(ExceptionType exception)
 
     cause |= ((uint32_t)m_inBranchDelay) << 31;
     cause |= static_cast<uint32_t>(exception) << 2;
-    setCop0Reg(static_cast<uint8_t>(CP0RegIndex::CAUSE), cause);
+    setCop0Reg(static_cast<uint8_t>(CP0Reg::CAUSE), cause);
 
-    uint32_t returnAddr = pc - (4 * (uint32_t)m_inBranchDelay);
-    setCop0Reg(static_cast<uint8_t>(CP0RegIndex::EPC), returnAddr);
+    uint32_t returnAddr = m_pc - (4 * (uint32_t)m_inBranchDelay);
+    setCop0Reg(static_cast<uint8_t>(CP0Reg::EPC), returnAddr);
 
-    uint32_t status = getCop0Reg(static_cast<uint8_t>(CP0RegIndex::SR));
+    uint32_t status = getCop0Reg(static_cast<uint8_t>(CP0Reg::SR));
     uint8_t stack = (status << 2) & 0b111111;
     status &= ~0b111111;
     status |= stack;
-    setCop0Reg(static_cast<uint8_t>(CP0RegIndex::SR), status);
+    setCop0Reg(static_cast<uint8_t>(CP0Reg::SR), status);
 
     uint32_t handlerAddr = 0;
 
@@ -977,7 +979,7 @@ void CPU::triggerException(ExceptionType exception)
 void CPU::illegalInstruction(const Instruction &instruction)
 {
     fprintf(stderr, "Illegal instruction: ");
-    std::cerr << Disassembler::disassemble(pc, instruction) << std::endl;
+    std::cerr << Disassembler::disassemble(m_pc, instruction) << std::endl;
 
     // Temporary exit until exception handling is properly implemented
     exit(1);

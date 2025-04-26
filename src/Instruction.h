@@ -85,7 +85,7 @@ enum class BranchOnConditionZero
     BGEZAL = 0x11,
 };
 
-enum class CoprocessorOpcodes
+enum class CoprocessorOpcode
 {
     MFC = 0b0,
     CFC = 0b01,

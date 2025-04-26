@@ -5,12 +5,12 @@
 #include <string>
 
 #include "Debugger.hpp"
+#include "CPU.h"
+#include "GLFW/glfw3.h"
 
 class BIOS;
 class RAM;
 class Bus;
-struct CPU;
-struct GLFWwindow;
 
 class System
 {

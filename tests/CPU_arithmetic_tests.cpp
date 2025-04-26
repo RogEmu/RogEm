@@ -1,725 +1,333 @@
 #include <gtest/gtest.h>
-#include "Utils.h"
 #include "BIOS.h"
 #include "Bus.h"
 #include "CPU.h"
+#include "RAM.h"
 
-TEST(CpuTest, ADDI_1)
+class CpuArithmeticTest : public testing::Test
 {
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
+    protected:
+        Bus bus;
+        BIOS bios;
+        RAM ram;
+        CPU cpu;
 
-    uint32_t value = 0xB16B00B5;
-    int16_t imm = -1;
+        const uint32_t defaultRegVal = 0xDEADBEEF;
 
-    loadImmediate(cpu, 11, value);
-    i.i.rs = 11;
-    i.i.rt = 8;
-    i.i.immediate = imm;
-    cpu.addImmediate(i);
+        CpuArithmeticTest() :
+            bus(&bios, &ram),
+            cpu(&bus)
+        {
+            cpu.setReg(CpuReg::PC, 0x10000);
+        }
 
-    EXPECT_EQ(cpu.gpr[i.i.rt], 0xB16B00B4);
-}
+        void runArithmeticTest(SecondaryOpCode opcode, uint32_t left, uint32_t right, uint32_t expected)
+        {
+            Instruction i;
+            i.r.opcode = static_cast<uint8_t>(PrimaryOpCode::SPECIAL);
+            i.r.rd = static_cast<uint8_t>(CpuReg::T0);
+            i.r.rs = static_cast<uint8_t>(CpuReg::T1);
+            i.r.rt = static_cast<uint8_t>(CpuReg::T2);
+            i.r.funct = static_cast<uint8_t>(opcode);
 
-TEST(CpuTest, ADDI_2)
+            auto pc = cpu.getReg(CpuReg::PC);
+            bus.storeWord(pc, i.raw);
+
+            cpu.setReg(CpuReg::T0, defaultRegVal);
+            cpu.setReg(CpuReg::T1, left);
+            cpu.setReg(CpuReg::T2, right);
+            cpu.step();
+
+            EXPECT_EQ(cpu.getReg(CpuReg::T0), expected);
+        }
+
+        void runArithmeticImmediateTest(PrimaryOpCode opcode, uint32_t value, uint16_t immediate, uint32_t expected)
+        {
+            Instruction i;
+            i.i.opcode = static_cast<uint8_t>(opcode);
+            i.i.rt = static_cast<uint8_t>(CpuReg::T0);
+            i.i.rs = static_cast<uint8_t>(CpuReg::T1);
+            i.i.immediate = immediate;
+
+            auto pc = cpu.getReg(CpuReg::PC);
+            bus.storeWord(pc, i.raw);
+
+            cpu.setReg(CpuReg::T0, defaultRegVal);
+            cpu.setReg(CpuReg::T1, value);
+            cpu.step();
+
+            EXPECT_EQ(cpu.getReg(CpuReg::T0), expected);
+        }
+};
+
+TEST_F(CpuArithmeticTest, ADDI_Basic)
 {
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
-
     uint32_t value = 123;
-    int16_t imm = 23768;
-
-    loadImmediate(cpu, 11, value);
-    i.i.rs = 11;
-    i.i.rt = 8;
-    i.i.immediate = imm;
-    cpu.addImmediate(i);
-
-    EXPECT_EQ(cpu.gpr[i.i.rt], value + imm);
+    int16_t imm = 0x5CD8;
+    uint32_t expected = value + imm;
+    runArithmeticImmediateTest(PrimaryOpCode::ADDI, value, imm, expected);
 }
 
-TEST(CpuTest, ADDI_Negative_1)
+TEST_F(CpuArithmeticTest, ADDI_Negative_Immediate)
 {
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t value = 0x1;
-    int16_t imm = -1;
-
-    loadImmediate(cpu, 11, value);
-    i.i.rs = 11;
-    i.i.rt = 8;
-    i.i.immediate = imm;
-    cpu.addImmediate(i);
-
-    EXPECT_EQ(cpu.gpr[i.i.rt], 0);
+    uint32_t value = 0x10;
+    int16_t imm = -4189;
+    uint32_t expected = value + imm;
+    runArithmeticImmediateTest(PrimaryOpCode::ADDI, value, imm, expected);
 }
 
-TEST(CpuTest, ADDI_Negative_Overflow)
+TEST_F(CpuArithmeticTest, ADDI_Immediate_Minimum)
 {
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t value = INT32_MAX;
-    int16_t imm = 1; // <-- Should overflow only in signed arithmetic
-
-    loadImmediate(cpu, 11, value);
-    i.i.rs = 11;
-    i.i.rt = 8;
-    i.i.immediate = imm;
-    uint32_t oldRtValue = cpu.getReg(i.i.rt);
-    cpu.addImmediate(i);
-
-    EXPECT_EQ(cpu.gpr[i.i.rt], oldRtValue);
-}
-
-TEST(CpuTest, ADDI_Negative_No_Overflow)
-{
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t value = UINT32_MAX; // <-- Treated as signed (-1)
-    int16_t imm = 1; // <-- Should not overflow in signed arithmetic
-
-    loadImmediate(cpu, 11, value);
-    i.i.rs = 11;
-    i.i.rt = 8;
-    i.i.immediate = imm;
-    cpu.addImmediate(i);
-
-    EXPECT_EQ(cpu.gpr[i.i.rt], 0);
-}
-
-TEST(CpuTest, ADDI_Negative_No_Underflow)
-{
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t value = 0;
-    int16_t imm = -1; // <-- Should not underflow in signed arithmetic
-
-    loadImmediate(cpu, 11, value);
-    i.i.rs = 11;
-    i.i.rt = 8;
-    i.i.immediate = imm;
-    cpu.addImmediate(i);
-
-    EXPECT_EQ(cpu.gpr[i.i.rt], -1);
-}
-
-TEST(CpuTest, ADDI_Negative_Underflow)
-{
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t value = (uint32_t)INT32_MIN;
-    int16_t imm = -1; // <-- Should underflow in signed arithmetic
-
-    loadImmediate(cpu, 8, value);
-    i.i.rs = 8; // $t0
-    i.i.rt = 9; // $t1
-    i.i.immediate = imm;
-    uint32_t oldRtValue = cpu.getReg(i.i.rt);
-    cpu.addImmediate(i);
-
-    EXPECT_EQ(cpu.gpr[i.i.rt], oldRtValue);
-}
-
-TEST(CpuTest, ADDIU_1)
-{
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t value = 0xC0FFEE;
-    int16_t imm = -1;
-
-    loadImmediate(cpu, 8, value);
-    i.i.rs = 8;
-    i.i.rt = 9;
-    i.i.immediate = imm;
-    cpu.addImmediateUnsigned(i);
-
-    EXPECT_EQ(cpu.gpr[i.i.rt], value + imm);
-}
-
-TEST(CpuTest, ADDIU_2)
-{
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t value = 0xBADBABE;
+    uint32_t value = 0x10;
     int16_t imm = INT16_MIN;
-
-    loadImmediate(cpu, 8, value);
-    i.i.rs = 8;
-    i.i.rt = 9;
-    i.i.immediate = imm;
-    cpu.addImmediateUnsigned(i);
-
-    EXPECT_EQ(cpu.gpr[i.i.rt], value + imm);
+    uint32_t expected = value + imm;
+    runArithmeticImmediateTest(PrimaryOpCode::ADDI, value, imm, expected);
 }
 
-TEST(CpuTest, ADDIU_No_Overflow)
+TEST_F(CpuArithmeticTest, ADDI_Immediate_Maximum)
 {
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
+    uint32_t value = 0x10;
+    int16_t imm = INT16_MAX;
+    uint32_t expected = value + imm;
+    runArithmeticImmediateTest(PrimaryOpCode::ADDI, value, imm, expected);
+}
 
+TEST_F(CpuArithmeticTest, ADDI_Overflow)
+{
     uint32_t value = INT32_MAX;
     int16_t imm = 1;
-
-    loadImmediate(cpu, 8, value);
-    i.i.rs = 8;
-    i.i.rt = 9;
-    i.i.immediate = imm;
-    cpu.addImmediateUnsigned(i);
-
-    EXPECT_EQ(cpu.gpr[i.i.rt], value + imm);
+    uint32_t expected = defaultRegVal; // Overflow expected so default $t0 value expected
+    runArithmeticImmediateTest(PrimaryOpCode::ADDI, value, imm, expected);
 }
 
-TEST(CpuTest, ADDIU_No_Underflow)
+TEST_F(CpuArithmeticTest, ADDI_No_Overflow)
 {
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
+    uint32_t value = UINT32_MAX;
+    int16_t imm = 1;
+    uint32_t expected = value + imm;
+    runArithmeticImmediateTest(PrimaryOpCode::ADDI, value, imm, expected);
+}
 
+TEST_F(CpuArithmeticTest, ADDI_No_Underflow)
+{
     uint32_t value = 0;
     int16_t imm = -1;
-
-    loadImmediate(cpu, 8, value);
-    i.i.rs = 8;
-    i.i.rt = 9;
-    i.i.immediate = imm;
-    cpu.addImmediateUnsigned(i);
-
-    EXPECT_EQ(cpu.gpr[i.i.rt], value + imm);
+    uint32_t expected = value + imm;
+    runArithmeticImmediateTest(PrimaryOpCode::ADDI, value, imm, expected);
 }
 
-TEST(CpuTest, ADDIU_No_Underflow_2)
+TEST_F(CpuArithmeticTest, ADDI_Underflow)
 {
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t value = (uint32_t)INT32_MIN;
+    uint32_t value = static_cast<uint32_t>(INT32_MIN);
     int16_t imm = -1;
-
-    loadImmediate(cpu, 8, value);
-    i.i.rs = 8;
-    i.i.rt = 9;
-    i.i.immediate = imm;
-    cpu.addImmediateUnsigned(i);
-
-    EXPECT_EQ(cpu.gpr[i.i.rt], value + imm);
+    uint32_t expected = defaultRegVal; // Overflow expected so default $t0 value expected
+    runArithmeticImmediateTest(PrimaryOpCode::ADDI, value, imm, expected);
 }
 
-TEST(CpuTest, ADDIU_3)
+TEST_F(CpuArithmeticTest, ADDIU_Basic)
 {
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
+    uint32_t value = 0xBADBABE;
+    int16_t imm = 0x429;
+    uint32_t expected = value + imm;
+    runArithmeticImmediateTest(PrimaryOpCode::ADDIU, value, imm, expected);
+}
 
+TEST_F(CpuArithmeticTest, ADDIU_Immediate_Minimum)
+{
+    uint32_t value = 0xBADBABE;
+    int16_t imm = INT16_MIN;
+    uint32_t expected = value + imm;
+    runArithmeticImmediateTest(PrimaryOpCode::ADDIU, value, imm, expected);
+}
+
+TEST_F(CpuArithmeticTest, ADDIU_Immediate_Maximum)
+{
+    uint32_t value = 0xBADBABE;
+    int16_t imm = INT16_MAX;
+    uint32_t expected = value + imm;
+    runArithmeticImmediateTest(PrimaryOpCode::ADDIU, value, imm, expected);
+}
+
+TEST_F(CpuArithmeticTest, ADDIU_No_Overflow)
+{
+    uint32_t value = static_cast<uint32_t>(INT32_MAX);
+    int16_t imm = 1;
+    uint32_t expected = value + imm;
+    runArithmeticImmediateTest(PrimaryOpCode::ADDIU, value, imm, expected);
+}
+
+TEST_F(CpuArithmeticTest, ADDIU_No_Overflow_2)
+{
+    uint32_t value = static_cast<uint32_t>(-1);
+    int16_t imm = 2;
+    uint32_t expected = value + imm;
+    runArithmeticImmediateTest(PrimaryOpCode::ADDIU, value, imm, expected);
+}
+
+TEST_F(CpuArithmeticTest, ADDIU_No_Underflow)
+{
     uint32_t value = 0;
-    int16_t imm = 12322;
-
-    loadImmediate(cpu, 0, value);
-    i.i.rs = 0;
-    i.i.rt = 8;
-    i.i.immediate = imm;
-    cpu.addImmediateUnsigned(i);
-
-    EXPECT_EQ(cpu.gpr[i.i.rt], value + imm);
+    int16_t imm = -1;
+    uint32_t expected = static_cast<uint32_t>(-1);
+    runArithmeticImmediateTest(PrimaryOpCode::ADDIU, value, imm, expected);
 }
 
-TEST(CpuTest, ADD_Normal)
+TEST_F(CpuArithmeticTest, ADDIU_No_Underflow_2)
 {
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t value1 = 100;
-    uint32_t value2 = 200;
-
-    loadImmediate(cpu, 1, value1);
-    loadImmediate(cpu, 2, value2);
-    i.r.rs = 1;
-    i.r.rt = 2;
-    i.r.rd = 3;
-
-    cpu.addWord(i);
-
-    EXPECT_EQ(cpu.gpr[i.r.rd], value1 + value2);
+    uint32_t value = static_cast<uint32_t>(INT32_MIN);
+    int16_t imm = -1;
+    uint32_t expected = value + imm;
+    runArithmeticImmediateTest(PrimaryOpCode::ADDIU, value, imm, expected);
 }
 
-TEST(CpuTest, ADD_Zero)
+TEST_F(CpuArithmeticTest, ADD_Basic)
 {
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
-
-    loadImmediate(cpu, 1, 0);
-    loadImmediate(cpu, 2, 0);
-    i.r.rs = 1;
-    i.r.rt = 2;
-    i.r.rd = 3;
-
-    cpu.addWord(i);
-
-    EXPECT_EQ(cpu.gpr[i.r.rd], 0);
+    uint32_t vleft = 100;
+    uint32_t vright = 200;
+    uint32_t expected = vleft + vright;
+    runArithmeticTest(SecondaryOpCode::ADD, vleft, vright, expected);
 }
 
-TEST(CpuTest, ADD_Negative)
+TEST_F(CpuArithmeticTest, ADD_Zeroed_Registers)
 {
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
-
-    int32_t value1 = -50;
-    int32_t value2 = 30;
-
-    loadImmediate(cpu, 1, value1);
-    loadImmediate(cpu, 2, value2);
-    i.r.rs = 1;
-    i.r.rt = 2;
-    i.r.rd = 3;
-
-    cpu.addWord(i);
-
-    EXPECT_EQ(cpu.gpr[i.r.rd], value1 + value2);
+    uint32_t vleft = 0;
+    uint32_t vright = 0;
+    uint32_t expected = 0;
+    runArithmeticTest(SecondaryOpCode::ADD, vleft, vright, expected);
 }
 
-TEST(CpuTest, ADD_Overflow_Positive)
+TEST_F(CpuArithmeticTest, ADD_Negative_Positive)
 {
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
-
-    int32_t value1 = INT32_MAX;
-    int32_t value2 = 1;
-    int32_t initial_rd_value = 0xDEADBEEF; // Known value for verification
-
-    loadImmediate(cpu, 1, value1);
-    loadImmediate(cpu, 2, value2);
-    loadImmediate(cpu, 3, initial_rd_value); // Initialize rd
-    i.r.rs = 1;
-    i.r.rt = 2;
-    i.r.rd = 3;
-
-    cpu.addWord(i);
-
-    EXPECT_EQ(cpu.gpr[i.r.rd], initial_rd_value); // rd should remain unchanged
+    uint32_t vleft = static_cast<uint32_t>(-50);
+    uint32_t vright = 30;
+    uint32_t expected = vleft + vright;
+    runArithmeticTest(SecondaryOpCode::ADD, vleft, vright, expected);
 }
 
-TEST(CpuTest, ADD_Overflow_Negative)
+TEST_F(CpuArithmeticTest, ADD_Overflow)
 {
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
-
-    int32_t value1 = INT32_MIN;
-    int32_t value2 = -1;
-    int32_t initial_rd_value = 0xDEADBEEF; // Known value for verification
-
-    loadImmediate(cpu, 1, value1);
-    loadImmediate(cpu, 2, value2);
-    loadImmediate(cpu, 3, initial_rd_value); // Initialize rd
-    i.r.rs = 1;
-    i.r.rt = 2;
-    i.r.rd = 3;
-
-    cpu.addWord(i);
-
-    EXPECT_EQ(cpu.gpr[i.r.rd], initial_rd_value); // rd should remain unchanged
+    uint32_t vleft = static_cast<uint32_t>(INT32_MAX);
+    uint32_t vright = 1;
+    uint32_t expected = defaultRegVal;
+    runArithmeticTest(SecondaryOpCode::ADD, vleft, vright, expected);
 }
 
-TEST(CpuTest, ADDU_Normal)
+TEST_F(CpuArithmeticTest, ADD_Underflow)
 {
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t value1 = 100;
-    uint32_t value2 = 200;
-
-    loadImmediate(cpu, 1, value1);
-    loadImmediate(cpu, 2, value2);
-    i.r.rs = 1;
-    i.r.rt = 2;
-    i.r.rd = 3;
-
-    cpu.addWordUnsigned(i);
-
-    EXPECT_EQ(cpu.gpr[i.r.rd], value1 + value2);
+    uint32_t vleft = static_cast<uint32_t>(INT32_MIN);
+    uint32_t vright = static_cast<uint32_t>(-1);
+    uint32_t expected = defaultRegVal;
+    runArithmeticTest(SecondaryOpCode::ADD, vleft, vright, expected);
 }
 
-TEST(CpuTest, ADDU_Zero)
+TEST_F(CpuArithmeticTest, ADDU_Basic)
 {
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
-
-    loadImmediate(cpu, 1, 0);
-    loadImmediate(cpu, 2, 0);
-    i.r.rs = 1;
-    i.r.rt = 2;
-    i.r.rd = 3;
-
-    cpu.addWordUnsigned(i);
-
-    EXPECT_EQ(cpu.gpr[i.r.rd], 0);
+    uint32_t vleft = 100;
+    uint32_t vright = 200;
+    uint32_t expected = vleft + vright;
+    runArithmeticTest(SecondaryOpCode::ADDU, vleft, vright, expected);
 }
 
-TEST(CpuTest, ADDU_Negative)
+TEST_F(CpuArithmeticTest, ADDU_Zeroed_Registers)
 {
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
-
-    int32_t value1 = -50;
-    int32_t value2 = 30;
-
-    loadImmediate(cpu, 1, value1);
-    loadImmediate(cpu, 2, value2);
-    i.r.rs = 1;
-    i.r.rt = 2;
-    i.r.rd = 3;
-
-    cpu.addWordUnsigned(i);
-
-    EXPECT_EQ(cpu.gpr[i.r.rd], static_cast<uint32_t>(value1 + value2));
+    uint32_t vleft = 0;
+    uint32_t vright = 0;
+    uint32_t expected = 0;
+    runArithmeticTest(SecondaryOpCode::ADDU, vleft, vright, expected);
 }
 
-TEST(CpuTest, ADDU_Overflow)
+TEST_F(CpuArithmeticTest, ADDU_Negative)
 {
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t value1 = 0xFFFFFFFF; // Largest unsigned value
-    uint32_t value2 = 1;          // Causes wraparound
-    uint32_t expected_result = value1 + value2; // Should wrap to 0
-
-    loadImmediate(cpu, 1, value1);
-    loadImmediate(cpu, 2, value2);
-    i.r.rs = 1;
-    i.r.rt = 2;
-    i.r.rd = 3;
-
-    cpu.addWordUnsigned(i);
-
-    EXPECT_EQ(cpu.gpr[i.r.rd], expected_result); // No overflow exception, just wraparound
+    uint32_t vleft = static_cast<uint32_t>(-50);
+    uint32_t vright = 30;
+    uint32_t expected = vleft + vright;
+    runArithmeticTest(SecondaryOpCode::ADDU, vleft, vright, expected);
 }
 
-TEST(CpuTest, SUB_1)
+TEST_F(CpuArithmeticTest, ADDU_No_Overflow)
 {
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t left = 36178;
-    uint32_t right = 9403875;
-
-    loadImmediate(cpu, 8, left);
-    loadImmediate(cpu, 9, right);
-    // rd = rs - rt;
-    i.r.rd = 10;
-    i.r.rs = 8;
-    i.r.rt = 9;
-    cpu.substractWord(i);
-
-    EXPECT_EQ(cpu.gpr[i.r.rd], left - right);
+    uint32_t vleft = UINT32_MAX;
+    uint32_t vright = 1;
+    uint32_t expected = 0;
+    runArithmeticTest(SecondaryOpCode::ADDU, vleft, vright, expected);
 }
 
-TEST(CpuTest, SUB_Overflow)
+TEST_F(CpuArithmeticTest, SUB_Basic)
 {
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
-
-    // Should overflow into negative integers
-    uint32_t left = INT32_MAX;
-    uint32_t right = (uint32_t)-1;
-
-    uint32_t oldRd = cpu.getReg(10);
-    loadImmediate(cpu, 8, left);
-    loadImmediate(cpu, 9, right);
-    // rd = rs - rt;
-    i.r.rd = 10;
-    i.r.rs = 8;
-    i.r.rt = 9;
-    cpu.substractWord(i);
-
-    EXPECT_EQ(cpu.gpr[i.r.rd], oldRd);
+    uint32_t vleft = 36178;
+    uint32_t vright = 9403875;
+    uint32_t expected = vleft - vright;
+    runArithmeticTest(SecondaryOpCode::SUB, vleft, vright, expected);
 }
 
-TEST(CpuTest, SUB_Overflow_2)
+TEST_F(CpuArithmeticTest, SUB_Overflow)
 {
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
-
-    // Should overflow into negative integers
-    uint32_t left = INT32_MAX;
-    uint32_t right = (uint32_t)-79879;
-
-    uint32_t oldRd = cpu.getReg(10);
-    loadImmediate(cpu, 8, left);
-    loadImmediate(cpu, 9, right);
-    // rd = rs - rt;
-    i.r.rd = 10;
-    i.r.rs = 8;
-    i.r.rt = 9;
-    cpu.substractWord(i);
-
-    EXPECT_EQ(cpu.gpr[i.r.rd], oldRd);
+    uint32_t vleft = static_cast<uint32_t>(INT32_MAX);
+    uint32_t vright = static_cast<uint32_t>(-10);
+    uint32_t expected = defaultRegVal;
+    runArithmeticTest(SecondaryOpCode::SUB, vleft, vright, expected);
 }
 
-TEST(CpuTest, SUB_Underflow)
+TEST_F(CpuArithmeticTest, SUB_Underflow)
 {
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
-
-    // Should overflow into negative integers
-    uint32_t left = (uint32_t)INT32_MIN;
-    uint32_t right = 1;
-
-    uint32_t oldRd = cpu.getReg(10);
-    loadImmediate(cpu, 8, left);
-    loadImmediate(cpu, 9, right);
-    // rd = rs - rt;
-    i.r.rd = 10;
-    i.r.rs = 8;
-    i.r.rt = 9;
-    cpu.substractWord(i);
-
-    EXPECT_EQ(cpu.gpr[i.r.rd], oldRd);
+    uint32_t vleft = static_cast<uint32_t>(INT32_MIN);
+    uint32_t vright = static_cast<uint32_t>(10);
+    uint32_t expected = defaultRegVal;
+    runArithmeticTest(SecondaryOpCode::SUB, vleft, vright, expected);
 }
 
-TEST(CpuTest, SUB_Underflow_2)
+TEST_F(CpuArithmeticTest, SUB_No_Underflow)
 {
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
-
-    // Should overflow into negative integers
-    uint32_t left = (uint32_t)INT32_MIN;
-    uint32_t right = 8790870;
-
-    uint32_t oldRd = cpu.getReg(10);
-    loadImmediate(cpu, 8, left);
-    loadImmediate(cpu, 9, right);
-    // rd = rs - rt;
-    i.r.rd = 10;
-    i.r.rs = 8;
-    i.r.rt = 9;
-    cpu.substractWord(i);
-
-    EXPECT_EQ(cpu.gpr[i.r.rd], oldRd);
+    uint32_t vleft = 1;
+    uint32_t vright = 2;
+    uint32_t expected = static_cast<uint32_t>(-1);
+    runArithmeticTest(SecondaryOpCode::SUB, vleft, vright, expected);
 }
 
-TEST(CpuTest, SUB_No_Overflow)
+TEST_F(CpuArithmeticTest, SUB_No_Overflow)
 {
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
-
-    // Should overflow into negative integers
-    uint32_t left = 1;
-    uint32_t right = 2;
-
-    loadImmediate(cpu, 8, left);
-    loadImmediate(cpu, 9, right);
-    // rd = rs - rt;
-    i.r.rd = 10;
-    i.r.rs = 8;
-    i.r.rt = 9;
-    cpu.substractWord(i);
-
-    EXPECT_EQ(cpu.gpr[i.r.rd], left - right);
+    uint32_t vleft = static_cast<uint32_t>(-1);
+    uint32_t vright = static_cast<uint32_t>(-2);
+    uint32_t expected = 1;
+    runArithmeticTest(SecondaryOpCode::SUB, vleft, vright, expected);
 }
 
-TEST(CpuTest, SUB_No_Overflow_2)
+TEST_F(CpuArithmeticTest, SUBU_Basic)
 {
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
-
-    // Should overflow into negative integers
-    uint32_t left = (uint32_t)-1;
-    uint32_t right = (uint32_t)-2;
-
-    loadImmediate(cpu, 8, left);
-    loadImmediate(cpu, 9, right);
-    // rd = rs - rt;
-    i.r.rd = 10;
-    i.r.rs = 8;
-    i.r.rt = 9;
-    cpu.substractWord(i);
-
-    EXPECT_EQ(cpu.gpr[i.r.rd], left - right);
+    uint32_t vleft = static_cast<uint32_t>(986648768);
+    uint32_t vright = static_cast<uint32_t>(-8790870);
+    uint32_t expected = vleft - vright;
+    runArithmeticTest(SecondaryOpCode::SUBU, vleft, vright, expected);
 }
 
-TEST(CpuTest, SUBU_1)
+TEST_F(CpuArithmeticTest, SUBU_Basic_Reverse_Sign)
 {
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t left = 986648768;
-    uint32_t right = (uint32_t)-8790870;
-
-    loadImmediate(cpu, 8, left);
-    loadImmediate(cpu, 9, right);
-    // rd = rs - rt;
-    i.r.rd = 10;
-    i.r.rs = 8;
-    i.r.rt = 9;
-    cpu.substractWordUnsigned(i);
-
-    EXPECT_EQ(cpu.gpr[i.r.rd], left - right);
+    uint32_t vleft = static_cast<uint32_t>(-986648768);
+    uint32_t vright = static_cast<uint32_t>(8790870);
+    uint32_t expected = vleft - vright;
+    runArithmeticTest(SecondaryOpCode::SUBU, vleft, vright, expected);
 }
 
-TEST(CpuTest, SUBU_2)
+TEST_F(CpuArithmeticTest, SUBU_Both_Negative)
 {
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t left = (uint32_t)-891840298;
-    uint32_t right = 8790870;
-
-    loadImmediate(cpu, 8, left);
-    loadImmediate(cpu, 9, right);
-    // rd = rs - rt;
-    i.r.rd = 10;
-    i.r.rs = 8;
-    i.r.rt = 9;
-    cpu.substractWordUnsigned(i);
-
-    EXPECT_EQ(cpu.gpr[i.r.rd], left - right);
+    uint32_t vleft = static_cast<uint32_t>(-891840298);
+    uint32_t vright = static_cast<uint32_t>(-8790870);
+    uint32_t expected = vleft - vright;
+    runArithmeticTest(SecondaryOpCode::SUBU, vleft, vright, expected);
 }
 
-TEST(CpuTest, SUBU_3)
+TEST_F(CpuArithmeticTest, SUBU_No_Overflow)
 {
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t left = (uint32_t)-891840298;
-    uint32_t right = (uint32_t)-8790870;
-
-    loadImmediate(cpu, 8, left);
-    loadImmediate(cpu, 9, right);
-    // rd = rs - rt;
-    i.r.rd = 10;
-    i.r.rs = 8;
-    i.r.rt = 9;
-    cpu.substractWordUnsigned(i);
-
-    EXPECT_EQ(cpu.gpr[i.r.rd], left - right);
+    uint32_t vleft = static_cast<uint32_t>(INT32_MAX);
+    uint32_t vright = static_cast<uint32_t>(-1);
+    uint32_t expected = vleft - vright;
+    runArithmeticTest(SecondaryOpCode::SUBU, vleft, vright, expected);
 }
 
-TEST(CpuTest, SUBU_4)
+TEST_F(CpuArithmeticTest, SUBU_No_Underflow)
 {
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t left = (uint32_t)-891840298;
-    uint32_t right = 8790870;
-
-    loadImmediate(cpu, 8, left);
-    loadImmediate(cpu, 9, right);
-    // rd = rs - rt;
-    i.r.rd = 10;
-    i.r.rs = 8;
-    i.r.rt = 9;
-    cpu.substractWordUnsigned(i);
-
-    EXPECT_EQ(cpu.gpr[i.r.rd], left - right);
-}
-
-TEST(CpuTest, SUBU_No_Overflow)
-{
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t left = INT32_MAX;
-    uint32_t right = (uint32_t)-1;
-
-    loadImmediate(cpu, 8, left);
-    loadImmediate(cpu, 9, right);
-    // rd = rs - rt;
-    i.r.rd = 10;
-    i.r.rs = 8;
-    i.r.rt = 9;
-    cpu.substractWordUnsigned(i);
-
-    EXPECT_EQ(cpu.gpr[i.r.rd], left - right);
-}
-
-TEST(CpuTest, SUBU_No_Overflow_2)
-{
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t left = (uint32_t)INT32_MIN;
-    uint32_t right = 1;
-
-    loadImmediate(cpu, 8, left);
-    loadImmediate(cpu, 9, right);
-    // rd = rs - rt;
-    i.r.rd = 10;
-    i.r.rs = 8;
-    i.r.rt = 9;
-    cpu.substractWordUnsigned(i);
-
-    EXPECT_EQ(cpu.gpr[i.r.rd], left - right);
+    uint32_t vleft = static_cast<uint32_t>(INT32_MIN);
+    uint32_t vright = 1;
+    uint32_t expected = vleft - vright;
+    runArithmeticTest(SecondaryOpCode::SUBU, vleft, vright, expected);
 }

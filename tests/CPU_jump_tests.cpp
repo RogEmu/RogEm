@@ -1,124 +1,107 @@
 #include <gtest/gtest.h>
-#include "Utils.h"
 #include "BIOS.h"
 #include "Bus.h"
 #include "CPU.h"
+#include "RAM.h"
 
-TEST(CpuTest, JUMP)
+class CpuJumpTest : public testing::Test
 {
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
+    protected:
+        Bus bus;
+        BIOS bios;
+        RAM ram;
+        CPU cpu;
 
-    cpu.pc = 0x80010000;
-    i.j.address = 0x123456;
-    cpu.jump(i);
-    uint32_t expected_pc = (cpu.pc & 0xF0000000) | (i.j.address << 2);
+        CpuJumpTest() :
+            bus(&bios, &ram),
+            cpu(&bus)
+        {
+            cpu.setReg(CpuReg::PC, 0x10000);
+        }
+};
 
-    EXPECT_EQ(cpu.m_branchSlotAddr, expected_pc);
+TEST_F(CpuJumpTest, JUMP)
+{
+    auto pc = cpu.getReg(CpuReg::PC);
+    bus.storeWord(pc, 0x08002000); // J 0x2000
+    bus.storeWord(pc + 4, 0x25090010); // ADDIU $t1, $t2, 0x10
+
+    cpu.setReg(CpuReg::T0, 0x5);
+
+    cpu.step(); // Executes delay slot
+    EXPECT_EQ(cpu.getReg(CpuReg::PC), pc + 4);
+
+    cpu.step(); // Executes jump
+    EXPECT_EQ(cpu.getReg(CpuReg::PC), 0x8000);
+    EXPECT_EQ(cpu.getReg(CpuReg::T1), 21); // T1 = T0 + 0x10
 }
 
-TEST(CpuTest, JUMP_AND_LINK)
+TEST_F(CpuJumpTest, JUMP_AND_LINK)
 {
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
+    auto pc = cpu.getReg(CpuReg::PC);
+    bus.storeWord(pc, 0x0C002000); // JAL 0x2000
+    bus.storeWord(pc + 4, 0x25090010); // ADDIU $t1, $t2, 0x10
 
-    cpu.pc = 0x80010000;
-    i.j.address = 0x123456;
-    uint32_t expected_pc = (cpu.pc & 0xF0000000) | (i.j.address << 2);
-    uint32_t expected_return = cpu.pc + 8;
-    cpu.jumpAndLink(i);
+    cpu.setReg(CpuReg::T0, 5);
 
-    EXPECT_EQ(cpu.m_branchSlotAddr, expected_pc);
-    EXPECT_EQ(cpu.gpr[31], expected_return);
+    cpu.step(); // Executes delay slot
+    EXPECT_EQ(cpu.getReg(CpuReg::PC), pc + 4);
+    EXPECT_EQ(cpu.getReg(CpuReg::RA), pc + 8);
+
+    cpu.step(); // Executes jump
+    EXPECT_EQ(cpu.getReg(CpuReg::T1), 21); // T1 = T0 + 10
+    EXPECT_EQ(cpu.getReg(CpuReg::PC), 0x8000);
 }
 
-TEST(CpuTest, JUMP_REGISTER)
+TEST_F(CpuJumpTest, JUMP_REGISTER)
 {
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
+    auto pc = cpu.getReg(CpuReg::PC);
+    bus.storeWord(pc, 0x01800008); // JR $t4
+    bus.storeWord(pc + 4, 0x25490010); // ADDIU $t1, $t2, 0x10
 
-    uint32_t address = 0x12345678;
-    loadImmediate(cpu, 8, address);
-    i.r.rs = 8;
-    cpu.jumpRegister(i);
+    cpu.setReg(CpuReg::T2, 0x10);
+    cpu.setReg(CpuReg::T4, 0xFABC);
 
-    EXPECT_EQ(cpu.m_branchSlotAddr, address);
+    cpu.step(); // delay slot
+    EXPECT_EQ(cpu.getReg(CpuReg::PC), pc + 4);
+
+    cpu.step(); // jump
+    EXPECT_EQ(cpu.getReg(CpuReg::PC), 0xFABC);
+    EXPECT_EQ(cpu.getReg(CpuReg::T1), 32);
 }
 
-TEST(CpuTest, JUMP_AND_LINK_REGISTER)
+TEST_F(CpuJumpTest, JUMP_AND_LINK_REGISTER)
 {
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
+    auto pc = cpu.getReg(CpuReg::PC);
+    bus.storeWord(pc, 0x01A06009); // JALR $t4, $t5
+    bus.storeWord(pc + 4, 0x25490010); // ADDIU $t1, $t2, 0x10
 
-    cpu.pc = 0x80010000;
+    cpu.setReg(CpuReg::T2, 0x10);
+    cpu.setReg(CpuReg::T5, 0xFABC); // Set jump address
 
-    uint32_t jump_target = 0x80020000;
-    cpu.setReg(5, jump_target);
+    cpu.step(); // delay slot
+    EXPECT_EQ(cpu.getReg(CpuReg::PC), pc + 4);
+    EXPECT_EQ(cpu.getReg(CpuReg::T4), pc + 8);
 
-    i.r.rs = 5;
-    i.r.rd = 12;
-
-    uint32_t expected_return = cpu.pc + 8; // JALR stores PC + 8 in $ra
-    uint32_t expected_pc = jump_target;
-
-    cpu.jumpAndLinkRegister(i);
-
-    EXPECT_EQ(cpu.gpr[12], expected_return);
-    EXPECT_EQ(cpu.m_branchSlotAddr, expected_pc);
+    cpu.step(); // jump
+    EXPECT_EQ(cpu.getReg(CpuReg::PC), 0xFABC);
+    EXPECT_EQ(cpu.getReg(CpuReg::T1), 32);
 }
 
-TEST(CpuTest, JUMP_AND_LINK_REGISTER_2)
+TEST_F(CpuJumpTest, JUMP_AND_LINK_REGISTER_RA)
 {
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
+    auto pc = cpu.getReg(CpuReg::PC);
+    bus.storeWord(pc, 0x0180F809); // JALR $t4, $ra
+    bus.storeWord(pc + 4, 0x25490010); // ADDIU $t1, $t2, 0x10
 
-    cpu.pc = 0x80010000;
+    cpu.setReg(CpuReg::T2, 0x10);
+    cpu.setReg(CpuReg::T4, 0xFABC); // Set jump address
 
-    uint32_t jump_target = 0x80020000;
-    cpu.setReg(5, jump_target);
+    cpu.step(); // delay slot
+    EXPECT_EQ(cpu.getReg(CpuReg::PC), pc + 4);
+    EXPECT_EQ(cpu.getReg(CpuReg::RA), pc + 8);
 
-    i.r.rs = 5;
-    i.r.rd = 24;
-
-    uint32_t expected_return = cpu.pc + 8; // JALR stores PC + 8 in $ra
-    uint32_t expected_pc = jump_target;
-
-    cpu.jumpAndLinkRegister(i);
-
-    EXPECT_EQ(cpu.gpr[24], expected_return);
-    EXPECT_EQ(cpu.m_branchSlotAddr, expected_pc);
-}
-
-TEST(CpuTest, JUMP_AND_LINK_REGISTER_3)
-{
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
-
-    cpu.pc = 0x80010000;
-
-    uint32_t jump_target = 0x80020000;
-    cpu.setReg(5, jump_target);
-
-    i.r.rs = 5;
-    i.r.rd = 31;
-
-    uint32_t expected_return = cpu.pc + 8; // JALR stores PC + 8 in $ra
-    uint32_t expected_pc = jump_target;
-
-    cpu.jumpAndLinkRegister(i);
-
-    EXPECT_EQ(cpu.gpr[31], expected_return);
-    EXPECT_EQ(cpu.m_branchSlotAddr, expected_pc);
+    cpu.step(); // jump
+    EXPECT_EQ(cpu.getReg(CpuReg::PC), 0xFABC);
+    EXPECT_EQ(cpu.getReg(CpuReg::T1), 32);
 }

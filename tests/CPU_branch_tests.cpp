@@ -1,1170 +1,397 @@
 #include <gtest/gtest.h>
-#include "Utils.h"
 #include "BIOS.h"
 #include "RAM.h"
 #include "Bus.h"
 #include "CPU.h"
 
-TEST(CpuTest, BEQ_Equal)
+class CpuBranchTest : public testing::Test
 {
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
-    uint8_t srcReg = static_cast<uint8_t>(GprIndex::T0);
-    uint8_t targetReg = static_cast<uint8_t>(GprIndex::T1);
-    uint32_t value = 0xB16B00B5;
+    protected:
+        Bus bus;
+        BIOS bios;
+        RAM ram;
+        CPU cpu;
 
-    int16_t imm = 0x0004;
+        const uint32_t defaultRegVal = 0xDEADBEEF;
 
-    loadImmediate(cpu, srcReg, value);
-    loadImmediate(cpu, targetReg, value);
-    i.i.rs = srcReg;
-    i.i.rt = targetReg;
-    i.i.immediate = imm;
-    cpu.branchOnEqual(i);
+        CpuBranchTest() :
+            bus(&bios, &ram),
+            cpu(&bus)
+        {
+            cpu.setReg(CpuReg::PC, 0x10000);
+        }
 
-    EXPECT_EQ(cpu.m_branchSlotAddr, cpu.pc + 4 + (imm << 2));
-    EXPECT_EQ(cpu.m_nextIsBranchDelay, true);
+        void runBranchTest(PrimaryOpCode opcode, uint32_t rs, uint32_t rt, int16_t offset, bool branchTaken)
+        {
+            Instruction i;
+            i.i.opcode = static_cast<uint8_t>(opcode);
+            i.i.rs = static_cast<uint8_t>(CpuReg::T0);
+            i.i.rt = static_cast<uint8_t>(CpuReg::T1);
+            i.i.immediate = offset;
+
+            auto pc = cpu.getReg(CpuReg::PC);
+            const uint32_t branchTarget = branchTaken ? pc + 4 + (offset * 4) : pc + 8;
+
+            cpu.setReg(CpuReg::T0, rs);
+            cpu.setReg(CpuReg::T1, rt);
+            cpu.setReg(CpuReg::T2, 0x10);
+
+            bus.storeWord(pc, i.raw); // Branch instruction
+            bus.storeWord(pc + 4, 0x254B0020); // ADDIU $t3, $t2, 0x20 (delay slot)
+
+            cpu.step();
+            EXPECT_EQ(cpu.getReg(CpuReg::PC), pc + 4);
+
+            cpu.step();
+            EXPECT_EQ(cpu.getReg(CpuReg::T3), 0x30);
+            EXPECT_EQ(cpu.getReg(CpuReg::PC), branchTarget);
+        }
+
+        void runBcondzTest(BranchOnConditionZero opcode, uint32_t rs, int16_t offset, bool branchTaken)
+        {
+            Instruction i;
+            i.i.opcode = static_cast<uint8_t>(PrimaryOpCode::BCONDZ);
+            i.i.rs = static_cast<uint8_t>(CpuReg::T0);
+            i.i.rt = static_cast<uint8_t>(opcode);
+            i.i.immediate = offset;
+
+            auto pc = cpu.getReg(CpuReg::PC);
+            const uint32_t branchTarget = branchTaken ? pc + 4 + (offset * 4) : pc + 8;
+
+            cpu.setReg(CpuReg::T0, rs);
+            cpu.setReg(CpuReg::T1, 0);
+            cpu.setReg(CpuReg::RA, defaultRegVal);
+
+            bus.storeWord(pc, i.raw);
+            bus.storeWord(pc + 4, 0x34091234); // ORI $t1, $zero, 0x1234 (delay slot)
+
+            cpu.step();
+            EXPECT_EQ(cpu.getReg(CpuReg::PC), pc + 4);
+
+            cpu.step();
+            EXPECT_EQ(cpu.getReg(CpuReg::T1), 0x1234);
+            EXPECT_EQ(cpu.getReg(CpuReg::PC), branchTarget);
+
+            if (opcode == BranchOnConditionZero::BLTZAL || opcode == BranchOnConditionZero::BGEZAL) {
+                EXPECT_EQ(cpu.getReg(CpuReg::RA), branchTaken ? pc + 8 : defaultRegVal); // RA should be set to return address
+            }
+        }
+};
+
+TEST_F(CpuBranchTest, BEQ_BranchTaken)
+{
+    int16_t offset = 0x20;
+    uint32_t rs = 10;
+    uint32_t rt = 10;
+    runBranchTest(PrimaryOpCode::BEQ, rs, rt, offset, true);
 }
 
-TEST(CpuTest, BEQ_Not_Equal)
+TEST_F(CpuBranchTest, BEQ_BranchNotTaken)
 {
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
-    uint8_t srcReg = static_cast<uint8_t>(GprIndex::T0);
-    uint8_t targetReg = static_cast<uint8_t>(GprIndex::T1);
-    uint32_t value = 0xB16B00B5;
-
-    int16_t imm = 0x0004;
-
-    loadImmediate(cpu, srcReg, value);
-    loadImmediate(cpu, targetReg, value + 1);
-    i.i.rs = srcReg;
-    i.i.rt = targetReg;
-    i.i.immediate = imm;
-    cpu.m_branchSlotAddr = 0;
-    cpu.branchOnEqual(i);
-
-    EXPECT_EQ(cpu.pc, RESET_VECTOR);
+    int16_t offset = 0x20;
+    uint32_t rs = 1;
+    uint32_t rt = 0;
+    runBranchTest(PrimaryOpCode::BEQ, rs, rt, offset, false);
 }
 
-TEST(CpuTest, BNE_BranchWhenNotEqual)
+TEST_F(CpuBranchTest, BEQ_ZeroOffset)
 {
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint8_t srcReg = static_cast<uint8_t>(GprIndex::T0);
-    uint8_t targetReg = static_cast<uint8_t>(GprIndex::T1);
-
-    cpu.setReg(srcReg, 11);
-    cpu.setReg(targetReg, 12);
-
-    i.i.rs = srcReg;
-    i.i.rt = targetReg;
-    i.i.immediate = 0x0004;
-    cpu.m_branchSlotAddr = 0;
-
-    cpu.branchOnNotEqual(i);
-    EXPECT_EQ(cpu.m_branchSlotAddr, RESET_VECTOR + 4 + ((int16_t)i.i.immediate << 2));
-    EXPECT_EQ(cpu.m_nextIsBranchDelay, true);  // Branch taken
+    int16_t offset = 0;
+    uint32_t rs = 1;
+    uint32_t rt = 1;
+    runBranchTest(PrimaryOpCode::BEQ, rs, rt, offset, true);
 }
 
-TEST(CpuTest, BNE_NoBranchWhenEqual)
+TEST_F(CpuBranchTest, BEQ_MaxOffset)
 {
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint8_t srcReg = static_cast<uint8_t>(GprIndex::T0);
-    uint8_t targetReg = static_cast<uint8_t>(GprIndex::T1);
-
-    cpu.setReg(srcReg, 11);
-    cpu.setReg(targetReg, 11);  // Same value
-
-    i.i.rs = srcReg;
-    i.i.rt = targetReg;
-    i.i.immediate = 0x0004;
-    cpu.m_branchSlotAddr = 0;
-
-    cpu.branchOnNotEqual(i);
-    EXPECT_EQ(cpu.m_branchSlotAddr, 0);  // No branch
-    EXPECT_EQ(cpu.m_nextIsBranchDelay, false);  // No branch taken
-}
-
-TEST(CpuTest, BNE_NoBranch_ZeroRegistersEqual)
-{
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint8_t srcReg = static_cast<uint8_t>(GprIndex::T0);
-    uint8_t targetReg = static_cast<uint8_t>(GprIndex::T1);
-
-    cpu.setReg(srcReg, 0);
-    cpu.setReg(targetReg, 0);  // Same value
-
-    i.i.rs = srcReg;
-    i.i.rt = targetReg;
-    i.i.immediate = 0x0004;
-    cpu.m_branchSlotAddr = 0;
-
-    cpu.branchOnNotEqual(i);
-    EXPECT_EQ(cpu.m_branchSlotAddr, 0);  // No branch
-    EXPECT_EQ(cpu.m_nextIsBranchDelay, false);  // No branch taken
-}
-
-TEST(CpuTest, BNE_MaxPositiveOffset) {
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint8_t srcReg = static_cast<uint8_t>(GprIndex::T0);
-    uint8_t targetReg = static_cast<uint8_t>(GprIndex::T1);
-
-    cpu.setReg(srcReg, 11);
-    cpu.setReg(targetReg, 12);
-
-    i.i.rs = srcReg;
-    i.i.rt = targetReg;
-    i.i.immediate = 0x7FFF;  // Maximum positive offset
-    cpu.m_branchSlotAddr = 0;
-
-    cpu.branchOnNotEqual(i);
-    EXPECT_EQ(cpu.m_branchSlotAddr, RESET_VECTOR + 4 + ((int16_t)i.i.immediate << 2));
-    EXPECT_EQ(cpu.m_nextIsBranchDelay, true);  // Branch taken
-}
-
-TEST(CpuBranchTests, BLTZ_BranchTaken)
-{
-    BIOS bios;
-    RAM ram;
-    Bus bus(&bios, &ram);
-    CPU cpu(&bus);
-
-    const uint32_t pc = 0x00100000;
-    const uint16_t offset = 0x0020; // 32 instructions = 128 bytes
-    const uint32_t branchTarget = pc + 4 + (offset << 2); // 0x00100084
-
-    cpu.setSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC), pc);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T0), 0xFFFFFFFF);  // t0 = -1 (branch should be taken)
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T1), 0);           // clear t1
-
-    // Write instructions
-    bus.storeWord(pc,     0x05000020); // BLTZ t0, +0x20
-    bus.storeWord(pc + 4, 0x34091234); // ORI t1, zero, 0x1234 (delay slot)
-
-    // Step 1: Execute BLTZ
-    cpu.step();
-
-    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
-    EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
-
-    // Step 2: Execute delay slot
-    cpu.step();
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T1)), 0x1234);
-    EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), branchTarget);
-}
-
-TEST(CpuBranchTests, BLTZ_BranchNotTaken_Zero)
-{
-    BIOS bios;
-    RAM ram;
-    Bus bus(&bios, &ram);
-    CPU cpu(&bus);
-
-    const uint32_t pc = 0x00100000;
-    const uint32_t nextPC = pc + 8; // no branch, normal PC increment
-
-    cpu.setSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC), pc);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T0), 0); // t0 = 0 (not less than 0)
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T1), 0);
-
-    bus.storeWord(pc,     0x05000020); // BLTZ t0, +0x20
-    bus.storeWord(pc + 4, 0x34091234); // ORI t1, zero, 0x1234
-
-    // Step 1: Execute BLTZ
-    cpu.step();
-
-    EXPECT_FALSE(cpu.m_nextIsBranchDelay);
-
-    // Step 2: Execute delay slot
-    cpu.step();
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T1)), 0x1234);
-    EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), nextPC);
-}
-
-TEST(CpuBranchTests, BLTZ_BranchNotTaken)
-{
-    BIOS bios;
-    RAM ram;
-    Bus bus(&bios, &ram);
-    CPU cpu(&bus);
-
-    const uint32_t pc = 0x00100000;
-    const uint32_t nextPC = pc + 8; // no branch, normal PC increment
-
-    cpu.setSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC), pc);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T0), 0x24);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T1), 0);
-
-    bus.storeWord(pc,     0x05000020); // BLTZ t0, +0x20
-    bus.storeWord(pc + 4, 0x34091234); // ORI t1, zero, 0x1234
-
-    // Step 1: Execute BLTZ
-    cpu.step();
-
-    EXPECT_FALSE(cpu.m_nextIsBranchDelay);
-
-    // Step 2: Execute delay slot
-    cpu.step();
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T1)), 0x1234);
-    EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), nextPC);
-}
-
-TEST(CpuBranchTests, BLTZ_ZeroOffset)
-{
-    BIOS bios;
-    RAM ram;
-    Bus bus(&bios, &ram);
-    CPU cpu(&bus);
-
-    const uint32_t pc = 0x00100000;
-    const uint32_t branchTarget = pc + 4; // no offset, same as pc + 4 = 0x00100004
-
-    cpu.setSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC), pc);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T0), 0xFFFFFFFF);  // branch taken
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T1), 0);
-
-    bus.storeWord(pc,     0x05000000); // BLTZ t0, +0x00
-    bus.storeWord(pc + 4, 0x34091234); // ORI t1, zero, 0x1234
-
-    cpu.step();
-
-    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
-    EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
-
-    cpu.step();
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T1)), 0x1234);
-    EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), branchTarget);
-}
-
-TEST(CpuBranchTests, BLTZ_MaxPositiveOffset)
-{
-    BIOS bios;
-    RAM ram;
-    Bus bus(&bios, &ram);
-    CPU cpu(&bus);
-
-    const uint32_t pc = 0x00100000;
-    const int16_t offset = INT16_MAX;
-    const uint32_t branchTarget = pc + 4 + (offset << 2);
-
-    cpu.setSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC), pc);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T0), 0xFFFFFFFF);  // branch taken
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T1), 0);
-
-    bus.storeWord(pc,     0x05007FFF); // BLTZ t0, +0x7FFF
-    bus.storeWord(pc + 4, 0x34091234); // ORI t1, zero, 0x1234
-
-    cpu.step();
-
-    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
-    EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
-
-    cpu.step();
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T1)), 0x1234);
-    EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), branchTarget);
-}
-
-TEST(CpuBranchTests, BLTZ_BackwardBranch)
-{
-    BIOS bios;
-    RAM ram;
-    Bus bus(&bios, &ram);
-    CPU cpu(&bus);
-
-    uint32_t pc = 0x00100080;
-    int16_t offset = -0x10; // -16 instructions = -64 bytes
-    uint32_t branchTarget = pc + 4 + (offset << 2); // 0x00100044
-
-    cpu.setSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC), pc);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T0), 0xFFFFFFFF);  // branch taken
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T1), 0);
-
-    bus.storeWord(pc,     0x0500FFF0); // BLTZ t0, -0x10
-    bus.storeWord(pc + 4, 0x34091234); // ORI t1, zero, 0x1234
-
-    cpu.step();
-
-    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
-    EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
-
-    cpu.step();
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T1)), 0x1234);
-    EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), branchTarget);
-}
-
-TEST(CpuBranchTests, BLTZ_MaxNegativeOffset)
-{
-    BIOS bios;
-    RAM ram;
-    Bus bus(&bios, &ram);
-    CPU cpu(&bus);
-
-    uint32_t pc = 0x00110000;
-    int16_t offset = INT16_MIN;
-    uint32_t branchTarget = pc + 4 + (offset << 2); // pc + 4 - 0x20000 = 0x000F0004
-
-    cpu.setSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC), pc);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T0), 0xFFFFFFFF); // branch should be taken
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T1), 0);
-
-    bus.storeWord(pc,     0x05008000); // BLTZ T0, -0x8000
-    bus.storeWord(pc + 4, 0x34091234); // ORI T1, ZERO, 0x1234
-
-    // Step 1: Execute BLTZ
-    cpu.step();
-
-    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
-    EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
-
-    // Step 2: Execute delay slot
-    cpu.step();
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T1)), 0x1234);
-    EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), branchTarget);
-}
-
-TEST(CpuBranchTests, BGTZ_BranchTaken)
-{
-    BIOS bios;
-    RAM ram;
-    Bus bus(&bios, &ram);
-    CPU cpu(&bus);
-
-    const uint32_t pc = 0x00100000;
-    const uint16_t offset = 0x0020; // 32 instructions = 128 bytes
-    const uint32_t branchTarget = pc + 4 + (offset << 2); // 0x00100084
-
-    cpu.setSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC), pc);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T0), 1);     // t0 = 1 (branch should be taken)
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T1), 0);             // clear t1
-
-    // Write instructions
-    bus.storeWord(pc,     0x1D000020); // BGTZ t0, +0x20
-    bus.storeWord(pc + 4, 0x34091234); // ORI t1, zero, 0x1234 (delay slot)
-
-    // Step 1: Execute BLTZ
-    cpu.step();
-
-    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
-    EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
-
-    // Step 2: Execute delay slot
-    cpu.step();
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T1)), 0x1234);
-    EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), branchTarget);
-}
-
-TEST(CpuBranchTests, BGTZ_BranchNotTaken_Zero)
-{
-    BIOS bios;
-    RAM ram;
-    Bus bus(&bios, &ram);
-    CPU cpu(&bus);
-
-    const uint32_t pc = 0x00100000;
-    const uint32_t nextPC = pc + 8; // no branch, normal PC increment
-
-    cpu.setSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC), pc);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T0), 0); // t0 = 0 (not less than 0)
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T1), 0);
-
-    bus.storeWord(pc,     0x1D000020); // BGTZ t0, +0x20
-    bus.storeWord(pc + 4, 0x34091234); // ORI t1, zero, 0x1234
-
-    // Step 1: Execute BLTZ
-    cpu.step();
-
-    EXPECT_FALSE(cpu.m_nextIsBranchDelay);
-
-    // Step 2: Execute delay slot
-    cpu.step();
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T1)), 0x1234);
-    EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), nextPC);
-}
-
-TEST(CpuBranchTests, BGTZ_BranchNotTaken)
-{
-    BIOS bios;
-    RAM ram;
-    Bus bus(&bios, &ram);
-    CPU cpu(&bus);
-
-    const uint32_t pc = 0x00100000;
-    const uint32_t nextPC = pc + 8; // no branch, normal PC increment
-
-    cpu.setSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC), pc);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T0), 0xFFFFFFFF); // t0 = -1 (not less than 0)
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T1), 0x24);
-
-    bus.storeWord(pc,     0x1D000020); // BGTZ t0, +0x20
-    bus.storeWord(pc + 4, 0x34091234); // ORI t1, zero, 0x1234
-
-    // Step 1: Execute BLTZ
-    cpu.step();
-
-    EXPECT_FALSE(cpu.m_nextIsBranchDelay);
-
-    // Step 2: Execute delay slot
-    cpu.step();
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T1)), 0x1234);
-    EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), nextPC);
-}
-
-TEST(CpuBranchTests, BGTZ_ZeroOffset)
-{
-    BIOS bios;
-    RAM ram;
-    Bus bus(&bios, &ram);
-    CPU cpu(&bus);
-
-    const uint32_t pc = 0x00100000;
-    const uint32_t branchTarget = pc + 4; // no offset, same as pc + 4 = 0x00100004
-
-    cpu.setSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC), pc);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T0), 1);  // branch taken
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T1), 0);
-
-    bus.storeWord(pc,     0x1D000000); // BGTZ t0, +0x20
-    bus.storeWord(pc + 4, 0x34091234); // ORI t1, zero, 0x1234
-
-    cpu.step();
-
-    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
-    EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
-
-    cpu.step();
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T1)), 0x1234);
-    EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), branchTarget);
-}
-
-TEST(CpuBranchTests, BGTZ_MaxPositiveOffset)
-{
-    BIOS bios;
-    RAM ram;
-    Bus bus(&bios, &ram);
-    CPU cpu(&bus);
-
-    const uint32_t pc = 0x00100000;
-    const int16_t offset = INT16_MAX;
-    const uint32_t branchTarget = pc + 4 + (offset << 2);
-
-    cpu.setSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC), pc);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T0), 1);  // branch taken
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T1), 0);
-
-    bus.storeWord(pc,     0x1D007FFF); // BGTZ t0, +0x7FFF
-    bus.storeWord(pc + 4, 0x34091234); // ORI t1, zero, 0x1234
-
-    cpu.step();
-
-    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
-    EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
-
-    cpu.step();
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T1)), 0x1234);
-    EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), branchTarget);
-}
-
-TEST(CpuBranchTests, BGTZ_BackwardBranch)
-{
-    BIOS bios;
-    RAM ram;
-    Bus bus(&bios, &ram);
-    CPU cpu(&bus);
-
-    uint32_t pc = 0x00100080;
-    int16_t offset = -0x10; // -16 instructions = -64 bytes
-    uint32_t branchTarget = pc + 4 + (offset << 2); // 0x00100044
-
-    cpu.setSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC), pc);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T0), 1);  // branch taken
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T1), 0);
-
-    bus.storeWord(pc,     0x1D00FFF0); // BGTZ t0, 0x10
-    bus.storeWord(pc + 4, 0x34091234); // ORI t1, zero, 0x1234
-
-    cpu.step();
-
-    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
-    EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
-
-    cpu.step();
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T1)), 0x1234);
-    EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), branchTarget);
-}
-
-TEST(CpuBranchTests, BGTZ_MaxNegativeOffset)
-{
-    BIOS bios;
-    RAM ram;
-    Bus bus(&bios, &ram);
-    CPU cpu(&bus);
-
-    uint32_t pc = 0x00110000;
-    int16_t offset = INT16_MIN;
-    uint32_t branchTarget = pc + 4 + (offset << 2); // pc + 4 - 0x20000 = 0x000F0004
-
-    cpu.setSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC), pc);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T0), 1); // branch should be taken
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T1), 0);
-
-    bus.storeWord(pc,     0x1D008000); // BGTZ t0, -0x8000
-    bus.storeWord(pc + 4, 0x34091234); // ORI T1, ZERO, 0x1234
-
-    // Step 1: Execute BLTZ
-    cpu.step();
-
-    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
-    EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
-
-    // Step 2: Execute delay slot
-    cpu.step();
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T1)), 0x1234);
-    EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), branchTarget);
-}
-
-TEST(CpuBranchTests, BGEZ_BranchTaken_Zero)
-{
-    BIOS bios;
-    RAM ram;
-    Bus bus(&bios, &ram);
-    CPU cpu(&bus);
-
-    const uint32_t pc = 0x00100000;
-    const uint16_t offset = 0x0020;
-    const uint32_t branchTarget = pc + 4 + (offset << 2); // 0x00100084
-
-    cpu.setSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC), pc);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T0), 0); // t0 = 0
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T1), 0);
-
-    bus.storeWord(pc,     0x05010020); // BGEZ T0, +0x20
-    bus.storeWord(pc + 4, 0x34091234); // ORI T1, ZERO, 0x1234
-
-    cpu.step();
-    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
-    EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
-
-    cpu.step();
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T1)), 0x1234);
-    EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), branchTarget);
-}
-
-TEST(CpuBranchTests, BGEZ_BranchTaken_Positive)
-{
-    BIOS bios;
-    RAM ram;
-    Bus bus(&bios, &ram);
-    CPU cpu(&bus);
-
-    const uint32_t pc = 0x00100000;
-    const uint16_t offset = 0x0020;
-    const uint32_t branchTarget = pc + 4 + (offset << 2); // 0x00100084
-
-    cpu.setSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC), pc);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T0), 0x00000001); // t0 = 1
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T1), 0);
-
-    bus.storeWord(pc,     0x05010020); // BGEZ T0, +0x20
-    bus.storeWord(pc + 4, 0x34091234); // ORI T1, ZERO, 0x1234
-
-    cpu.step();
-    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
-    EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
-
-    cpu.step();
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T1)), 0x1234);
-    EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), branchTarget);
-}
-
-TEST(CpuBranchTests, BGEZ_BranchNotTaken)
-{
-    BIOS bios;
-    RAM ram;
-    Bus bus(&bios, &ram);
-    CPU cpu(&bus);
-
-    const uint32_t pc = 0x00100000;
-    const uint32_t nextPc = pc + 8;
-
-    cpu.setSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC), pc);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T0), 0xFFFFFFFF); // t0 = -1
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T1), 0);
-
-    bus.storeWord(pc,     0x05010020); // BGEZ T0, +0x20
-    bus.storeWord(pc + 4, 0x34091234); // ORI T1, ZERO, 0x1234
-
-    cpu.step();
-    EXPECT_FALSE(cpu.m_nextIsBranchDelay);
-
-    cpu.step();
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T1)), 0x1234);
-    EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), nextPc);
-}
-
-TEST(CpuBranchTests, BGEZ_ZeroOffset)
-{
-    BIOS bios;
-    RAM ram;
-    Bus bus(&bios, &ram);
-    CPU cpu(&bus);
-
-    uint32_t pc = 0x00100000;
-    uint32_t branchTarget = pc + 4; // offset = 0 -> PC + 4
-
-    cpu.setSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC), pc);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T0), 0); // t0 = 0
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T1), 0);
-
-    bus.storeWord(pc,     0x05010000); // BGEZ T0, 0
-    bus.storeWord(pc + 4, 0x34091234); // ORI T1, ZERO, 0x1234
-
-    cpu.step();
-    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
-    EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
-
-    cpu.step();
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T1)), 0x1234);
-    EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), branchTarget);
-}
-
-TEST(CpuBranchTests, BGEZ_MaxPositiveOffset)
-{
-    BIOS bios;
-    RAM ram;
-    Bus bus(&bios, &ram);
-    CPU cpu(&bus);
-
-    uint32_t pc = 0x00100000;
-    uint16_t offset = INT16_MAX;
-    uint32_t branchTarget = pc + 4 + (offset << 2); // pc + 4 + 131068
-
-    cpu.setSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC), pc);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T0), 1); // t0 > 0
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T1), 0);
-
-    bus.storeWord(pc,     0x05017FFF); // BGEZ T0, +0x7FFF
-    bus.storeWord(pc + 4, 0x34091234); // ORI T1, ZERO, 0x1234
-
-    cpu.step();
-    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
-    EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
-
-    cpu.step();
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T1)), 0x1234);
-    EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), branchTarget);
-}
-
-TEST(CpuBranchTests, BGEZ_MaxNegativeOffset)
-{
-    BIOS bios;
-    RAM ram;
-    Bus bus(&bios, &ram);
-    CPU cpu(&bus);
-
-    uint32_t pc = 0x00120000;
-    int16_t offset = INT16_MIN;
-    uint32_t branchTarget = pc + 4 + (offset << 2); // pc + 4 - 131072
-
-    cpu.setSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC), pc);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T0), 0); // t0 = 0 (branch taken)
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T1), 0);
-
-    bus.storeWord(pc,     0x05018000); // BGEZ T0, -0x8000
-    bus.storeWord(pc + 4, 0x34091234); // ORI T1, ZERO, 0x1234
-
-    cpu.step();
-    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
-    EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
-
-    cpu.step();
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T1)), 0x1234);
-    EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), branchTarget);
-}
-
-TEST(CpuBranchTests, BLEZ_ZeroOffset)
-{
-    BIOS bios;
-    RAM ram;
-    Bus bus(&bios, &ram);
-    CPU cpu(&bus);
-
-    uint32_t pc = 0x00100000;
-    uint32_t branchTarget = pc + 4;
-
-    cpu.setSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC), pc);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T0), 0xFFFFFFFF); // t0 = -1
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T1), 0);
-
-    bus.storeWord(pc,     0x19000000); // BLEZ T0, 0
-    bus.storeWord(pc + 4, 0x34091234); // ORI T1, ZERO, 0x1234
-
-    cpu.step();
-    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
-    EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
-
-    cpu.step();
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T1)), 0x1234);
-    EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), branchTarget);
-}
-
-TEST(CpuBranchTests, BLEZ_BranchTaken_Negative)
-{
-    BIOS bios;
-    RAM ram;
-    Bus bus(&bios, &ram);
-    CPU cpu(&bus);
-
-    uint32_t pc = 0x00100000;
-    uint16_t offset = 0x0020;
-    uint32_t branchTarget = pc + 4 + (offset << 2); // 0x00100084
-
-    cpu.setSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC), pc);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T0), 0xFFFFFFFF); // t0 = -1
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T1), 0);
-
-    bus.storeWord(pc,     0x19000020); // BLEZ T0, 0x20
-    bus.storeWord(pc + 4, 0x34091234); // ORI T1, ZERO, 0x1234
-
-    cpu.step();
-    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
-    EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
-
-    cpu.step();
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T1)), 0x1234);
-    EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), branchTarget);
-}
-
-TEST(CpuBranchTests, BLEZ_BranchTaken_Zero)
-{
-    BIOS bios;
-    RAM ram;
-    Bus bus(&bios, &ram);
-    CPU cpu(&bus);
-
-    uint32_t pc = 0x00100000;
-    uint16_t offset = 0x0020;
-    uint32_t branchTarget = pc + 4 + (offset << 2);
-
-    cpu.setSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC), pc);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T0), 0); // t0 = 0
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T1), 0);
-
-    bus.storeWord(pc,     0x19000020); // BLEZ T0, 0x20
-    bus.storeWord(pc + 4, 0x34091234); // ORI T1, ZERO, 0x1234
-
-    cpu.step();
-    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
-    EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
-
-    cpu.step();
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T1)), 0x1234);
-    EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), branchTarget);
-}
-
-TEST(CpuBranchTests, BLEZ_BranchNotTaken_Positive)
-{
-    BIOS bios;
-    RAM ram;
-    Bus bus(&bios, &ram);
-    CPU cpu(&bus);
-
-    uint32_t pc = 0x00100000;
-    uint32_t branchTarget = pc + 8; // Not taken -> PC + 8
-
-    cpu.m_branchSlotAddr = 0xDEADBEEF;
-    cpu.setSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC), pc);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T0), 123); // t0 = 123 (not taken)
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T1), 0);
-
-    bus.storeWord(pc,     0x19000020); // BLEZ T0, 0x20
-    bus.storeWord(pc + 4, 0x34091234); // ORI T1, ZERO, 0x1234
-
-    cpu.step();
-    EXPECT_FALSE(cpu.m_nextIsBranchDelay);
-    EXPECT_EQ(cpu.m_branchSlotAddr, 0xDEADBEEF);
-
-    cpu.step();
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T1)), 0x1234);
-    EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), branchTarget);
-}
-
-TEST(CpuBranchTests, BLEZ_MaxPositiveOffset)
-{
-    BIOS bios;
-    RAM ram;
-    Bus bus(&bios, &ram);
-    CPU cpu(&bus);
-
-    uint32_t pc = 0x00100000;
-    uint16_t offset = INT16_MAX;
-    uint32_t branchTarget = pc + 4 + (offset << 2); // 0x00100000 + 4 + 131068 = 0x00120000
-
-    cpu.setSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC), pc);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T0), 0xFFFFFFFF); // t0 = -1
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T1), 0);
-
-    bus.storeWord(pc,     0x19007FFF); // BLEZ T0, 0x7FFF
-    bus.storeWord(pc + 4, 0x34091234); // ORI T1, ZERO, 0x1234
-
-    cpu.step();
-    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
-    EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
-
-    cpu.step();
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T1)), 0x1234);
-    EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), branchTarget);
-}
-
-TEST(CpuBranchTests, BLEZ_MaxNegativeOffset)
-{
-    BIOS bios;
-    RAM ram;
-    Bus bus(&bios, &ram);
-    CPU cpu(&bus);
-
-    uint32_t pc = 0x00120000;
-    int16_t offset = INT16_MIN;
-    uint32_t branchTarget = pc + 4 + (offset << 2); // pc + 4 - 131072 = 0x00100004
-
-    cpu.setSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC), pc);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T0), 0); // t0 = 0 (branch taken)
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T1), 0);
-
-    bus.storeWord(pc,     0x19008000); // BLEZ T0, 0x8000
-    bus.storeWord(pc + 4, 0x34091234); // ORI T1, ZERO, 0x1234
-
-    cpu.step();
-    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
-    EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
-
-    cpu.step();
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T1)), 0x1234);
-    EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), branchTarget);
-}
-
-TEST(CpuBranchTests, BLTZAL_BranchTaken)
-{
-    BIOS bios;
-    RAM ram;
-    Bus bus(&bios, &ram);
-    CPU cpu(&bus);
-
-    uint32_t pc = 0x00100000;
-    uint16_t offset = 0x0020;
-    uint32_t branchTarget = pc + 4 + (offset << 2); // 0x00100084
-
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T0), 0xFFFFFFFF); // -1 -> taken
-    cpu.setReg(static_cast<uint8_t>(GprIndex::RA), 0);          // clear RA
-    cpu.setSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC), pc);
-
-    bus.storeWord(pc, 0x05100020);     // BLTZAL T0, +0x20
-    bus.storeWord(pc + 4, 0x34080042); // ORI T0, R0, 0x0042 (delay slot)
-
-    cpu.step();
-
-    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
-    EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
-
-    cpu.step();
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T0)), 0x42);
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::RA)), pc + 8); // RA should be set to return address
-    EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), branchTarget);
-}
-
-TEST(CpuBranchTests, BLTZAL_BranchNotTaken_Zero)
-{
-    BIOS bios;
-    RAM ram;
-    Bus bus(&bios, &ram);
-    CPU cpu(&bus);
-
-    uint32_t pc = 0x00100000;
-    uint32_t fallthrough = pc + 8;
-    uint32_t ra = 0xDEADBEEF;
-
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T0), 0); // 0 -> not taken
-    cpu.setReg(static_cast<uint8_t>(GprIndex::RA), ra);
-    cpu.setSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC), pc);
-
-    bus.storeWord(pc, 0x05100020);     // BLTZAL T0, +0x20
-    bus.storeWord(pc + 4, 0x34080042); // ORI T0, R0, 0x0042 (delay slot)
-
-    cpu.step();
-
-    EXPECT_FALSE(cpu.m_nextIsBranchDelay);
-
-    cpu.step();
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T0)), 0x42);
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::RA)), ra); // RA unchanged
-    EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), fallthrough);
-}
-
-TEST(CpuBranchTests, BLTZAL_BranchNotTaken)
-{
-    BIOS bios;
-    RAM ram;
-    Bus bus(&bios, &ram);
-    CPU cpu(&bus);
-
-    uint32_t pc = 0x00100000;
-    uint32_t fallthrough = pc + 8;
-    uint32_t ra = 0xDEADBEEF;
-
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T0), 190); // 190 -> not taken
-    cpu.setReg(static_cast<uint8_t>(GprIndex::RA), ra);
-    cpu.setSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC), pc);
-
-    bus.storeWord(pc, 0x05100020);     // BLTZAL T0, +0x20
-    bus.storeWord(pc + 4, 0x34080042); // ORI T0, R0, 0x0042 (delay slot)
-
-    cpu.step();
-
-    EXPECT_FALSE(cpu.m_nextIsBranchDelay);
-
-    cpu.step();
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T0)), 0x42);
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::RA)), ra); // RA unchanged
-    EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), fallthrough);
-}
-
-TEST(CpuBranchTests, BLTZAL_MaxNegativeOffset)
-{
-    BIOS bios;
-    RAM ram;
-    Bus bus(&bios, &ram);
-    CPU cpu(&bus);
-
-    uint32_t pc = 0x00100000;
-    int16_t offset = INT16_MIN;
-    uint32_t branchTarget = pc + 4 + (offset << 2); // PC + 4 + (-0x8000 << 2)
-
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T0), 0xFFFFFFFF); // -1 -> taken
-    cpu.setReg(static_cast<uint8_t>(GprIndex::RA), 0);
-    cpu.setSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC), pc);
-
-    bus.storeWord(pc, 0x05108000);     // BLTZAL T0, -0x8000
-    bus.storeWord(pc + 4, 0x34080042); // ORI T0, R0, 0x0042 (delay slot)
-
-    cpu.step();
-
-    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
-    EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
-
-    cpu.step();
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T0)), 0x42);
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::RA)), pc + 8);
-    EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), branchTarget);
-}
-
-TEST(CpuBranchTests, BLTZAL_MaxPositiveOffset)
-{
-    BIOS bios;
-    RAM ram;
-    Bus bus(&bios, &ram);
-    CPU cpu(&bus);
-
-    uint32_t pc = 0x00100000;
     int16_t offset = INT16_MAX;
-    uint32_t branchTarget = pc + 4 + (offset << 2); // pc + 4 + (0x7FFF * 4) = 0x00100000 + 4 + 0x1FFFC = 0x0020FFFC
-
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T0), 0xFFFFFFFF); // -1 → taken
-    cpu.setReg(static_cast<uint8_t>(GprIndex::RA), 0);
-    cpu.setSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC), pc);
-
-    bus.storeWord(pc, 0x05107FFF);     // BLTZAL T0, +0x7FFF
-    bus.storeWord(pc + 4, 0x34080042); // ORI T0, R0, 0x0042 (delay slot)
-
-    cpu.step();
-
-    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
-    EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
-
-    cpu.step();
-
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T0)), 0x42);
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::RA)), pc + 8);
-    EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), branchTarget);
+    uint32_t rs = 1;
+    uint32_t rt = 1;
+    runBranchTest(PrimaryOpCode::BEQ, rs, rt, offset, true);
 }
 
-TEST(CpuBranchTests, BGEZAL_BranchTaken)
+TEST_F(CpuBranchTest, BEQ_MinOffset)
 {
-    BIOS bios;
-    RAM ram;
-    Bus bus(&bios, &ram);
-    CPU cpu(&bus);
-
-    uint32_t pc = 0x00100000;
-    uint16_t offset = 0x0020;
-    uint32_t branchTarget = pc + 4 + (offset << 2);
-
-    cpu.setSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC), pc);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T0), 0x10);  // T0 = 0x10 (branch taken)
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T1), 0);           // T1 cleared
-    cpu.setReg(static_cast<uint8_t>(GprIndex::RA), 0);           // RA cleared
-
-    bus.storeWord(pc, 0x05110020);     // BGEZAL T0, +0x20
-    bus.storeWord(pc + 4, 0x34090042); // ORI T1, R0, 0x0042
-
-    cpu.step();
-    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
-    EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
-
-    cpu.step();
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T1)), 0x42);
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::RA)), pc + 8);
-    EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), branchTarget);
-}
-
-TEST(CpuBranchTests, BGEZAL_BranchTaken_Zero)
-{
-    BIOS bios;
-    RAM ram;
-    Bus bus(&bios, &ram);
-    CPU cpu(&bus);
-
-    uint32_t pc = 0x00100000;
-    uint16_t offset = 0x0020;
-    uint32_t branchTarget = pc + 4 + (offset << 2);
-
-    cpu.setSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC), pc);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T0), 0);  // T0 = 0 (branch taken)
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T1), 0);           // T1 cleared
-    cpu.setReg(static_cast<uint8_t>(GprIndex::RA), 0);           // RA cleared
-
-    bus.storeWord(pc, 0x05110020);     // BGEZAL T0, +0x20
-    bus.storeWord(pc + 4, 0x34090042); // ORI T1, R0, 0x0042
-
-    cpu.step();
-    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
-    EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
-
-    cpu.step();
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T1)), 0x42);
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::RA)), pc + 8);
-    EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), branchTarget);
-}
-
-TEST(CpuBranchTests, BGEZAL_BranchNotTaken)
-{
-    BIOS bios;
-    RAM ram;
-    Bus bus(&bios, &ram);
-    CPU cpu(&bus);
-
-    uint32_t pc = 0x00100000;
-    uint32_t nextPc = pc + 8;
-    cpu.m_branchSlotAddr = UINT32_MAX; // Should not change
-
-    cpu.setSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC), pc);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T0), 0xFFFFFFFF);  // T0 = -1 (branch not taken)
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T1), 0);           // T1 cleared
-    cpu.setReg(static_cast<uint8_t>(GprIndex::RA), 0);           // RA should remain unchanged
-
-    bus.storeWord(pc, 0x05110020);     // BGEZAL T0, +0x20
-    bus.storeWord(pc + 4, 0x34090042); // ORI T1, R0, 0x0042
-
-    cpu.step();
-    EXPECT_FALSE(cpu.m_nextIsBranchDelay);
-    EXPECT_EQ(cpu.m_branchSlotAddr, UINT32_MAX);
-
-    cpu.step();
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T1)), 0x42);
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::RA)), 0);
-    EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), nextPc);
-}
-
-TEST(CpuBranchTests, BGEZAL_MaxPositiveOffset)
-{
-    BIOS bios;
-    RAM ram;
-    Bus bus(&bios, &ram);
-    CPU cpu(&bus);
-
-    uint32_t pc = 0x00100000;
-    int16_t offset = INT16_MAX;
-    uint32_t branchTarget = pc + 4 + (offset << 2);
-
-    cpu.setSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC), pc);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T0), 10);           // T0 = 10 (taken)
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T1), 0);           // T1 cleared
-    cpu.setReg(static_cast<uint8_t>(GprIndex::RA), 0);           // RA cleared
-
-    bus.storeWord(pc, 0x05117FFF);     // BGEZAL T0, +0x7FFF
-    bus.storeWord(pc + 4, 0x34090042); // ORI T1, R0, 0x0042
-
-    cpu.step();
-    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
-    EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
-
-    cpu.step();
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T1)), 0x42);
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::RA)), pc + 8);
-    EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), branchTarget);
-}
-
-TEST(CpuBranchTests, BGEZAL_MaxNegativeOffset)
-{
-    BIOS bios;
-    RAM ram;
-    Bus bus(&bios, &ram);
-    CPU cpu(&bus);
-
-    uint32_t pc = 0x00100000;
     int16_t offset = INT16_MIN;
-    uint32_t branchTarget = pc + 4 + (offset << 2);
+    uint32_t rs = 1;
+    uint32_t rt = 1;
+    runBranchTest(PrimaryOpCode::BEQ, rs, rt, offset, true);
+}
 
-    cpu.setSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC), pc);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T0), 10);           // T0 = 10 (taken)
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T1), 0);           // T1 cleared
-    cpu.setReg(static_cast<uint8_t>(GprIndex::RA), 0);           // RA cleared
+TEST_F(CpuBranchTest, BNE_BranchTaken)
+{
+    int16_t offset = 0x20;
+    uint32_t rs = 1;
+    uint32_t rt = 0;
+    runBranchTest(PrimaryOpCode::BNE, rs, rt, offset, true);
+}
 
-    bus.storeWord(pc, 0x05118000);     // BGEZAL T0, -0x8000
-    bus.storeWord(pc + 4, 0x34090042); // ORI T1, R0, 0x0042
+TEST_F(CpuBranchTest, BNE_BranchNotTaken)
+{
+    int16_t offset = 0;
+    uint32_t rs = 1;
+    uint32_t rt = rs;
+    runBranchTest(PrimaryOpCode::BNE, rs, rt, offset, false);
+}
 
-    cpu.step();
-    EXPECT_TRUE(cpu.m_nextIsBranchDelay);
-    EXPECT_EQ(cpu.m_branchSlotAddr, branchTarget);
+TEST_F(CpuBranchTest, BNE_ZeroOffset)
+{
+    int16_t offset = 0;
+    uint32_t rs = 1;
+    uint32_t rt = 0;
+    runBranchTest(PrimaryOpCode::BNE, rs, rt, offset, true);
+}
 
-    cpu.step();
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::T1)), 0x42);
-    EXPECT_EQ(cpu.getReg(static_cast<uint8_t>(GprIndex::RA)), pc + 8);
-    EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), branchTarget);
+TEST_F(CpuBranchTest, BNE_MaxOffset)
+{
+    int16_t offset = INT16_MAX;
+    uint32_t rs = 1;
+    uint32_t rt = 0;
+    runBranchTest(PrimaryOpCode::BNE, rs, rt, offset, true);
+}
+
+TEST_F(CpuBranchTest, BNE_MinOffset)
+{
+    int16_t offset = INT16_MIN;
+    uint32_t rs = 1;
+    uint32_t rt = 0;
+    runBranchTest(PrimaryOpCode::BNE, rs, rt, offset, true);
+}
+
+TEST_F(CpuBranchTest, BLTZ_BranchTaken)
+{
+    int16_t offset = 0x20;
+    uint32_t rs = static_cast<uint32_t>(-1);
+    runBcondzTest(BranchOnConditionZero::BLTZ, rs, offset, true);
+}
+
+TEST_F(CpuBranchTest, BLTZ_BranchNotTaken_Zero)
+{
+    int16_t offset = 0x20;
+    uint32_t rs = 0;
+    runBcondzTest(BranchOnConditionZero::BLTZ, rs, offset, false);
+}
+
+TEST_F(CpuBranchTest, BLTZ_BranchNotTaken)
+{
+    int16_t offset = 0x20;
+    uint32_t rs = 10;
+    runBcondzTest(BranchOnConditionZero::BLTZ, rs, offset, false);
+}
+
+TEST_F(CpuBranchTest, BLTZ_ZeroOffset)
+{
+    int16_t offset = 0;
+    uint32_t rs = static_cast<uint32_t>(-1);
+    runBcondzTest(BranchOnConditionZero::BLTZ, rs, offset, true);
+}
+
+TEST_F(CpuBranchTest, BLTZ_MaxOffset)
+{
+    int16_t offset = INT16_MAX;
+    uint32_t rs = static_cast<uint32_t>(-1);
+    runBcondzTest(BranchOnConditionZero::BLTZ, rs, offset, true);
+}
+
+TEST_F(CpuBranchTest, BLTZ_MinOffset)
+{
+    int16_t offset = INT16_MIN;
+    uint32_t rs = static_cast<uint32_t>(-1);
+    runBcondzTest(BranchOnConditionZero::BLTZ, rs, offset, true);
+}
+
+TEST_F(CpuBranchTest, BGTZ_BranchTaken)
+{
+    int16_t offset = 0x20;
+    uint32_t rs = 0x10;
+    runBranchTest(PrimaryOpCode::BGTZ, rs, 0, offset, true);
+}
+
+TEST_F(CpuBranchTest, BGTZ_BranchNotTaken)
+{
+    int16_t offset = 0x20;
+    uint32_t rs = static_cast<uint32_t>(-1);
+    runBranchTest(PrimaryOpCode::BGTZ, rs, 0, offset, false);
+}
+
+TEST_F(CpuBranchTest, BGTZ_BranchNotTaken_Zero)
+{
+    int16_t offset = 0x20;
+    uint32_t rs = 0;
+    runBranchTest(PrimaryOpCode::BGTZ, rs, 0, offset, false);
+}
+
+TEST_F(CpuBranchTest, BGTZ_ZeroOffset)
+{
+    int16_t offset = 0;
+    uint32_t rs = 0x10;
+    runBranchTest(PrimaryOpCode::BGTZ, rs, 0, offset, true);
+}
+
+TEST_F(CpuBranchTest, BGTZ_MaxOffset)
+{
+    int16_t offset = INT16_MAX;
+    uint32_t rs = 0x10;
+    runBranchTest(PrimaryOpCode::BGTZ, rs, 0, offset, true);
+}
+
+TEST_F(CpuBranchTest, BGTZ_MinOffset)
+{
+    int16_t offset = INT16_MIN;
+    uint32_t rs = 0x10;
+    runBranchTest(PrimaryOpCode::BGTZ, rs, 0, offset, true);
+}
+
+TEST_F(CpuBranchTest, BGEZ_BranchTaken)
+{
+    int16_t offset = 0x20;
+    uint32_t rs = 0x10;
+    runBcondzTest(BranchOnConditionZero::BGEZ, rs, offset, true);
+}
+
+TEST_F(CpuBranchTest, BGEZ_BranchTaken_Zero)
+{
+    int16_t offset = 0x20;
+    uint32_t rs = 0;
+    runBcondzTest(BranchOnConditionZero::BGEZ, rs, offset, true);
+}
+
+TEST_F(CpuBranchTest, BGEZ_BranchNotTaken)
+{
+    int16_t offset = 0x20;
+    uint32_t rs = static_cast<uint32_t>(-1);
+    runBcondzTest(BranchOnConditionZero::BGEZ, rs, offset, false);
+}
+
+TEST_F(CpuBranchTest, BGEZ_ZeroOffset)
+{
+    int16_t offset = 0;
+    uint32_t rs = 0x10;
+    runBcondzTest(BranchOnConditionZero::BGEZ, rs, offset, true);
+}
+
+TEST_F(CpuBranchTest, BGEZ_MaxOffset)
+{
+    int16_t offset = INT16_MAX;
+    uint32_t rs = 0x10;
+    runBcondzTest(BranchOnConditionZero::BGEZ, rs, offset, true);
+}
+
+TEST_F(CpuBranchTest, BGEZ_MinOffset)
+{
+    int16_t offset = INT16_MIN;
+    uint32_t rs = 0x10;
+    runBcondzTest(BranchOnConditionZero::BGEZ, rs, offset, true);
+}
+
+TEST_F(CpuBranchTest, BLEZ_BranchTaken)
+{
+    int16_t offset = 0x20;
+    uint32_t rs = static_cast<uint32_t>(-1);
+    runBranchTest(PrimaryOpCode::BLEZ, rs, 0, offset, true);
+}
+
+TEST_F(CpuBranchTest, BLEZ_BranchTaken_Zero)
+{
+    int16_t offset = 0x20;
+    uint32_t rs = 0;
+    runBranchTest(PrimaryOpCode::BLEZ, rs, 0, offset, true);
+}
+
+TEST_F(CpuBranchTest, BLEZ_BranchNotTaken)
+{
+    int16_t offset = 0x20;
+    uint32_t rs = 0x10;
+    runBranchTest(PrimaryOpCode::BLEZ, rs, 0, offset, false);
+}
+
+TEST_F(CpuBranchTest, BLEZ_ZeroOffset)
+{
+    int16_t offset = 0;
+    uint32_t rs = 0;
+    runBranchTest(PrimaryOpCode::BLEZ, rs, 0, offset, true);
+}
+
+TEST_F(CpuBranchTest, BLEZ_MaxOffset)
+{
+    int16_t offset = INT16_MAX;
+    uint32_t rs = 0;
+    runBranchTest(PrimaryOpCode::BLEZ, rs, 0, offset, true);
+}
+
+TEST_F(CpuBranchTest, BLEZ_MinOffset)
+{
+    int16_t offset = INT16_MIN;
+    uint32_t rs = 0;
+    runBranchTest(PrimaryOpCode::BLEZ, rs, 0, offset, true);
+}
+
+TEST_F(CpuBranchTest, BLTZAL_BranchTaken)
+{
+    int16_t offset = 0x20;
+    uint32_t rs = static_cast<uint32_t>(-1);
+    runBcondzTest(BranchOnConditionZero::BLTZAL, rs, offset, true);
+}
+
+TEST_F(CpuBranchTest, BLTZAL_BranchNotTaken)
+{
+    int16_t offset = 0x20;
+    uint32_t rs = 1;
+    runBcondzTest(BranchOnConditionZero::BLTZAL, rs, offset, false);
+}
+
+TEST_F(CpuBranchTest, BLTZAL_BranchNotTaken_Zero)
+{
+    int16_t offset = 0x20;
+    uint32_t rs = 0;
+    runBcondzTest(BranchOnConditionZero::BLTZAL, rs, offset, false);
+}
+
+TEST_F(CpuBranchTest, BLTZAL_MaxOffset)
+{
+    int16_t offset = INT16_MAX;
+    uint32_t rs = static_cast<uint32_t>(-1);
+    runBcondzTest(BranchOnConditionZero::BLTZAL, rs, offset, true);
+}
+
+TEST_F(CpuBranchTest, BLTZAL_MinOffset)
+{
+    int16_t offset = INT16_MIN;
+    uint32_t rs = static_cast<uint32_t>(-1);
+    runBcondzTest(BranchOnConditionZero::BLTZAL, rs, offset, true);
+}
+
+TEST_F(CpuBranchTest, BGEZAL_BranchTaken)
+{
+    int16_t offset = 0x20;
+    uint32_t rs = 1;
+    runBcondzTest(BranchOnConditionZero::BGEZAL, rs, offset, true);
+}
+
+TEST_F(CpuBranchTest, BGEZAL_BranchTaken_Zero)
+{
+    int16_t offset = 0x20;
+    uint32_t rs = 0;
+    runBcondzTest(BranchOnConditionZero::BGEZAL, rs, offset, true);
+}
+
+TEST_F(CpuBranchTest, BGEZAL_BranchNotTaken)
+{
+    int16_t offset = 0x20;
+    uint32_t rs = static_cast<uint32_t>(-1);
+    runBcondzTest(BranchOnConditionZero::BGEZAL, rs, offset, false);
+}
+
+TEST_F(CpuBranchTest, BGEZAL_MaxOffset)
+{
+    int16_t offset = INT16_MAX;
+    uint32_t rs = 0x10;
+    runBcondzTest(BranchOnConditionZero::BGEZAL, rs, offset, true);
+}
+
+TEST_F(CpuBranchTest, BGEZAL_MaxNegativeOffset)
+{
+    int16_t offset = INT16_MIN;
+    uint32_t rs = 0x10;
+    runBcondzTest(BranchOnConditionZero::BGEZAL, rs, offset, true);
 }

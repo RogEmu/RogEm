@@ -1,14 +1,15 @@
 #ifndef ASSEMBLYWINDOW_HPP_
 #define ASSEMBLYWINDOW_HPP_
 
-#include "imgui.h"
 #include "IWindow.hpp"
+
+#include "imgui.h"
 #include <memory>
 
-#define GREY ImColor(171, 183, 183, 255)
+#include "CPU.h"
+#include "Debugger.hpp"
 
-struct CPU;
-class Debugger;
+#define GREY ImColor(171, 183, 183, 255)
 
 class AssemblyWindow : public IWindow
 {

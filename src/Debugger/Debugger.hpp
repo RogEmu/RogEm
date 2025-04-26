@@ -8,9 +8,9 @@
 #include <fstream>
 #include <nlohmann/json.hpp>
 #include "Disassembler.h"
+#include "CPU.h"
 
 class IWindow;
-struct CPU;
 class System;
 
 enum class BreakpointType
@@ -46,10 +46,8 @@ class Debugger
 
         // Debugger CPU Controls
         void stepOver();
-        uint32_t getGPR(uint8_t reg) const;
-        void setGPR(uint8_t reg, uint32_t value);
-        uint32_t getSpecialReg(uint8_t reg) const;
-        void setSpecialReg(uint8_t reg, uint32_t val);
+        uint32_t getCpuReg(CpuReg reg) const;
+        void setCpuReg(CpuReg reg, uint32_t value);
         uint32_t getCop0Reg(uint8_t reg) const;
         void setCop0Reg(uint8_t reg, uint32_t val);
         void CPUReset();

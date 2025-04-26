@@ -1,119 +1,107 @@
 #include <gtest/gtest.h>
-#include "Utils.h"
 #include "BIOS.h"
 #include "Bus.h"
 #include "CPU.h"
+#include "RAM.h"
 
-TEST(CpuTest, MTC0_1)
+class CpuCop0Test : public testing::Test
 {
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
+    protected:
+        Bus bus;
+        BIOS bios;
+        RAM ram;
+        CPU cpu;
 
-    uint32_t value = 0xB16B00B5;
-    uint8_t srcReg = static_cast<uint8_t>(GprIndex::T0);
-    uint8_t destReg = static_cast<uint8_t>(CP0RegIndex::CAUSE);
+        const uint32_t defaultRegVal = 0xDEADBEEF;
 
-    cpu.setReg(srcReg, value);
-    i.r.rt = srcReg;
-    i.r.rd = destReg;
-    cpu.mtc0(i);
+        CpuCop0Test() :
+            bus(&bios, &ram),
+            cpu(&bus)
+        {
+            cpu.setReg(CpuReg::PC, 0x10000);
+        }
 
-    EXPECT_EQ(cpu.getCop0Reg(destReg), value);
+        void runMoveFromCop0Test(uint8_t srcReg, CpuReg destReg)
+        {
+            Instruction i;
+            i.r.opcode = static_cast<uint8_t>(PrimaryOpCode::COP0);
+            i.r.rs = static_cast<uint8_t>(CoprocessorOpcode::MFC);
+            i.r.rt = static_cast<uint8_t>(destReg);
+            i.r.rd = srcReg;
+
+            auto pc = cpu.getReg(CpuReg::PC);
+            bus.storeWord(pc, i.raw);
+            cpu.setCop0Reg(srcReg, 0xCAFEBABE);
+            cpu.setReg(destReg, defaultRegVal);
+
+            cpu.step();
+
+            EXPECT_EQ(cpu.getReg(destReg), 0xCAFEBABE);
+        }
+
+        void runMoveToCop0Test(CpuReg srcReg, uint8_t destReg)
+        {
+            Instruction i;
+            i.r.opcode = static_cast<uint8_t>(PrimaryOpCode::COP0);
+            i.r.rs = static_cast<uint8_t>(CoprocessorOpcode::MTC);
+            i.r.rt = static_cast<uint8_t>(srcReg);
+            i.r.rd = destReg;
+
+            auto pc = cpu.getReg(CpuReg::PC);
+            bus.storeWord(pc, i.raw);
+            cpu.setReg(srcReg, 0xCAFEBABE);
+            cpu.setCop0Reg(destReg, defaultRegVal);
+
+            cpu.step();
+
+            EXPECT_EQ(cpu.getCop0Reg(destReg), 0xCAFEBABE);
+        }
+};
+
+TEST_F(CpuCop0Test, MTC0_1)
+{
+    CpuReg srcReg = CpuReg::T0;
+    uint8_t destReg = static_cast<uint8_t>(CP0Reg::CAUSE);
+
+    runMoveToCop0Test(srcReg, destReg);
 }
 
-TEST(CpuTest, MTC0_2)
+TEST_F(CpuCop0Test, MTC0_2)
 {
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
+    CpuReg srcReg = CpuReg::T0;
+    uint8_t destReg = static_cast<uint8_t>(CP0Reg::SR);
 
-    uint32_t value = 0xB16B00B5;
-    uint8_t srcReg = static_cast<uint8_t>(GprIndex::T0);
-    uint8_t destReg = static_cast<uint8_t>(CP0RegIndex::SR);
-
-    cpu.setReg(srcReg, value);
-    i.r.rt = srcReg;
-    i.r.rd = destReg;
-    cpu.mtc0(i);
-
-    EXPECT_EQ(cpu.getCop0Reg(destReg), value);
+    runMoveToCop0Test(srcReg, destReg);
 }
 
-TEST(CpuTest, MTC0_Unmapped_Reg)
+TEST_F(CpuCop0Test, MTC0_Unmapped_Reg)
 {
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
+    CpuReg srcReg = CpuReg::T0;
+    uint8_t destReg = static_cast<uint8_t>(CP0Reg::BPC) + 1;
 
-    uint32_t value = 0xB16B00B5;
-    uint8_t srcReg = static_cast<uint8_t>(GprIndex::T0);
-    uint8_t destReg = static_cast<uint8_t>(CP0RegIndex::BPC) + 1;
-
-    cpu.setReg(srcReg, value);
-    i.r.rt = srcReg;
-    i.r.rd = destReg;
-    cpu.mtc0(i);
-
-    EXPECT_EQ(cpu.getCop0Reg(destReg), value);
+    runMoveToCop0Test(srcReg, destReg);
 }
 
-TEST(CpuTest, MFC0_1)
+TEST_F(CpuCop0Test, MFC0_1)
 {
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
+    uint8_t srcReg = static_cast<uint8_t>(CP0Reg::CAUSE);
+    CpuReg destReg = CpuReg::T1;
 
-    uint32_t value = 0xB16B00B5;
-    uint8_t srcReg = static_cast<uint8_t>(CP0RegIndex::CAUSE);
-    uint8_t destReg = static_cast<uint8_t>(GprIndex::T1);
-
-    cpu.setCop0Reg(srcReg, value);
-    i.r.rt = destReg;
-    i.r.rd = srcReg;
-    cpu.mfc0(i);
-
-    EXPECT_EQ(cpu.getReg(destReg), value);
+    runMoveFromCop0Test(srcReg, destReg);
 }
 
-TEST(CpuTest, MFC0_2)
+TEST_F(CpuCop0Test, MFC0_2)
 {
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
+    uint8_t srcReg = static_cast<uint8_t>(CP0Reg::SR);
+    CpuReg destReg = CpuReg::T1;
 
-    uint32_t value = 0xB16B00B5;
-    uint8_t srcReg = static_cast<uint8_t>(CP0RegIndex::SR);
-    uint8_t destReg = static_cast<uint8_t>(GprIndex::T1);
-
-    cpu.setCop0Reg(srcReg, value);
-    i.r.rt = destReg;
-    i.r.rd = srcReg;
-    cpu.mfc0(i);
-
-    EXPECT_EQ(cpu.getReg(destReg), value);
+    runMoveFromCop0Test(srcReg, destReg);
 }
 
-TEST(CpuTest, MFC0_Unmapped_Reg)
+TEST_F(CpuCop0Test, MFC0_Unmapped_Reg)
 {
-    auto bios = BIOS();
-    auto bus = Bus(&bios, nullptr);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t value = 0xB16B00B5;
     uint8_t srcReg = static_cast<uint8_t>(0);
-    uint8_t destReg = static_cast<uint8_t>(GprIndex::T1);
+    CpuReg destReg = CpuReg::T1;
 
-    cpu.setCop0Reg(srcReg, value);
-    i.r.rt = destReg;
-    i.r.rd = srcReg;
-    cpu.mfc0(i);
-
-    EXPECT_EQ(cpu.getReg(destReg), value);
+    runMoveFromCop0Test(srcReg, destReg);
 }

@@ -1,125 +1,110 @@
 #include <gtest/gtest.h>
-#include "Utils.h"
 #include "BIOS.h"
 #include "Bus.h"
 #include "RAM.h"
 #include "CPU.h"
 
-TEST(CPU_Exceptions, Syscall)
+class CpuExceptionTest : public testing::Test
 {
-    BIOS bios;
-    RAM ram;
-    Bus bus(&bios, &ram);
-    CPU cpu(&bus);
+    protected:
+        Bus bus;
+        BIOS bios;
+        RAM ram;
+        CPU cpu;
 
-    // Address for syscall instruction in RAM
-    const uint32_t pc = 0x00010000;
+        CpuExceptionTest() :
+            bus(&bios, &ram),
+            cpu(&bus)
+        {
+            cpu.setReg(CpuReg::PC, 0x10000);
+        }
+};
+
+TEST_F(CpuExceptionTest, Syscall)
+{
+    auto pc = cpu.getReg(CpuReg::PC);
     const uint32_t syscallInstr = 0x0000000C; // SYSCALL opcode
 
     // Write syscall instruction to RAM
     bus.storeWord(pc, syscallInstr);
 
-    // Set PC
-    cpu.setSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC), pc);
-
     // Clear EPC, Cause, Status
-    cpu.setCop0Reg(static_cast<uint8_t>(CP0RegIndex::CAUSE), 0);
-    cpu.setCop0Reg(static_cast<uint8_t>(CP0RegIndex::EPC), 0);
-    cpu.setCop0Reg(static_cast<uint8_t>(CP0RegIndex::SR), 0x0000000A);
+    cpu.setCop0Reg(static_cast<uint8_t>(CP0Reg::CAUSE), 0);
+    cpu.setCop0Reg(static_cast<uint8_t>(CP0Reg::EPC), 0);
+    cpu.setCop0Reg(static_cast<uint8_t>(CP0Reg::SR), 0x0000000A);
 
     // Step one instruction (should trigger exception)
     cpu.step();
 
     // Exception vector
-    EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), 0x80000080);
+    EXPECT_EQ(cpu.getReg(CpuReg::PC), 0x80000080);
 
     // EPC should be address of syscall instruction
-    EXPECT_EQ(cpu.getCop0Reg(static_cast<uint8_t>(CP0RegIndex::EPC)), pc);
+    EXPECT_EQ(cpu.getCop0Reg(static_cast<uint8_t>(CP0Reg::EPC)), pc);
 
     // Cause should have ExcCode = 8 (Syscall)
-    EXPECT_EQ((cpu.getCop0Reg(static_cast<uint8_t>(CP0RegIndex::CAUSE)) >> 2) & 0x1F, (uint32_t)ExceptionType::Syscall);
+    EXPECT_EQ((cpu.getCop0Reg(static_cast<uint8_t>(CP0Reg::CAUSE)) >> 2) & 0x1F, (uint32_t)ExceptionType::Syscall);
 
     // Branch Delay bit should be 0
-    EXPECT_FALSE(cpu.getCop0Reg(static_cast<uint8_t>(CP0RegIndex::SR)) >> 31);
+    EXPECT_FALSE(cpu.getCop0Reg(static_cast<uint8_t>(CP0Reg::SR)) >> 31);
 
     // Bits 6-7 should remain to 0 after shift
-    EXPECT_EQ((cpu.getCop0Reg(static_cast<uint8_t>(CP0RegIndex::SR)) >> 6) & 0x3, 0);
+    EXPECT_EQ((cpu.getCop0Reg(static_cast<uint8_t>(CP0Reg::SR)) >> 6) & 0x3, 0);
 
     // Bits 0-5 should be shifted 2 places left
-    EXPECT_EQ(cpu.getCop0Reg(static_cast<uint8_t>(CP0RegIndex::SR)) & 0x3F, 0x28);
+    EXPECT_EQ(cpu.getCop0Reg(static_cast<uint8_t>(CP0Reg::SR)) & 0x3F, 0x28);
 }
 
-TEST(CPU_Exceptions, Syscall_BranchDelaySlot)
+TEST_F(CpuExceptionTest, Syscall_BranchDelaySlot)
 {
-    BIOS bios;
-    RAM ram;
-    Bus bus(&bios, &ram);
-    CPU cpu(&bus);
+    auto pc = cpu.getReg(CpuReg::PC);
 
-    // Address for syscall instruction in RAM
-    const uint32_t pc = 0x00010000;
-    const uint32_t syscallInstr = 0x0000000C; // SYSCALL opcode
-    const uint32_t branchInstr = 0x1000FFFE; // BEQ $zero, $zero, -1 (dummy branch)
-
-    // Write syscall instruction to RAM
-    bus.storeWord(pc, branchInstr);
-    bus.storeWord(pc + 4, syscallInstr);
-
-    cpu.setSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC), pc);
+    bus.storeWord(pc, 0x1000FFFE); // BEQ $zero, $zero, -1 (dummy branch)
+    bus.storeWord(pc + 4, 0x0000000C); // SYSCALL opcode
 
     // Clear EPC, Cause, Status
-    cpu.setCop0Reg(static_cast<uint8_t>(CP0RegIndex::CAUSE), 0);
-    cpu.setCop0Reg(static_cast<uint8_t>(CP0RegIndex::EPC), 0);
-    cpu.setCop0Reg(static_cast<uint8_t>(CP0RegIndex::SR), 0x0000000A);
+    cpu.setCop0Reg(static_cast<uint8_t>(CP0Reg::CAUSE), 0);
+    cpu.setCop0Reg(static_cast<uint8_t>(CP0Reg::EPC), 0);
+    cpu.setCop0Reg(static_cast<uint8_t>(CP0Reg::SR), 0x0000000A);
 
     cpu.step(); // Step over branch instruction
     cpu.step(); // Step over syscall instruction (in branch delay slot)
 
     // Exception vector
-    EXPECT_EQ(cpu.getSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC)), 0x80000080);
+    EXPECT_EQ(cpu.getReg(CpuReg::PC), 0x80000080);
 
     // EPC should be address of branch instruction
-    EXPECT_EQ(cpu.getCop0Reg(static_cast<uint8_t>(CP0RegIndex::EPC)), pc);
+    EXPECT_EQ(cpu.getCop0Reg(static_cast<uint8_t>(CP0Reg::EPC)), pc);
 
     // Cause should have ExcCode = 8 (Syscall)
-    EXPECT_EQ((cpu.getCop0Reg(static_cast<uint8_t>(CP0RegIndex::CAUSE)) >> 2) & 0x1F, (uint32_t)ExceptionType::Syscall);
+    EXPECT_EQ((cpu.getCop0Reg(static_cast<uint8_t>(CP0Reg::CAUSE)) >> 2) & 0x1F, (uint32_t)ExceptionType::Syscall);
 
     // Branch Delay bit should be 0
-    EXPECT_TRUE(cpu.getCop0Reg(static_cast<uint8_t>(CP0RegIndex::CAUSE)) >> 31);
+    EXPECT_TRUE(cpu.getCop0Reg(static_cast<uint8_t>(CP0Reg::CAUSE)) >> 31);
 
     // Bits 6-7 should remain to 0 after shift
-    EXPECT_EQ((cpu.getCop0Reg(static_cast<uint8_t>(CP0RegIndex::SR)) >> 6) & 0x3, 0);
+    EXPECT_EQ((cpu.getCop0Reg(static_cast<uint8_t>(CP0Reg::SR)) >> 6) & 0x3, 0);
 
     // Bits 0-5 should be shifted 2 places left
-    EXPECT_EQ(cpu.getCop0Reg(static_cast<uint8_t>(CP0RegIndex::SR)) & 0x3F, 0x28);
+    EXPECT_EQ(cpu.getCop0Reg(static_cast<uint8_t>(CP0Reg::SR)) & 0x3F, 0x28);
 }
 
-TEST(CPU_Exceptions, RFE)
+TEST_F(CpuExceptionTest, RFE)
 {
-    BIOS bios;
-    RAM ram;
-    Bus bus(&bios, &ram);
-    CPU cpu(&bus);
+    auto pc = cpu.getReg(CpuReg::PC);
 
-    // Address for syscall instruction in RAM
-    const uint32_t pc = 0x00010000;
-    const uint32_t refInstruction = 0x42000010; // RFE opcode
-
-    // Write syscall instruction to RAM
-    bus.storeWord(pc, refInstruction);
-
-    cpu.setSpecialReg(static_cast<uint8_t>(SpecialRegIndex::PC), pc);
+    bus.storeWord(pc, 0x42000010); // RFE
 
     // Clear EPC, Cause, Status
-    cpu.setCop0Reg(static_cast<uint8_t>(CP0RegIndex::CAUSE), 0);
-    cpu.setCop0Reg(static_cast<uint8_t>(CP0RegIndex::EPC), 0);
-    cpu.setCop0Reg(static_cast<uint8_t>(CP0RegIndex::SR), 0x0000002A);
+    cpu.setCop0Reg(static_cast<uint8_t>(CP0Reg::CAUSE), 0);
+    cpu.setCop0Reg(static_cast<uint8_t>(CP0Reg::EPC), 0);
+    cpu.setCop0Reg(static_cast<uint8_t>(CP0Reg::SR), 0x0000002A);
 
     cpu.step();
 
     // Bits 6-7 should remain to 0 after shift
-    EXPECT_EQ((cpu.getCop0Reg(static_cast<uint8_t>(CP0RegIndex::SR)) >> 6) & 0x3, 0);
+    EXPECT_EQ((cpu.getCop0Reg(static_cast<uint8_t>(CP0Reg::SR)) >> 6) & 0x3, 0);
 
     // Bits 0-5 should be shifted 2 places right
-    EXPECT_EQ(cpu.getCop0Reg(static_cast<uint8_t>(CP0RegIndex::SR)) & 0x3F, 0xA);
+    EXPECT_EQ(cpu.getCop0Reg(static_cast<uint8_t>(CP0Reg::SR)) & 0x3F, 0xA);
 }

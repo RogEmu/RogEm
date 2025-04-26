@@ -1,8 +1,10 @@
+
+#include "System.hpp"
+
 #ifdef _WIN32
-    #include "Windows.h"
+    #include <Windows.h>
 #endif //_WIN32
 
-#include <GLFW/glfw3.h>
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
@@ -11,7 +13,6 @@
 #include <memory>
 #include <string>
 
-#include "System.hpp"
 #include "RAM.h"
 #include "CPU.h"
 #include "BIOS.h"

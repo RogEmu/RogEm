@@ -7,8 +7,8 @@
 #include "imgui.h"
 #include "imgui/imgui_memory_editor.h"
 
-struct CPU;
-class Debugger;
+#include "CPU.h"
+#include "Debugger.hpp"
 
 class MemoryWindow : public IWindow
 {

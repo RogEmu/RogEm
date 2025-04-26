@@ -157,13 +157,13 @@ static std::string dissambleBcondZ(uint32_t pc, Instruction i)
 
 static std::string disassembleCop0(uint32_t pc, Instruction i)
 {
-    auto code = static_cast<CoprocessorOpcodes>(i.r.rs);
+    auto code = static_cast<CoprocessorOpcode>(i.r.rs);
 
     switch (code)
     {
-    case CoprocessorOpcodes::MTC:
+    case CoprocessorOpcode::MTC:
         return formatAssembly(pc, i, InstructionData{"mtc0", "$%rt, $%rd"});
-    case CoprocessorOpcodes::MFC:
+    case CoprocessorOpcode::MFC:
         return formatAssembly(pc, i, InstructionData{"mfc0", "$%rt, $%rd"});
     default:
         break;

@@ -1,366 +1,278 @@
 #include <gtest/gtest.h>
-#include "Utils.h"
 #include "BIOS.h"
 #include "Bus.h"
 #include "CPU.h"
 #include "RAM.h"
 
-TEST(CpuTest, SW_PositiveOffset)
+class CpuStoreTest : public testing::Test
 {
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
+    protected:
+        Bus bus;
+        BIOS bios;
+        RAM ram;
+        CPU cpu;
 
-    uint32_t base_address = 0x2000;
-    uint32_t store_value = 0xCAFEBABE;
+        const uint32_t defaultRegVal = 0xDEADBEEF;
+
+        CpuStoreTest() :
+            bus(&bios, &ram),
+            cpu(&bus)
+        {
+            cpu.reset();
+            cpu.setReg(CpuReg::PC, 0x10000);
+        }
+
+        void runStore(PrimaryOpCode opcode, CpuReg rs, CpuReg rt, int16_t imm)
+        {
+            Instruction i;
+            i.i.opcode = static_cast<uint8_t>(opcode);
+            i.i.rs = static_cast<uint8_t>(rs);
+            i.i.rt = static_cast<uint8_t>(rt);
+            i.i.immediate = static_cast<uint16_t>(imm);
+
+            auto pc = cpu.getReg(CpuReg::PC);
+            bus.storeWord(pc, i.raw);
+            uint32_t base = cpu.getReg(rs);
+            uint32_t address = base + imm;
+
+            switch (opcode)
+            {
+                case PrimaryOpCode::SW:
+                    bus.storeWord(address, defaultRegVal);
+                    break;
+                case PrimaryOpCode::SH:
+                    bus.storeHalfWord(address, defaultRegVal & 0xFFFF);
+                    break;
+                case PrimaryOpCode::SB:
+                    bus.storeByte(address, defaultRegVal & 0xFF);
+                default:
+                    break;
+            }
+            cpu.step();
+        }
+};
+
+TEST_F(CpuStoreTest, SW_PositiveOffset)
+{
+    uint32_t base = 0x2000;
+    uint32_t value = 0xCAFEBABE;
     int16_t offset = 0x0018;  // Positive offset
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
 
-    cpu.setReg(static_cast<uint8_t>(GprIndex::A0), base_address);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::V0), store_value);
+    cpu.setReg(rs, base);
+    cpu.setReg(rt, value);
+    runStore(PrimaryOpCode::SW, rs, rt, offset);
 
-    i.i.rs = static_cast<uint8_t>(GprIndex::A0);
-    i.i.rt = static_cast<uint8_t>(GprIndex::V0);
-    i.i.immediate = offset;
-
-    cpu.storeWord(i);
-
-    EXPECT_EQ(ram.loadWord(base_address + offset), store_value);
+    EXPECT_EQ(bus.loadWord(base + offset), value);
 }
 
-TEST(CpuTest, SW_NegativeOffset)
+TEST_F(CpuStoreTest, SW_NegativeOffset)
 {
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t base_address = 0x3008;
-    uint32_t store_value = 0xFEEDFACE;
+    uint32_t base = 0x3008;
+    uint32_t value = 0xFEEDFACE;
     int16_t offset = -4164;  // Negative offset
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
 
-    cpu.setReg(static_cast<uint8_t>(GprIndex::A1), base_address);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::V1), store_value);
+    cpu.setReg(rs, base);
+    cpu.setReg(rt, value);
+    runStore(PrimaryOpCode::SW, rs, rt, offset);
 
-    i.i.rs = static_cast<uint8_t>(GprIndex::A1);
-    i.i.rt = static_cast<uint8_t>(GprIndex::V1);
-    i.i.immediate = offset;
-
-    cpu.storeWord(i);
-
-    EXPECT_EQ(ram.loadWord(base_address + offset), store_value);
+    EXPECT_EQ(bus.loadWord(base + offset), value);
 }
 
-TEST(CpuTest, SW_ZeroOffset)
+TEST_F(CpuStoreTest, SW_ZeroOffset)
 {
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t base_address = 0x4000;
-    uint32_t store_value = 0x12345678;
+    uint32_t base = 0x4000;
+    uint32_t value = 0x12345678;
     int16_t offset = 0;  // Zero offset
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
 
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T1), base_address);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::S1), store_value);
+    cpu.setReg(rs, base);
+    cpu.setReg(rt, value);
+    runStore(PrimaryOpCode::SW, rs, rt, offset);
 
-    i.i.rs = static_cast<uint8_t>(GprIndex::T1);
-    i.i.rt = static_cast<uint8_t>(GprIndex::S1);
-    i.i.immediate = offset;
-
-    cpu.storeWord(i);
-
-    EXPECT_EQ(ram.loadWord(base_address + offset), store_value);
+    EXPECT_EQ(bus.loadWord(base + offset), value);
 }
 
-TEST(CpuTest, SW_MaxOffset)
+TEST_F(CpuStoreTest, SW_MaxOffset)
 {
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t base_address = 0x5001;
-    uint32_t store_value = 0x89ABCDEF;
+    uint32_t base = 0x5001;
+    uint32_t value = 0x89ABCDEF;
     int16_t offset = INT16_MAX;  // Maximum positive offset
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
 
-    cpu.setReg(static_cast<uint8_t>(GprIndex::S2), base_address);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T2), store_value);
+    cpu.setReg(rs, base);
+    cpu.setReg(rt, value);
+    runStore(PrimaryOpCode::SW, rs, rt, offset);
 
-    i.i.rs = static_cast<uint8_t>(GprIndex::S2);
-    i.i.rt = static_cast<uint8_t>(GprIndex::T2);
-    i.i.immediate = offset;
-
-    cpu.storeWord(i);
-
-    EXPECT_EQ(ram.loadWord(base_address + offset), store_value);
+    EXPECT_EQ(bus.loadWord(base + offset), value);
 }
 
-TEST(CpuTest, SW_MinOffset)
+TEST_F(CpuStoreTest, SW_MinOffset)
 {
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t base_address = 0x16000;
-    uint32_t store_value = 0x10203040;
+    uint32_t base = 0x16000;
+    uint32_t value = 0x10203040;
     int16_t offset = INT16_MIN;  // Minimum negative offset
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
 
-    cpu.setReg(static_cast<uint8_t>(GprIndex::S3), base_address);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T3), store_value);
+    cpu.setReg(rs, base);
+    cpu.setReg(rt, value);
+    runStore(PrimaryOpCode::SW, rs, rt, offset);
 
-    i.i.rs = static_cast<uint8_t>(GprIndex::S3);
-    i.i.rt = static_cast<uint8_t>(GprIndex::T3);
-    i.i.immediate = offset;
-
-    cpu.storeWord(i);
-
-    EXPECT_EQ(ram.loadWord(base_address + offset), store_value);
+    EXPECT_EQ(bus.loadWord(base + offset), value);
 }
 
-TEST(CpuTest, SH_PositiveOffset)
+TEST_F(CpuStoreTest, SH_PositiveOffset)
 {
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t base_address = 0x2000;
-    uint16_t store_value = 0x1234;
+    uint32_t base = 0x2000;
+    uint16_t value = 0x1234;
     int16_t offset = 0x0136;  // Positive offset
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
 
-    cpu.setReg(static_cast<uint8_t>(GprIndex::A0), base_address);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::V0), store_value);
+    cpu.setReg(rs, base);
+    cpu.setReg(rt, value);
+    runStore(PrimaryOpCode::SH, rs, rt, offset);
 
-    i.i.rs = static_cast<uint8_t>(GprIndex::A0);
-    i.i.rt = static_cast<uint8_t>(GprIndex::V0);
-    i.i.immediate = offset;
-
-    cpu.storeHalfWord(i);
-
-    EXPECT_EQ(ram.loadHalfWord(base_address + offset), store_value);
+    EXPECT_EQ(bus.loadHalfWord(base + offset), value);
 }
 
-TEST(CpuTest, SH_NegativeOffset)
+TEST_F(CpuStoreTest, SH_NegativeOffset)
 {
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t base_address = 0x3004;
-    uint16_t store_value = 0x5678;
+    uint32_t base = 0x3004;
+    uint16_t value = 0x5678;
     int16_t offset = -2654;  // Negative offset
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
 
-    cpu.setReg(static_cast<uint8_t>(GprIndex::A1), base_address);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::V1), store_value);
+    cpu.setReg(rs, base);
+    cpu.setReg(rt, value);
+    runStore(PrimaryOpCode::SH, rs, rt, offset);
 
-    i.i.rs = static_cast<uint8_t>(GprIndex::A1);
-    i.i.rt = static_cast<uint8_t>(GprIndex::V1);
-    i.i.immediate = offset;
-
-    cpu.storeHalfWord(i);
-
-    EXPECT_EQ(ram.loadHalfWord(base_address + offset), store_value);
+    EXPECT_EQ(bus.loadHalfWord(base + offset), value);
 }
 
-TEST(CpuTest, SH_ZeroOffset)
+TEST_F(CpuStoreTest, SH_ZeroOffset)
 {
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t base_address = 0x4000;
-    uint16_t store_value = 0x9ABC;
+    uint32_t base = 0x4000;
+    uint16_t value = 0x9ABC;
     int16_t offset = 0;  // Zero offset
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
 
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T1), base_address);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::S1), store_value);
+    cpu.setReg(rs, base);
+    cpu.setReg(rt, value);
+    runStore(PrimaryOpCode::SH, rs, rt, offset);
 
-    i.i.rs = static_cast<uint8_t>(GprIndex::T1);
-    i.i.rt = static_cast<uint8_t>(GprIndex::S1);
-    i.i.immediate = offset;
-
-    cpu.storeHalfWord(i);
-
-    EXPECT_EQ(ram.loadHalfWord(base_address + offset), store_value);
+    EXPECT_EQ(bus.loadHalfWord(base + offset), value);
 }
 
-TEST(CpuTest, SH_MaxOffset)
+TEST_F(CpuStoreTest, SH_MaxOffset)
 {
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t base_address = 0x5001;
-    uint16_t store_value = 0xDEAD;
+    uint32_t base = 0x5001;
+    uint16_t value = 0xDEAD;
     int16_t offset = INT16_MAX;  // Maximum positive offset
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
 
-    cpu.setReg(static_cast<uint8_t>(GprIndex::S2), base_address);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T2), store_value);
+    cpu.setReg(rs, base);
+    cpu.setReg(rt, value);
+    runStore(PrimaryOpCode::SH, rs, rt, offset);
 
-    i.i.rs = static_cast<uint8_t>(GprIndex::S2);
-    i.i.rt = static_cast<uint8_t>(GprIndex::T2);
-    i.i.immediate = offset;
-
-    cpu.storeHalfWord(i);
-
-    EXPECT_EQ(ram.loadHalfWord(base_address + offset), store_value);
+    EXPECT_EQ(bus.loadHalfWord(base + offset), value);
 }
 
-TEST(CpuTest, SH_MinOffset)
+TEST_F(CpuStoreTest, SH_MinOffset)
 {
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t base_address = 0x16000;
-    uint16_t store_value = 0xBEEF;
+    uint32_t base = 0x16000;
+    uint16_t value = 0xBEEF;
     int16_t offset = INT16_MIN;  // Minimum negative offset
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
 
-    cpu.setReg(static_cast<uint8_t>(GprIndex::S3), base_address);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T3), store_value);
+    cpu.setReg(rs, base);
+    cpu.setReg(rt, value);
+    runStore(PrimaryOpCode::SH, rs, rt, offset);
 
-    i.i.rs = static_cast<uint8_t>(GprIndex::S3);
-    i.i.rt = static_cast<uint8_t>(GprIndex::T3);
-    i.i.immediate = offset;
-
-    cpu.storeHalfWord(i);
-
-    EXPECT_EQ(ram.loadHalfWord(base_address + offset), store_value);
+    EXPECT_EQ(bus.loadHalfWord(base + offset), value);
 }
 
-TEST(CpuTest, SB_PositiveOffset)
+TEST_F(CpuStoreTest, SB_PositiveOffset)
 {
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t base_address = 0x2000;
-    uint8_t store_value = 0x34;
+    uint32_t base = 0x2000;
+    uint8_t value = 0x34;
     int16_t offset = 0x01679; // Positive offset
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
 
-    cpu.setReg(static_cast<uint8_t>(GprIndex::A0), base_address);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::V0), store_value);
+    cpu.setReg(rs, base);
+    cpu.setReg(rt, value);
+    runStore(PrimaryOpCode::SB, rs, rt, offset);
 
-    i.i.rs = static_cast<uint8_t>(GprIndex::A0);
-    i.i.rt = static_cast<uint8_t>(GprIndex::V0);
-    i.i.immediate = offset;
-
-    cpu.storeByte(i);
-
-    EXPECT_EQ(ram.loadByte(base_address + offset), store_value);
+    EXPECT_EQ(bus.loadByte(base + offset), value);
 }
 
-TEST(CpuTest, SB_NegativeOffset)
+TEST_F(CpuStoreTest, SB_NegativeOffset)
 {
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t base_address = 0x3004;
-    uint8_t store_value = 0x78;
+    uint32_t base = 0x3004;
+    uint8_t value = 0x78;
     int16_t offset = -3897; // Negative offset
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
 
-    cpu.setReg(static_cast<uint8_t>(GprIndex::A1), base_address);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::V1), store_value);
+    cpu.setReg(rs, base);
+    cpu.setReg(rt, value);
+    runStore(PrimaryOpCode::SB, rs, rt, offset);
 
-    i.i.rs = static_cast<uint8_t>(GprIndex::A1);
-    i.i.rt = static_cast<uint8_t>(GprIndex::V1);
-    i.i.immediate = offset;
-
-    cpu.storeByte(i);
-
-    EXPECT_EQ(ram.loadByte(base_address + offset), store_value);
+    EXPECT_EQ(bus.loadByte(base + offset), value);
 }
 
-TEST(CpuTest, SB_ZeroOffset)
+TEST_F(CpuStoreTest, SB_ZeroOffset)
 {
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t base_address = 0x4000;
-    uint8_t store_value = 0xBC;
+    uint32_t base = 0x4000;
+    uint8_t value = 0xBC;
     int16_t offset = 0; // Zero offset
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
 
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T1), base_address);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::S1), store_value);
+    cpu.setReg(rs, base);
+    cpu.setReg(rt, value);
+    runStore(PrimaryOpCode::SB, rs, rt, offset);
 
-    i.i.rs = static_cast<uint8_t>(GprIndex::T1);
-    i.i.rt = static_cast<uint8_t>(GprIndex::S1);
-    i.i.immediate = offset;
-
-    cpu.storeByte(i);
-
-    EXPECT_EQ(ram.loadByte(base_address + offset), store_value);
+    EXPECT_EQ(bus.loadByte(base + offset), value);
 }
 
-TEST(CpuTest, SB_MaxOffset)
+TEST_F(CpuStoreTest, SB_MaxOffset)
 {
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t base_address = 0x5000;
-    uint8_t store_value = 0xDE;
+    uint32_t base = 0x5000;
+    uint8_t value = 0xDE;
     int16_t offset = INT16_MAX; // Maximum positive offset
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
 
-    cpu.setReg(static_cast<uint8_t>(GprIndex::S2), base_address);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T2), store_value);
+    cpu.setReg(rs, base);
+    cpu.setReg(rt, value);
+    runStore(PrimaryOpCode::SB, rs, rt, offset);
 
-    i.i.rs = static_cast<uint8_t>(GprIndex::S2);
-    i.i.rt = static_cast<uint8_t>(GprIndex::T2);
-    i.i.immediate = offset;
-
-    cpu.storeByte(i);
-
-    EXPECT_EQ(ram.loadByte(base_address + offset), store_value);
+    EXPECT_EQ(bus.loadByte(base + offset), value);
 }
 
-TEST(CpuTest, SB_MinOffset)
+TEST_F(CpuStoreTest, SB_MinOffset)
 {
-    auto bios = BIOS();
-    auto ram = RAM();
-    auto bus = Bus(&bios, &ram);
-    CPU cpu(&bus);
-    Instruction i;
-
-    uint32_t base_address = 0x36000;
-    uint8_t store_value = 0xEF;
+    uint32_t base = 0x36000;
+    uint8_t value = 0xEF;
     int16_t offset = INT16_MIN; // Minimum negative offset
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
 
-    cpu.setReg(static_cast<uint8_t>(GprIndex::S3), base_address);
-    cpu.setReg(static_cast<uint8_t>(GprIndex::T3), store_value);
+    cpu.setReg(rs, base);
+    cpu.setReg(rt, value);
+    runStore(PrimaryOpCode::SB, rs, rt, offset);
 
-    i.i.rs = static_cast<uint8_t>(GprIndex::S3);
-    i.i.rt = static_cast<uint8_t>(GprIndex::T3);
-    i.i.immediate = offset;
-
-    cpu.storeByte(i);
-
-    EXPECT_EQ(ram.loadByte(base_address + offset), store_value);
+    EXPECT_EQ(bus.loadByte(base + offset), value);
 }

@@ -17,8 +17,9 @@
 #define NB_GPR 32
 #define COP0_NB_REG 16
 
-enum class GprIndex
+enum class CpuReg
 {
+    // General purpose registers
     ZERO = 0,
     AT,
     V0, V1,
@@ -30,17 +31,15 @@ enum class GprIndex
     GP,
     SP,
     FP,
-    RA
-};
+    RA,
 
-enum class SpecialRegIndex
-{
-    PC = 0,
+    // Special registers
+    PC,
     HI,
     LO
 };
 
-enum class CP0RegIndex
+enum class CP0Reg
 {
     BPC = 3,
     BDA = 5,
@@ -79,137 +78,134 @@ enum class ExceptionType
     Overflow
 };
 
-struct CPU
-{
-    CPU(Bus *bus);
+class CPU {
+    public:
+        CPU(Bus *bus);
 
-    void step();
-    Instruction fetchInstruction();
-    void executeInstruction(const Instruction &instruction);
-    void reset();
+        void step();
+        void reset();
 
-    uint32_t getReg(uint8_t reg) const;
-    void setReg(uint8_t reg, uint32_t val);
+        uint32_t getReg(CpuReg reg) const;
+        void setReg(CpuReg reg, uint32_t val);
 
-    uint32_t getSpecialReg(uint8_t reg) const;
-    void setSpecialReg(uint8_t reg, uint32_t val);
+        uint32_t getCop0Reg(uint8_t reg) const;
+        void setCop0Reg(uint8_t reg, uint32_t val);
 
-    uint32_t getCop0Reg(uint8_t reg) const;
-    void setCop0Reg(uint8_t reg, uint32_t val);
+    private:
+        Instruction fetchInstruction();
+        void executeInstruction(const Instruction &instruction);
 
-    // Load instructions
-    void loadWord(const Instruction &instruction);
-    void loadByte(const Instruction &instruction);
-    void loadByteUnsigned(const Instruction &instruction);
-    void loadHalfWord(const Instruction &instruction);
-    void loadHalfWordUnsigned(const Instruction &instruction);
+        // Load instructions
+        void loadWord(const Instruction &instruction);
+        void loadByte(const Instruction &instruction);
+        void loadByteUnsigned(const Instruction &instruction);
+        void loadHalfWord(const Instruction &instruction);
+        void loadHalfWordUnsigned(const Instruction &instruction);
 
-    // Unaligned Load Instructions
-    void loadWordRight(const Instruction &instruction);
-    void loadWordLeft(const Instruction &instruction);
+        // Unaligned Load Instructions
+        void loadWordRight(const Instruction &instruction);
+        void loadWordLeft(const Instruction &instruction);
 
-    // Unaligned Store Instructions
-    void storeWordRight(const Instruction &instruction);
-    void storeWordLeft(const Instruction &instruction);
+        // Unaligned Store Instructions
+        void storeWordRight(const Instruction &instruction);
+        void storeWordLeft(const Instruction &instruction);
 
-    // Store instructions
-    void storeWord(const Instruction &instruction);
-    void storeHalfWord(const Instruction &instruction);
-    void storeByte(const Instruction &instruction);
+        // Store instructions
+        void storeWord(const Instruction &instruction);
+        void storeHalfWord(const Instruction &instruction);
+        void storeByte(const Instruction &instruction);
 
-    // Arithmetic Instructions
-    void addWord(const Instruction &instruction);
-    void addWordUnsigned(const Instruction &instruction);
-    void addImmediate(const Instruction &instruction); // Tested
-    void addImmediateUnsigned(const Instruction &instruction); // Tested
+        // Arithmetic Instructions
+        void addWord(const Instruction &instruction);
+        void addWordUnsigned(const Instruction &instruction);
+        void addImmediate(const Instruction &instruction);
+        void addImmediateUnsigned(const Instruction &instruction);
 
-    void substractWordUnsigned(const Instruction &instruction); // Tested
-    void substractWord(const Instruction &instruction); // Tested
+        void substractWordUnsigned(const Instruction &instruction);
+        void substractWord(const Instruction &instruction);
 
-    // Comparison Instructions
-    void setOnLessThan(const Instruction &instruction);
-    void setOnLessThanImmediate(const Instruction &instruction);
-    void setOnLessThanUnsigned(const Instruction &instruction);
-    void setOnLessThanImmediateUnsigned(const Instruction &instruction);
+        // Comparison Instructions
+        void setOnLessThan(const Instruction &instruction);
+        void setOnLessThanImmediate(const Instruction &instruction);
+        void setOnLessThanUnsigned(const Instruction &instruction);
+        void setOnLessThanImmediateUnsigned(const Instruction &instruction);
 
-    // Logic Instructions
-    void andWord(const Instruction &instruction); // Tested
-    void orWord(const Instruction &instruction); // Tested
-    void xorWord(const Instruction &instruction); // Tested
-    void norWord(const Instruction &instruction); // Tested
-    void andImmediateWord(const Instruction &instruction); // Tested
-    void orImmediateWord(const Instruction &instruction); // Tested
-    void xorImmediateWord(const Instruction &instruction); // Tested
-    void loadUpperImmediate(const Instruction &instruction); // Tested
+        // Logic Instructions
+        void andWord(const Instruction &instruction);
+        void orWord(const Instruction &instruction);
+        void xorWord(const Instruction &instruction);
+        void norWord(const Instruction &instruction);
+        void andImmediateWord(const Instruction &instruction);
+        void orImmediateWord(const Instruction &instruction);
+        void xorImmediateWord(const Instruction &instruction);
+        void loadUpperImmediate(const Instruction &instruction);
 
-    // Shift Instructions
-    void shiftLeftLogical(const Instruction &instruction); // Tested
-    void shiftLeftLogicalVariable(const Instruction &instruction); // Tested
-    void shiftRightLogical(const Instruction &instruction); // Tested
-    void shiftRightArithmetic(const Instruction &instruction); // Tested
-    void shiftRightArithmeticVariable(const Instruction &instruction); // Tested
-    void shiftRightLogicalVariable(const Instruction &instruction);
+        // Shift Instructions
+        void shiftLeftLogical(const Instruction &instruction);
+        void shiftLeftLogicalVariable(const Instruction &instruction);
+        void shiftRightLogical(const Instruction &instruction);
+        void shiftRightArithmetic(const Instruction &instruction);
+        void shiftRightArithmeticVariable(const Instruction &instruction);
+        void shiftRightLogicalVariable(const Instruction &instruction);
 
-    // Multiplication and division Instructions
-    void multiply(const Instruction &instruction); // Tested - needs checking
-    void multiplyUnsigned(const Instruction &instruction); // Tested - needs checking
-    void divide(const Instruction &instruction); // Tested - needs checking
-    void divideUnsigned(const Instruction &instruction); // Tested - needs checking
-    void moveFromHi(const Instruction &instruction); // Tested
-    void moveFromLo(const Instruction &instruction); // Tested
-    void moveToHi(const Instruction &instruction); // Tested
-    void moveToLo(const Instruction &instruction); // Tested
+        // Multiplication and division Instructions
+        void multiply(const Instruction &instruction);
+        void multiplyUnsigned(const Instruction &instruction);
+        void divide(const Instruction &instruction);
+        void divideUnsigned(const Instruction &instruction);
+        void moveFromHi(const Instruction &instruction);
+        void moveFromLo(const Instruction &instruction);
+        void moveToHi(const Instruction &instruction);
+        void moveToLo(const Instruction &instruction);
 
-    // Jump Instructions
-    void jump(const Instruction &instruction); // Tested
-    void jumpAndLink(const Instruction &instruction); // Tested
-    void jumpRegister(const Instruction &instruction); // Tested
-    void jumpAndLinkRegister(const Instruction &instruction); // Tested
+        // Jump Instructions
+        void jump(const Instruction &instruction);
+        void jumpAndLink(const Instruction &instruction);
+        void jumpRegister(const Instruction &instruction);
+        void jumpAndLinkRegister(const Instruction &instruction);
 
-    // Branch instructions
-    void executeBranch(const Instruction &instruction);
-    void branchOnEqual(const Instruction &instruction); // BEQ
-    void branchOnNotEqual(const Instruction &instruction); // BNZ
-    void branchOnLessThanOrEqualToZero(const Instruction &instruction); // BLEZ
-    void branchOnGreaterThanZero(const Instruction &instruction); // BGTZ
-    void branchOnLessThanZero(const Instruction &instruction); // BLTZ
-    void branchOnLessThanZeroAndLink(const Instruction &instruction); //BLTZAL
-    void branchOnGreaterThanOrEqualToZero(const Instruction &instruction); //BGEZ
-    void branchOnGreaterThanOrEqualToZeroAndLink(const Instruction &instruction); // BGEZAL
+        // Branch instructions
+        void executeBranch(const Instruction &instruction);
+        void branchOnConditionZero(const Instruction &instruction);
+        void branchOnEqual(const Instruction &instruction); // BEQ
+        void branchOnNotEqual(const Instruction &instruction); // BNZ
+        void branchOnLessThanOrEqualToZero(const Instruction &instruction); // BLEZ
+        void branchOnGreaterThanZero(const Instruction &instruction); // BGTZ
+        void branchOnLessThanZero(const Instruction &instruction); // BLTZ
+        void branchOnLessThanZeroAndLink(const Instruction &instruction); //BLTZAL
+        void branchOnGreaterThanOrEqualToZero(const Instruction &instruction); //BGEZ
+        void branchOnGreaterThanOrEqualToZeroAndLink(const Instruction &instruction); // BGEZAL
 
-    //COP0 Instructions
-    void executeCop0(const Instruction &instruction);
-    void mtc0(const Instruction &instruction); // Tested
-    void mfc0(const Instruction &instruction); // Tested
-    void returnFromException(const Instruction &instruction);
+        //COP0 Instructions
+        void executeCop0(const Instruction &instruction);
+        void mtc0(const Instruction &instruction);
+        void mfc0(const Instruction &instruction);
+        void returnFromException(const Instruction &instruction);
 
-    // Exception Instructions
-    void triggerException(ExceptionType exception);
-    void executeSyscall(const Instruction &instruction);
+        // Exception Instructions
+        void triggerException(ExceptionType exception);
+        void executeSyscall(const Instruction &instruction);
 
-    void illegalInstruction(const Instruction &instruction);
-    void specialInstruction(const Instruction &instruction);
-    void branchOnConditionZero(const Instruction &instruction);
+        void illegalInstruction(const Instruction &instruction);
+        void specialInstruction(const Instruction &instruction);
 
-    // General purpose registers
-    uint32_t gpr[NB_GPR];
+    private:
+        // Main CPU registers
+        uint32_t m_gpr[NB_GPR];
+        uint32_t m_pc;
+        uint32_t m_hi;
+        uint32_t m_lo;
 
-    // Reserved registers
-    uint32_t pc;
-    uint32_t hi;
-    uint32_t lo;
+        // COP0 registers
+        uint32_t m_cop0Reg[COP0_NB_REG];
 
-    uint32_t m_nextPc;
+        uint32_t m_nextPc;
+        uint32_t m_branchSlotAddr;
+        bool m_inBranchDelay;
+        bool m_nextIsBranchDelay;
 
-    uint32_t m_branchSlotAddr;
-    bool m_inBranchDelay;
-    bool m_nextIsBranchDelay;
-
-    // COP0 registers
-    uint32_t m_cop0Reg[COP0_NB_REG];
-
-    // Bus connection
-    Bus *m_bus;
+        // Bus connection
+        Bus *m_bus;
 };
 
 #endif /* !CPU_H_ */
