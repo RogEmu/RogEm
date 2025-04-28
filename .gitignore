@@ -6,3 +6,4 @@ imgui.ini
 /CMakeSettings.json
 /vcpkg_installed
 /bios
+breakpoints.json

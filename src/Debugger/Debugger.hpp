@@ -44,6 +44,8 @@ class Debugger
         float getSimulationSpeed() const;
         void setSimulationSpeed(float speed);
 
+        void checkTtyOutput();
+
         // Debugger CPU Controls
         void stepOver();
         uint32_t getCpuReg(CpuReg reg) const;

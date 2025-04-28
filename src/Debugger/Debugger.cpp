@@ -26,9 +26,11 @@ Debugger::Debugger(System *system) :
     m_windows.emplace_back(std::make_unique<RegisterWindow>(this));
     m_windows.emplace_back(std::make_unique<AssemblyWindow>(this));
     m_windows.emplace_back(std::make_unique<BreakpointWindow>(this));
-    m_windows.emplace_back(std::make_unique<LogWindow>(this));
     m_windows.emplace_back(std::make_unique<SettingsWindow>(this));
     auto biosMemoryWindow = std::make_unique<MemoryWindow>(this);
+    auto logWindow = std::make_unique<LogWindow>(this);
+    logWindow->setTitle("Log");
+    m_windows.push_back(std::move(logWindow));
     biosMemoryWindow->setBaseAddr(0xBFC00000);
     biosMemoryWindow->setTitle("BIOS");
     biosMemoryWindow->setReadOnly(true);
@@ -216,9 +218,22 @@ void Debugger::setResumeOnBreakpoint(bool resume)
     m_resumeOnBreakpoint = resume;
 }
 
+void Debugger::checkTtyOutput()
+{
+    for (auto &subwin : m_windows) {
+        if (auto logWindow = dynamic_cast<LogWindow*>(subwin.get())) {
+            logWindow->addLog(m_system->getCPU()->getTtyOutput());
+        }
+    }
+}
+
 void Debugger::update()
 {
     uint32_t pc = getCpuReg(CpuReg::PC);
+
+    if (m_system->getCPU()->getTtyOutputFlag() == true) {
+        checkTtyOutput();
+    }
 
     for (auto bp : m_breakpoints) {
         if (bp.enabled){

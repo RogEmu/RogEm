@@ -62,11 +62,61 @@ void CPU::reset()
     m_pc = RESET_VECTOR;
     std::memset(m_gpr, 0, NB_GPR * sizeof(m_gpr[0]));
     std::memset(m_cop0Reg, 0, COP0_NB_REG * sizeof(m_cop0Reg[0]));
+    m_isTtyOutput = false;
+}
+
+void CPU::setTtyOutputFlag(bool ttyOutput)
+{
+    m_isTtyOutput = ttyOutput;
+}
+
+bool CPU::getTtyOutputFlag()
+{
+    return m_isTtyOutput;
+}
+
+std::string CPU::getTtyOutput()
+{
+    std::string output = m_ttyOutput;
+    m_ttyOutput.clear();
+    m_isTtyOutput = false;
+    return output;
+}
+
+void CPU::checkTtyOutput()
+{
+    uint32_t t1 = getReg(CpuReg::T1);
+    uint32_t programCounter = getReg(CpuReg::PC);
+    if ((programCounter == 0xA0 && t1 == 0x3C) || (programCounter == 0xB0 && t1 == 0x3D))
+    {
+        char c = (static_cast<char>(getReg(CpuReg::A0) & 0xFF));
+        switch (c)
+        {
+            case '\t':
+                m_ttyOutput.append(8 - (m_ttyOutput.size() % 8), ' ');
+                break;
+            case '\0':
+            case '\n':
+                m_isTtyOutput = true;
+                break;
+            case '\b':
+                if (!m_ttyOutput.empty())
+                    m_ttyOutput.pop_back();
+                break;
+            case '\a':
+                m_ttyOutput += "[BELL]";
+                break;
+            default:
+                m_ttyOutput += static_cast<char>(c);
+                break;
+        }
+    }
 }
 
 Instruction CPU::fetchInstruction()
 {
     uint32_t instruction = m_bus->loadWord(m_pc);
+    checkTtyOutput();
     return Instruction{.raw=instruction};
 }
 

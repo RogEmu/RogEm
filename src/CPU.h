@@ -10,6 +10,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <string>
 #include "Instruction.h"
 #include "Bus.h"
 
@@ -84,7 +85,10 @@ class CPU {
 
         void step();
         void reset();
-
+        void checkTtyOutput();
+        void setTtyOutputFlag(bool ttyOutput);
+        bool getTtyOutputFlag();
+        std::string getTtyOutput();
         uint32_t getReg(CpuReg reg) const;
         void setReg(CpuReg reg, uint32_t val);
 
@@ -203,6 +207,8 @@ class CPU {
         uint32_t m_branchSlotAddr;
         bool m_inBranchDelay;
         bool m_nextIsBranchDelay;
+        bool m_isTtyOutput;
+        std::string m_ttyOutput;
 
         // Bus connection
         Bus *m_bus;
