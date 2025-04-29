@@ -12,12 +12,19 @@ class BIOS;
 class RAM;
 class Bus;
 
+struct EmulatorConfig
+{
+    std::string biosFilePath;
+    std::string exeFilePath;
+};
+
 class System
 {
     public:
-        System(const std::string &biosPath);
+        System();
         ~System();
 
+        int init(const EmulatorConfig &config);
         void run();
         bool isRunning() const;
 
@@ -30,6 +37,8 @@ class System
 
         double deltaTime();
 
+        void loadPsxExe(const char *path);
+
     private:
         std::unique_ptr<CPU> m_cpu;
         std::unique_ptr<RAM> m_ram;
@@ -37,6 +46,8 @@ class System
         std::unique_ptr<Bus> m_bus;
 
         std::unique_ptr<Debugger> m_debug;
+
+        EmulatorConfig m_emuConfig;
 
         GLFWwindow* m_window;
         bool m_isRunning;

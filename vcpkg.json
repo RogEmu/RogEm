@@ -5,6 +5,7 @@
     "glfw3",
     "opengl",
     "nlohmann-json",
+    "argparse",
     {
       "name": "imgui",
       "features": [

@@ -12,27 +12,20 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <fstream>
+#include <fmt/format.h>
+#include <chrono>
+#include <thread>
 
 #include "RAM.h"
 #include "CPU.h"
 #include "BIOS.h"
 #include "Bus.h"
+#include "PsxExecutable.hpp"
 
-System::System(const std::string &biosPath) :
+System::System() :
     m_lastTime(0.0)
 {
-    m_bios = std::make_unique<BIOS>(biosPath);
-    m_ram = std::make_unique<RAM>();
-    m_bus = std::make_unique<Bus>(m_bios.get(), m_ram.get());
-    m_cpu = std::make_unique<CPU>(m_bus.get());
-
-    m_debug = std::make_unique<Debugger>(this);
-
-    m_isRunning = true;
-    if (initGFLW() != 0)
-        m_isRunning = false;
-    if (initImGUi() != 0)
-        m_isRunning = false;
 }
 
 System::~System()
@@ -77,31 +70,42 @@ void renderFrame()
     glfwSwapBuffers(glfwGetCurrentContext());
 }
 
+int System::init(const EmulatorConfig &config)
+{
+    m_emuConfig = config;
+    m_bios = std::make_unique<BIOS>(config.biosFilePath);
+    m_ram = std::make_unique<RAM>();
+    m_bus = std::make_unique<Bus>(m_bios.get(), m_ram.get());
+    m_cpu = std::make_unique<CPU>(m_bus.get());
+    m_debug = std::make_unique<Debugger>(this);
+
+    if (initGFLW() || initImGUi())
+        return 1;
+    return 0;
+}
+
 void System::run()
 {
     double uiFps = 1/60.0;
     double uiTimer = 0.0;
-    double simulationTimer = 0.0;
-    double dt = 0.0;
 
+    m_isRunning = true;
     while (m_isRunning)
     {
         m_debug->update();
         if (!m_debug->isPaused())
         {
-            if (simulationTimer > (m_debug->getSimulationSpeed()))
-            {
-                m_cpu->step();
-                simulationTimer = 0;
+            if (m_cpu->getReg(CpuReg::PC) == 0x80030000 && !m_emuConfig.exeFilePath.empty()) {
+                loadPsxExe(m_emuConfig.exeFilePath.c_str());
             }
+            m_cpu->step();
         }
         if (uiTimer > uiFps)
         {
             glfwPollEvents();
 
             if (glfwGetWindowAttrib(m_window, GLFW_ICONIFIED) != 0) {
-                // ImGui_ImplGlfw_Sleep(10);
-                return;
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
             }
             if (glfwWindowShouldClose(m_window))
             {
@@ -113,9 +117,7 @@ void System::run()
             renderFrame();
             uiTimer = 0;
         }
-        dt = deltaTime();
-        uiTimer += dt;
-        simulationTimer += dt;
+        uiTimer += deltaTime();
     }
 }
 
@@ -134,7 +136,7 @@ int System::initGFLW()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 
     // Create a window
-    m_window = glfwCreateWindow(1280, 720, "RogEm v0.0.1", nullptr, nullptr);
+    m_window = glfwCreateWindow(1280, 720, "RogEm", nullptr, nullptr);
     if (!m_window)
         return -1;
     glfwMakeContextCurrent(m_window);
@@ -166,4 +168,20 @@ double System::deltaTime()
 
     m_lastTime = currentTime;
     return dt;
+}
+
+void System::loadPsxExe(const char *path)
+{
+    PsxExecutable exe(path);
+
+    if (exe.load()) {
+        m_cpu->setReg(CpuReg::PC, exe.initialPc);
+        m_cpu->setReg(CpuReg::GP, exe.initialGp);
+        m_cpu->setReg(CpuReg::SP, exe.initialSpBase);
+        m_cpu->setReg(CpuReg::FP, exe.initialSpBase);
+        m_ram->loadExecutable(exe.ramDestination, exe.exeData);
+        fmt::println("Loaded PSX-EXE file successfuly");
+    } else {
+        fmt::println("Error while loading PSX-EXE file");
+    }
 }

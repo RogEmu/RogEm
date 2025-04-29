@@ -8,17 +8,38 @@
 #include <iostream>
 #include <thread>
 
+#include <argparse/argparse.hpp>
+
 #include "System.hpp"
 
 int main(int ac, char **av)
 {
-    if (ac != 2)
-    {
-        std::cout << "Missing BIOS filepath" << std::endl;
-        return -1;
-    }
-    auto system = std::make_unique<System>(av[1]);
+    argparse::ArgumentParser args("RogEm");
 
-    system->run();
+    args.add_description("A PSX emulator written in C++ with love");
+    args.add_argument("bios").help("The BIOS file to boot the console with").required();
+    args.add_argument("exe").help("a PSX-EXE executable file to run after the BIOS boots").default_value("");
+
+    try
+    {
+        args.parse_args(ac, av);
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << std::endl;
+        std::cerr << args;
+        return 1;
+    }
+
+    EmulatorConfig config;
+    config.biosFilePath = args.get("bios");
+    config.exeFilePath = args.get("exe");
+
+    System system;
+
+    if (system.init(config)) {
+        return 1;
+    }
+    system.run();
     return 0;
 }

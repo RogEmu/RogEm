@@ -16,6 +16,8 @@ class RAM : public Memory
 {
     public:
         RAM();
+
+        void loadExecutable(uint32_t baseAddr, const std::vector<uint8_t> &code);
 };
 
 #endif /* !RAM_H_ */

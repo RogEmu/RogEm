@@ -15,6 +15,7 @@ set(SRC_FILES
     System.cpp
     MemoryMap.cpp
     Memory.cpp
+    PsxExecutable.cpp
     Debugger/Debugger.cpp
     Debugger/AssemblyWindow.cpp
     Debugger/RegisterWindow.cpp
