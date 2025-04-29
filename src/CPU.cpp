@@ -387,17 +387,21 @@ void CPU::loadUpperImmediate(const Instruction &instruction)
 
 void CPU::storeWord(const Instruction &instruction)
 {
-    auto sr = getCop0Reg(static_cast<uint8_t>(CP0Reg::SR));
+    int32_t imm = (int16_t)instruction.i.immediate;
+    uint32_t address = getReg(static_cast<CpuReg>(instruction.i.rs)) + imm;
 
+    if (address % 4 != 0) {
+        triggerException(ExceptionType::AddressErrorStore);
+        return;
+    }
+
+    auto sr = getCop0Reg(static_cast<uint8_t>(CP0Reg::SR));
     // Check if cache is isolated
     // TODO: Implement the REAL cache
     if (sr & 0x00010000)
     {
         return;
     }
-
-    int32_t imm = (int16_t)instruction.i.immediate;
-    uint32_t address = getReg(static_cast<CpuReg>(instruction.i.rs)) + imm;
     uint32_t value = getReg(static_cast<CpuReg>(instruction.i.rt));
 
     m_bus->storeWord(address, value);
@@ -405,8 +409,15 @@ void CPU::storeWord(const Instruction &instruction)
 
 void CPU::storeHalfWord(const Instruction &instruction)
 {
-    auto sr = getCop0Reg(static_cast<uint8_t>(CP0Reg::SR));
+    int32_t imm = (int16_t)instruction.i.immediate;
+    uint32_t address = getReg(static_cast<CpuReg>(instruction.i.rs)) + imm;
 
+    if (address % 2 != 0) {
+        triggerException(ExceptionType::AddressErrorStore);
+        return;
+    }
+
+    auto sr = getCop0Reg(static_cast<uint8_t>(CP0Reg::SR));
     // Check if cache is isolated
     // TODO: Implement the REAL cache
     if (sr & 0x00010000)
@@ -414,8 +425,6 @@ void CPU::storeHalfWord(const Instruction &instruction)
         return;
     }
 
-    int32_t imm = (int16_t)instruction.i.immediate;
-    uint32_t address = getReg(static_cast<CpuReg>(instruction.i.rs)) + imm;
     uint16_t value = static_cast<uint16_t>(getReg(static_cast<CpuReg>(instruction.i.rt)));
 
     m_bus->storeHalfWord(address, value);
@@ -472,8 +481,7 @@ void CPU::substractWord(const Instruction &instruction)
 
     if (subOverflow(left, right))
     {
-        // Overflow: need to raise exception on the system
-        std::cerr << "Substraction overflow! : TODO Raise Exception" << std::endl;
+        triggerException(ExceptionType::Overflow);
         return;
     }
     setReg(static_cast<CpuReg>(instruction.r.rd), tmp);
@@ -487,8 +495,7 @@ void CPU::addWord(const Instruction &instruction)
 
     if (addOverflow(left, right))
     {
-        // Overflow: need to raise exception on the system
-        std::cerr << "Addition overflow! : TODO Raise Exception : TODO Raise Exception" << std::endl;
+        triggerException(ExceptionType::Overflow);
         return;
     }
     setReg(static_cast<CpuReg>(instruction.r.rd), tmp);
@@ -511,9 +518,7 @@ void CPU::addImmediate(const Instruction &instruction)
 
     if (addOverflow(left, imm))
     {
-        // Overflow: need to raise exception on the system
-        // Do not modify register on overflow
-        std::cerr << "Addition overflow! : TODO Raise Exception" << std::endl;
+        triggerException(ExceptionType::Overflow);
         return;
     }
     setReg(static_cast<CpuReg>(instruction.i.rt), tmp);
@@ -582,8 +587,7 @@ void CPU::loadWord(const Instruction &instruction)
     uint32_t address = getReg(static_cast<CpuReg>(instruction.i.rs)) + imm;
 
     if (address % 4 != 0) {
-        // Misaligned: need to raise exception on the system
-        std::cerr << "Address is misaligned,!" << std::endl;
+        triggerException(ExceptionType::AddressErrorLoad);
         return;
     }
 
@@ -597,8 +601,7 @@ void CPU::loadHalfWord(const Instruction &instruction)
     uint32_t address = getReg(static_cast<CpuReg>(instruction.i.rs)) + imm;
 
     if (address % 2 != 0) {
-        // Misaligned: need to raise exception on the system
-        std::cerr << "Address is misaligned,!" << std::endl;
+        triggerException(ExceptionType::AddressErrorLoad);
         return;
     }
 
@@ -612,8 +615,7 @@ void CPU::loadHalfWordUnsigned(const Instruction &instruction)
     uint32_t address = getReg(static_cast<CpuReg>(instruction.i.rs)) + imm;
 
     if (address % 2 != 0) {
-        // Misaligned: need to raise exception on the system
-        std::cerr << "Address is misaligned,!" << std::endl;
+        triggerException(ExceptionType::AddressErrorLoad);
         return;
     }
 
