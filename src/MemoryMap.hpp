@@ -52,8 +52,9 @@ constexpr uint32_t BIOS_BASE_KSEG1 = 0xBFC00000;
 // Sub ranges/mappings are defined below
 constexpr MemRange BIOS_RANGE =              {BIOS_BASE_KUSEG, 512 * 1024};
 constexpr MemRange RAM_RANGE =               {RAM_BASE_KUSEG, 2048 * 1024};
+constexpr MemRange SCRATCHPAD_RANGE =        {0x1F800000, 1024};
 constexpr MemRange IO_PORTS_RANGE =          {0x1F801000, 4096};
-constexpr MemRange EXP2_RANGE =         {0x1F802000, 8 * 1024};
+constexpr MemRange EXP2_RANGE =              {0x1F802000, 8 * 1024};
 constexpr MemRange CACHE_CONTROL_RANGE =     {0xFFFE0000, 512};
 
 // I/O ports mappings within I/O ports range

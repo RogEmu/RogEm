@@ -36,6 +36,7 @@ class Bus
         BIOS *m_bios;
         RAM *m_ram;
         std::unique_ptr<Memory> m_ioPorts;
+        std::unique_ptr<Memory> m_scratchpad;
 
         uint32_t m_cacheControl;
 };

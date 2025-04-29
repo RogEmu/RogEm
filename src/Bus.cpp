@@ -20,19 +20,11 @@ Bus::Bus(BIOS* bios, RAM *ram) :
     m_cacheControl(0)
 {
     m_ioPorts = std::make_unique<Memory>(MemoryMap::IO_PORTS_RANGE.length);
+    m_scratchpad = std::make_unique<Memory>(MemoryMap::SCRATCHPAD_RANGE.length);
 }
 
 Bus::~Bus()
 {
-}
-
-static uint32_t reverse32(uint32_t data)
-{
-    uint32_t b1 = (data & 0x000000FF) << 24;
-    uint32_t b2 = (data & 0x0000FF00) << 8;
-    uint32_t b3 = (data & 0x00FF0000) >> 8;
-    uint32_t b4 = (data & 0xFF000000) >> 24;
-    return b4 | b3 | b2 | b1;
 }
 
 uint32_t Bus::loadWord(uint32_t addr) const
@@ -43,6 +35,10 @@ uint32_t Bus::loadWord(uint32_t addr) const
     {
         fmt::println(stderr, "Unaligned LW instruction\n");
         return 0;
+    }
+
+    if (addr == 0x1F801814) {
+        return 0xFFFFFFFF;
     }
 
     if (MemoryMap::BIOS_RANGE.contains(pAddress))
@@ -59,12 +55,16 @@ uint32_t Bus::loadWord(uint32_t addr) const
     }
     if (MemoryMap::CACHE_CONTROL_RANGE.contains(pAddress))
     {
-        return reverse32(m_cacheControl);
+        return m_cacheControl;
     }
     if (MemoryMap::EXP2_RANGE.contains(pAddress))
     {
         fmt::println(stderr, "Read word from Expansion Region 2 (0x{:08x}): Not implemented", addr);
         return 0;
+    }
+    if (MemoryMap::SCRATCHPAD_RANGE.contains(pAddress))
+    {
+        return m_scratchpad->loadWord(MemoryMap::SCRATCHPAD_RANGE.remap(pAddress));
     }
     return 0;
 }
@@ -89,11 +89,15 @@ void Bus::storeWord(uint32_t addr, uint32_t value)
     }
     else if (MemoryMap::CACHE_CONTROL_RANGE.contains(pAddress))
     {
-        m_cacheControl = reverse32(value);
+        m_cacheControl = value;
     }
     else if (MemoryMap::EXP2_RANGE.contains(pAddress))
     {
         fmt::println(stderr, "Write word 0x{:08X} to Expansion Region 2 (0x{:08X}): Not implemented", value, addr);
+    }
+    else if (MemoryMap::SCRATCHPAD_RANGE.contains(pAddress))
+    {
+        m_scratchpad->storeWord(MemoryMap::SCRATCHPAD_RANGE.remap(pAddress), value);
     }
     else
     {
@@ -133,6 +137,10 @@ uint16_t Bus::loadHalfWord(uint32_t addr) const
         fmt::println(stderr, "Read halfword from Expansion Region 2 (0x{:08x}): Not implemented", addr);
         return 0;
     }
+    if (MemoryMap::SCRATCHPAD_RANGE.contains(pAddress))
+    {
+        return m_scratchpad->loadHalfWord(MemoryMap::SCRATCHPAD_RANGE.remap(pAddress));
+    }
     return 0;
 }
 
@@ -160,6 +168,10 @@ void Bus::storeHalfWord(uint32_t addr, uint16_t value)
     else if (MemoryMap::EXP2_RANGE.contains(pAddress))
     {
         fmt::println(stderr, "Write halfword 0x{:04X} to Expansion Region 2 (0x{:08X}): Not implemented", value, addr);
+    }
+    else if (MemoryMap::SCRATCHPAD_RANGE.contains(pAddress))
+    {
+        m_scratchpad->storeHalfWord(MemoryMap::SCRATCHPAD_RANGE.remap(pAddress), value);
     }
     else
     {
@@ -193,6 +205,10 @@ uint8_t Bus::loadByte(uint32_t addr) const
         fmt::println(stderr, "Read byte from Expansion Region 2 (0x{:08x}): Not implemented", addr);
         return 0;
     }
+    if (MemoryMap::SCRATCHPAD_RANGE.contains(pAddress))
+    {
+        return m_scratchpad->loadByte(MemoryMap::SCRATCHPAD_RANGE.remap(pAddress));
+    }
     return 0;
 }
 
@@ -215,6 +231,10 @@ void Bus::storeByte(uint32_t addr, uint8_t value)
     else if (MemoryMap::EXP2_RANGE.contains(pAddress))
     {
         fmt::println(stderr, "Write byte 0x{:02X} to Expansion Region 2 (0x{:08X}): Not implemented", value, addr);
+    }
+    else if (MemoryMap::SCRATCHPAD_RANGE.contains(pAddress))
+    {
+        m_scratchpad->storeByte(MemoryMap::SCRATCHPAD_RANGE.remap(pAddress), value);
     }
     else
     {
