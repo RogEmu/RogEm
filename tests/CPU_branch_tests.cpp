@@ -67,13 +67,16 @@ class CpuBranchTest : public testing::Test
 
             cpu.step();
             EXPECT_EQ(cpu.getReg(CpuReg::PC), pc + 4);
+            if (opcode == BranchOnConditionZero::BGEZAL || opcode == BranchOnConditionZero::BLTZAL) {
+                EXPECT_EQ(cpu.getReg(CpuReg::RA), pc + 8);
+            }
 
             cpu.step();
             EXPECT_EQ(cpu.getReg(CpuReg::T1), 0x1234);
             EXPECT_EQ(cpu.getReg(CpuReg::PC), branchTarget);
 
             if (opcode == BranchOnConditionZero::BLTZAL || opcode == BranchOnConditionZero::BGEZAL) {
-                EXPECT_EQ(cpu.getReg(CpuReg::RA), branchTaken ? pc + 8 : defaultRegVal); // RA should be set to return address
+                EXPECT_EQ(cpu.getReg(CpuReg::RA), pc + 8); // RA should always be set to return address
             }
         }
 };

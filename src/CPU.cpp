@@ -50,6 +50,10 @@ void CPU::step()
     {
         m_nextPc += 4;
     }
+    if (m_jumpToUnaligned) {
+        triggerException(ExceptionType::AddressErrorLoad);
+        m_jumpToUnaligned = false;
+    }
     executeInstruction(instruction);
     m_pc = m_nextPc;
     m_inBranchDelay = false;
@@ -59,6 +63,7 @@ void CPU::reset()
 {
     m_nextIsBranchDelay = false;
     m_inBranchDelay = false;
+    m_jumpToUnaligned = false;
     m_pc = RESET_VECTOR;
     std::memset(m_gpr, 0, NB_GPR * sizeof(m_gpr[0]));
     std::memset(m_cop0Reg, 0, COP0_NB_REG * sizeof(m_cop0Reg[0]));
@@ -643,58 +648,62 @@ void CPU::loadByteUnsigned(const Instruction &instruction)
 
 void CPU::loadWordRight(const Instruction &instruction)
 {
-    int32_t imm = static_cast<int16_t>(instruction.i.immediate);
-    uint32_t address = getReg(static_cast<CpuReg>(instruction.i.rs)) + imm;
-    uint32_t value = m_bus->loadWord(address & ~3);
+    int32_t offset = static_cast<int16_t>(instruction.i.immediate);
+    uint32_t address = getReg(static_cast<CpuReg>(instruction.i.rs)) + offset;
 
+    uint32_t loadedWord = m_bus->loadWord(address & ~3);
     uint32_t shift = (address & 3) * 8;
-    uint32_t mask = 0xFFFFFFFF >> shift;
-    uint32_t right = value & mask;
+    uint32_t mask = 0xFFFFFFFF << shift;
 
-    uint32_t res = (getReg(static_cast<CpuReg>(instruction.i.rt)) & ~mask) | right;
-    setReg(static_cast<CpuReg>(instruction.i.rt), res);
+    uint32_t currentRegValue = getReg(static_cast<CpuReg>(instruction.i.rt));
+    uint32_t loadedSection = (loadedWord & mask) >> shift;
+    uint32_t result = (currentRegValue & ~(mask >> shift)) | loadedSection;
+    setReg(static_cast<CpuReg>(instruction.i.rt), result);
 }
 
 void CPU::loadWordLeft(const Instruction &instruction)
 {
-    int32_t imm = static_cast<int16_t>(instruction.i.immediate);
-    uint32_t address = getReg(static_cast<CpuReg>(instruction.i.rs)) + imm;
-    uint32_t value = m_bus->loadWord(address & ~3);
+    int32_t offset = static_cast<int16_t>(instruction.i.immediate);
+    uint32_t address = getReg(static_cast<CpuReg>(instruction.i.rs)) + offset;
 
+    uint32_t loadedWord = m_bus->loadWord(address & ~3);
     uint32_t shift = (3 - (address & 3)) * 8;
-    uint32_t mask = 0xFFFFFFFF << shift;
+    uint32_t mask = 0xFFFFFFFF >> shift;
 
-    value &= mask;
-    uint32_t res = (getReg(static_cast<CpuReg>(instruction.i.rt)) & ~mask) | value;
-    setReg(static_cast<CpuReg>(instruction.i.rt), res);
+    uint32_t currentRegValue = getReg(static_cast<CpuReg>(instruction.i.rt));
+
+    uint32_t loadedSection = (loadedWord & mask) << shift;
+    uint32_t result = loadedSection | (currentRegValue & ~(mask << shift));
+    setReg(static_cast<CpuReg>(instruction.i.rt), result);
 }
+
 
 void CPU::storeWordRight(const Instruction &instruction)
 {
-    int32_t imm = static_cast<int16_t>(instruction.i.immediate);
-    uint32_t address = getReg(static_cast<CpuReg>(instruction.i.rs)) + imm;
-    uint32_t value = getReg(static_cast<CpuReg>(instruction.i.rt));
+    int32_t offset = static_cast<int16_t>(instruction.i.immediate);
+    uint32_t address = getReg(static_cast<CpuReg>(instruction.i.rs)) + offset;
+    uint32_t storedWord = getReg(static_cast<CpuReg>(instruction.i.rt));
 
+    uint32_t currentWord = m_bus->loadWord(address & ~3);
     uint32_t shift = (address & 3) * 8;
     uint32_t mask = 0xFFFFFFFF >> shift;
-    uint32_t oldValue = m_bus->loadWord(address & ~3);
 
-    uint32_t res = (oldValue & ~mask) | ((value << shift) & mask);
-    m_bus->storeWord(address & ~3, res);
+    uint32_t result = (currentWord & ~(mask << shift)) | ((storedWord & mask) << shift);
+    m_bus->storeWord(address & ~3, result);
 }
 
 void CPU::storeWordLeft(const Instruction &instruction)
 {
-    int32_t imm = static_cast<int16_t>(instruction.i.immediate);
-    uint32_t address = getReg(static_cast<CpuReg>(instruction.i.rs)) + imm;
-    uint32_t value = getReg(static_cast<CpuReg>(instruction.i.rt));
+    int32_t offset = static_cast<int16_t>(instruction.i.immediate);
+    uint32_t address = getReg(static_cast<CpuReg>(instruction.i.rs)) + offset;
+    uint32_t storedWord = getReg(static_cast<CpuReg>(instruction.i.rt));
 
     uint32_t shift = (3 - (address & 3)) * 8;
     uint32_t mask = 0xFFFFFFFF << shift;
-    uint32_t oldValue = m_bus->loadWord(address & ~3);
+    uint32_t currentWord = m_bus->loadWord(address & ~3);
 
-    uint32_t res = (oldValue & ~mask) | ((value >> shift) & mask);
-    m_bus->storeWord(address & ~3, res);
+    uint32_t result = (currentWord & ~(mask >> shift)) | ((storedWord & mask) >> shift);
+    m_bus->storeWord(address & ~3, result);
 }
 
 void CPU::setOnLessThan(const Instruction &instruction)
@@ -871,7 +880,12 @@ void CPU::jumpAndLink(const Instruction &instruction)
 
 void CPU::jumpRegister(const Instruction &instruction)
 {
-    m_branchSlotAddr = getReg(static_cast<CpuReg>(instruction.r.rs));
+    uint32_t targetAddress = getReg(static_cast<CpuReg>(instruction.r.rs));
+    if (targetAddress % 4 != 0) {
+        m_jumpToUnaligned = true;
+        m_badVarAddr = m_pc;
+    }
+    m_branchSlotAddr = targetAddress;
     m_nextIsBranchDelay = true;
 }
 
@@ -927,18 +941,18 @@ void CPU::branchOnLessThanZeroAndLink(const Instruction &instruction)
 {
     if (static_cast<int32_t>(getReg(static_cast<CpuReg>(instruction.i.rs))) < 0)
     {
-        setReg(CpuReg::RA, m_pc + 8);
         executeBranch(instruction);
     }
+    setReg(CpuReg::RA, m_pc + 8);
 }
 
 void CPU::branchOnGreaterThanOrEqualToZeroAndLink(const Instruction &instruction)
 {
     if (static_cast<int32_t>(getReg(static_cast<CpuReg>(instruction.i.rs))) >= 0)
     {
-        setReg(CpuReg::RA, m_pc + 8);
         executeBranch(instruction);
     }
+    setReg(CpuReg::RA, m_pc + 8);
 }
 
 void CPU::executeCop0(const Instruction &instruction)
@@ -1020,6 +1034,11 @@ void CPU::triggerException(ExceptionType exception)
     {
     case ExceptionType::Breakpoint:
         handlerAddr = static_cast<uint32_t>(ExceptionVector::COP0_BRK);
+        break;
+    case ExceptionType::AddressErrorLoad:
+    case ExceptionType::AddressErrorStore:
+        setCop0Reg(static_cast<uint8_t>(CP0Reg::BadVaddr), m_badVarAddr);
+        handlerAddr = static_cast<uint32_t>(ExceptionVector::GENERAL);
         break;
     default:
         handlerAddr = static_cast<uint32_t>(ExceptionVector::GENERAL);

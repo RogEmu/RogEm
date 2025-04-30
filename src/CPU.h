@@ -210,6 +210,9 @@ class CPU {
         bool m_isTtyOutput;
         std::string m_ttyOutput;
 
+        bool m_jumpToUnaligned;
+        uint32_t m_badVarAddr;
+
         // Bus connection
         Bus *m_bus;
 };

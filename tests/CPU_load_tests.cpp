@@ -565,7 +565,7 @@ TEST_F(CpuLoadTest, LWL_AlignedLoad)
     cpu.setReg(rs, base);
     bus.storeWord(base, value);
     runLWL(rt, rs, offset);
-    EXPECT_EQ(cpu.getReg(rt), (value & 0xFF << 24) | (defaultRegVal & 0xFFFFFF));
+    EXPECT_EQ(cpu.getReg(rt), 0xDDADBEEF);
 }
 
 TEST_F(CpuLoadTest, LWL_Offset1)
@@ -579,7 +579,7 @@ TEST_F(CpuLoadTest, LWL_Offset1)
     cpu.setReg(rs, base);
     bus.storeWord(base, value);
     runLWL(rt, rs, offset);
-    EXPECT_EQ(cpu.getReg(rt), (value & 0xFFFF << 16) | (defaultRegVal & 0xFFFF));
+    EXPECT_EQ(cpu.getReg(rt), 0xCCDDBEEF);
 }
 
 TEST_F(CpuLoadTest, LWL_Offset2)
@@ -593,7 +593,7 @@ TEST_F(CpuLoadTest, LWL_Offset2)
     cpu.setReg(rs, base);
     bus.storeWord(base, value);
     runLWL(rt, rs, offset);
-    EXPECT_EQ(cpu.getReg(rt), (value & 0xFFFFFF << 8) | (defaultRegVal & 0xFF));
+    EXPECT_EQ(cpu.getReg(rt), 0xBBCCDDEF);
 }
 
 TEST_F(CpuLoadTest, LWL_Offset3)
@@ -635,7 +635,7 @@ TEST_F(CpuLoadTest, LWR_Offset1)
     cpu.setReg(rs, base);
     bus.storeWord(base, value);
     runLWR(rt, rs, offset);
-    EXPECT_EQ(cpu.getReg(rt), (defaultRegVal & 0xFF << 24) | (value & 0xFFFFFF));
+    EXPECT_EQ(cpu.getReg(rt), 0xDEAABBCC);
 }
 
 TEST_F(CpuLoadTest, LWR_Offset2)
@@ -649,7 +649,7 @@ TEST_F(CpuLoadTest, LWR_Offset2)
     cpu.setReg(rs, base);
     bus.storeWord(base, value);
     runLWR(rt, rs, offset);
-    EXPECT_EQ(cpu.getReg(rt), (defaultRegVal & 0xFFFF << 16) | (value & 0xFFFF));
+    EXPECT_EQ(cpu.getReg(rt), 0xDEADAABB);
 }
 
 TEST_F(CpuLoadTest, LWR_Offset3)
@@ -663,5 +663,5 @@ TEST_F(CpuLoadTest, LWR_Offset3)
     cpu.setReg(rs, base);
     bus.storeWord(base, value);
     runLWR(rt, rs, offset);
-    EXPECT_EQ(cpu.getReg(rt), (defaultRegVal & 0xFFFFFF << 8) | (value & 0xFF));
+    EXPECT_EQ(cpu.getReg(rt), 0xDEADBEAA);
 }

@@ -276,3 +276,63 @@ TEST_F(CpuStoreTest, SB_MinOffset)
 
     EXPECT_EQ(bus.loadByte(base + offset), value);
 }
+
+TEST_F(CpuStoreTest, SWR_Offset0)
+{
+    uint32_t base = 0x1000;
+    uint32_t value = 0xAABBCCDD;
+    int16_t offset = 0;
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
+
+    cpu.setReg(rs, base);
+    cpu.setReg(rt, value);
+    bus.storeWord(base, 0xCAFEBABE);
+    runStore(PrimaryOpCode::SWR, rs, rt, offset);
+    EXPECT_EQ(bus.loadWord(base), value);
+}
+
+TEST_F(CpuStoreTest, SWR_Offset1)
+{
+    uint32_t base = 0x1000;
+    uint32_t value = 0xAABBCCDD;
+    int16_t offset = 1;
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
+
+    cpu.setReg(rs, base);
+    cpu.setReg(rt, value);
+    bus.storeWord(base, 0xCAFEBABE);
+    runStore(PrimaryOpCode::SWR, rs, rt, offset);
+    EXPECT_EQ(bus.loadWord(base), 0xBBCCDDBE);
+}
+
+TEST_F(CpuStoreTest, SWR_Offset2)
+{
+    uint32_t base = 0x1000;
+    uint32_t value = 0xAABBCCDD;
+    int16_t offset = 2;
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
+
+    cpu.setReg(rs, base);
+    cpu.setReg(rt, value);
+    bus.storeWord(base, 0xCAFEBABE);
+    runStore(PrimaryOpCode::SWR, rs, rt, offset);
+    EXPECT_EQ(bus.loadWord(base), 0xCCDDBABE);
+}
+
+TEST_F(CpuStoreTest, SWR_Offset3)
+{
+    uint32_t base = 0x1000;
+    uint32_t value = 0xAABBCCDD;
+    int16_t offset = 3;
+    CpuReg rs = CpuReg::T0;
+    CpuReg rt = CpuReg::T1;
+
+    cpu.setReg(rs, base);
+    cpu.setReg(rt, value);
+    bus.storeWord(base, 0xCAFEBABE);
+    runStore(PrimaryOpCode::SWR, rs, rt, offset);
+    EXPECT_EQ(bus.loadWord(base), 0xDDFEBABE);
+}
