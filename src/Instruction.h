@@ -94,6 +94,31 @@ enum class CoprocessorOpcode
     IMM25 = 0b10000
 };
 
+enum class GTEFunction : uint8_t {
+    RTPS   = 0x01,
+    NCLIP  = 0x06,
+    OP     = 0x0C,
+    DPCS   = 0x10,
+    INTPL  = 0x11,
+    MVMVA  = 0x12,
+    NCDS   = 0x13,
+    CDP    = 0x14,
+    NCDT   = 0x16,
+    NCCS   = 0x1B,
+    CC     = 0x1C,
+    NCS    = 0x1E,
+    NCT    = 0x20,
+    SQR    = 0x28,
+    DCPL   = 0x29,
+    DPCT   = 0x2A,
+    AVSZ3  = 0x2D,
+    AVSZ4  = 0x2E,
+    RTPT   = 0x30,
+    GPF    = 0x3D,
+    GPL    = 0x3E,
+    NCCT   = 0x3F
+};
+
 union Instruction {
     uint32_t raw;  // The raw 32-bit instruction
 

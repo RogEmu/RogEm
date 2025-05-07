@@ -127,6 +127,10 @@ Instruction CPU::fetchInstruction()
 
 void CPU::executeInstruction(const Instruction &instruction)
 {
+    if (instruction.r.opcode & 0x10) {
+        executeCoprocessor(instruction);
+        return;
+    }
     switch (static_cast<PrimaryOpCode>(instruction.r.opcode))
     {
     case PrimaryOpCode::LUI:
@@ -203,9 +207,6 @@ void CPU::executeInstruction(const Instruction &instruction)
         break;
     case PrimaryOpCode::BCONDZ:
         branchOnConditionZero(instruction);
-        break;
-    case PrimaryOpCode::COP0:
-        executeCop0(instruction);
         break;
     case PrimaryOpCode::BNE:
         branchOnNotEqual(instruction);
@@ -955,8 +956,9 @@ void CPU::branchOnGreaterThanOrEqualToZeroAndLink(const Instruction &instruction
     setReg(CpuReg::RA, m_pc + 8);
 }
 
-void CPU::executeCop0(const Instruction &instruction)
+void CPU::executeCoprocessor(const Instruction &instruction)
 {
+    // Obsolete, need to be redone to match specific processors
     auto code = static_cast<CoprocessorOpcode>(instruction.r.rs);
 
     switch (code)

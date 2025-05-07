@@ -180,8 +180,8 @@ class CPU {
         void branchOnGreaterThanOrEqualToZero(const Instruction &instruction); //BGEZ
         void branchOnGreaterThanOrEqualToZeroAndLink(const Instruction &instruction); // BGEZAL
 
-        //COP0 Instructions
-        void executeCop0(const Instruction &instruction);
+        //COP Instructions
+        void executeCoprocessor(const Instruction &instruction);
         void mtc0(const Instruction &instruction);
         void mfc0(const Instruction &instruction);
         void returnFromException(const Instruction &instruction);
