@@ -79,6 +79,13 @@ enum class ExceptionType
     Overflow
 };
 
+struct LoadDelaySlot
+{
+    uint32_t value;
+    CpuReg reg;
+    bool pending;
+};
+
 class CPU {
     public:
         CPU(Bus *bus);
@@ -98,8 +105,10 @@ class CPU {
     private:
         Instruction fetchInstruction();
         void executeInstruction(const Instruction &instruction);
+        void handleLoadDelay();
 
         // Load instructions
+        void loadWithDelay(CpuReg reg, uint32_t value);
         void loadWord(const Instruction &instruction);
         void loadByte(const Instruction &instruction);
         void loadByteUnsigned(const Instruction &instruction);
@@ -189,6 +198,7 @@ class CPU {
         // Exception Instructions
         void triggerException(ExceptionType exception);
         void executeSyscall(const Instruction &instruction);
+        void executeBreak(const Instruction &instruction);
 
         void illegalInstruction(const Instruction &instruction);
         void specialInstruction(const Instruction &instruction);
@@ -204,9 +214,13 @@ class CPU {
         uint32_t m_cop0Reg[COP0_NB_REG];
 
         uint32_t m_nextPc;
+
+        LoadDelaySlot m_loadDelaySlots[2];
+
         uint32_t m_branchSlotAddr;
         bool m_inBranchDelay;
         bool m_nextIsBranchDelay;
+
         bool m_isTtyOutput;
         std::string m_ttyOutput;
 

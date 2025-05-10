@@ -55,6 +55,7 @@ void CPU::step()
         m_jumpToUnaligned = false;
     }
     executeInstruction(instruction);
+    handleLoadDelay();
     m_pc = m_nextPc;
     m_inBranchDelay = false;
 }
@@ -65,6 +66,7 @@ void CPU::reset()
     m_inBranchDelay = false;
     m_jumpToUnaligned = false;
     m_pc = RESET_VECTOR;
+    std::memset(m_loadDelaySlots, 0, sizeof(m_loadDelaySlots));
     std::memset(m_gpr, 0, NB_GPR * sizeof(m_gpr[0]));
     std::memset(m_cop0Reg, 0, COP0_NB_REG * sizeof(m_cop0Reg[0]));
     m_isTtyOutput = false;
@@ -223,24 +225,37 @@ void CPU::executeInstruction(const Instruction &instruction)
     }
 }
 
-void CPU::branchOnConditionZero(const Instruction &Instruction)
+void CPU::handleLoadDelay()
 {
-    switch (static_cast<BranchOnConditionZero>(Instruction.i.rt))
+    if (m_loadDelaySlots[0].pending) {
+        setReg(m_loadDelaySlots[0].reg, m_loadDelaySlots[0].value);
+        m_loadDelaySlots[0].pending = false;
+    }
+    if (m_loadDelaySlots[1].pending) {
+        m_loadDelaySlots[0] = m_loadDelaySlots[1];
+        m_loadDelaySlots[1].pending = false;
+    }
+}
+
+void CPU::branchOnConditionZero(const Instruction &instruction)
+{
+    uint8_t branchFunc = instruction.i.rt & 0b10001;
+    switch (static_cast<BranchOnConditionZero>(branchFunc))
     {
     case BranchOnConditionZero::BLTZ:
-        branchOnLessThanZero(Instruction);
+        branchOnLessThanZero(instruction);
         break;
     case BranchOnConditionZero::BGEZ:
-        branchOnGreaterThanOrEqualToZero(Instruction);
+        branchOnGreaterThanOrEqualToZero(instruction);
         break;
     case BranchOnConditionZero::BLTZAL:
-        branchOnLessThanZeroAndLink(Instruction);
+        branchOnLessThanZeroAndLink(instruction);
         break;
     case BranchOnConditionZero::BGEZAL:
-        branchOnGreaterThanOrEqualToZeroAndLink(Instruction);
+        branchOnGreaterThanOrEqualToZeroAndLink(instruction);
         break;
     default:
-        illegalInstruction(Instruction);
+        illegalInstruction(instruction);
         break;
     }
 }
@@ -329,6 +344,9 @@ void CPU::specialInstruction(const Instruction &instruction)
         break;
     case SecondaryOpCode::SYSCALL:
         executeSyscall(instruction);
+        break;
+    case SecondaryOpCode::BREAK:
+        executeBreak(instruction);
         break;
     default:
         illegalInstruction(instruction);
@@ -587,6 +605,13 @@ void CPU::xorImmediateWord(const Instruction &instruction)
     setReg(static_cast<CpuReg>(instruction.i.rt), res);
 }
 
+void CPU::loadWithDelay(CpuReg reg, uint32_t value)
+{
+    m_loadDelaySlots[1].value = value;
+    m_loadDelaySlots[1].reg = reg;
+    m_loadDelaySlots[1].pending = true;
+}
+
 void CPU::loadWord(const Instruction &instruction)
 {
     int32_t imm = static_cast<int16_t>(instruction.i.immediate);
@@ -598,7 +623,7 @@ void CPU::loadWord(const Instruction &instruction)
     }
 
     uint32_t value = m_bus->loadWord(address);
-    setReg(static_cast<CpuReg>(instruction.i.rt), value);  // No sign extension needed for 32-bit word load
+    loadWithDelay(static_cast<CpuReg>(instruction.i.rt), value);
 }
 
 void CPU::loadHalfWord(const Instruction &instruction)
@@ -611,8 +636,8 @@ void CPU::loadHalfWord(const Instruction &instruction)
         return;
     }
 
-    int16_t value = static_cast<int16_t>(m_bus->loadHalfWord(address));  // Sign-extend
-    setReg(static_cast<CpuReg>(instruction.i.rt), static_cast<int32_t>(value));
+    int16_t value = static_cast<int16_t>(m_bus->loadHalfWord(address));
+    loadWithDelay(static_cast<CpuReg>(instruction.i.rt), value);
 }
 
 void CPU::loadHalfWordUnsigned(const Instruction &instruction)
@@ -626,7 +651,7 @@ void CPU::loadHalfWordUnsigned(const Instruction &instruction)
     }
 
     uint16_t value = m_bus->loadHalfWord(address);
-    setReg(static_cast<CpuReg>(instruction.i.rt), static_cast<uint32_t>(value));
+    loadWithDelay(static_cast<CpuReg>(instruction.i.rt), value);
 }
 
 void CPU::loadByte(const Instruction &instruction)
@@ -635,7 +660,7 @@ void CPU::loadByte(const Instruction &instruction)
     uint32_t address = getReg(static_cast<CpuReg>(instruction.i.rs)) + imm;
 
     int8_t value = static_cast<int8_t>(m_bus->loadByte(address));
-    setReg(static_cast<CpuReg>(instruction.i.rt), static_cast<int32_t>(value));
+    loadWithDelay(static_cast<CpuReg>(instruction.i.rt), value);
 }
 
 void CPU::loadByteUnsigned(const Instruction &instruction)
@@ -644,7 +669,7 @@ void CPU::loadByteUnsigned(const Instruction &instruction)
     uint32_t address = getReg(static_cast<CpuReg>(instruction.i.rs)) + imm;
 
     uint8_t value = m_bus->loadByte(address);
-    setReg(static_cast<CpuReg>(instruction.i.rt), static_cast<uint32_t>(value));
+    loadWithDelay(static_cast<CpuReg>(instruction.i.rt), value);
 }
 
 void CPU::loadWordRight(const Instruction &instruction)
@@ -656,10 +681,18 @@ void CPU::loadWordRight(const Instruction &instruction)
     uint32_t shift = (address & 3) * 8;
     uint32_t mask = 0xFFFFFFFF << shift;
 
-    uint32_t currentRegValue = getReg(static_cast<CpuReg>(instruction.i.rt));
+    uint32_t currentRegValue = 0;
+
+    if (m_loadDelaySlots[0].pending) {
+        currentRegValue = m_loadDelaySlots[0].value;
+        m_loadDelaySlots[0].pending = false;
+    } else {
+        currentRegValue = getReg(static_cast<CpuReg>(instruction.i.rt));
+    }
+
     uint32_t loadedSection = (loadedWord & mask) >> shift;
     uint32_t result = (currentRegValue & ~(mask >> shift)) | loadedSection;
-    setReg(static_cast<CpuReg>(instruction.i.rt), result);
+    loadWithDelay(static_cast<CpuReg>(instruction.i.rt), result);
 }
 
 void CPU::loadWordLeft(const Instruction &instruction)
@@ -671,11 +704,18 @@ void CPU::loadWordLeft(const Instruction &instruction)
     uint32_t shift = (3 - (address & 3)) * 8;
     uint32_t mask = 0xFFFFFFFF >> shift;
 
-    uint32_t currentRegValue = getReg(static_cast<CpuReg>(instruction.i.rt));
+    uint32_t currentRegValue = 0;
+
+    if (m_loadDelaySlots[0].pending) {
+        currentRegValue = m_loadDelaySlots[0].value;
+        m_loadDelaySlots[0].pending = false;
+    } else {
+        currentRegValue = getReg(static_cast<CpuReg>(instruction.i.rt));
+    }
 
     uint32_t loadedSection = (loadedWord & mask) << shift;
     uint32_t result = loadedSection | (currentRegValue & ~(mask << shift));
-    setReg(static_cast<CpuReg>(instruction.i.rt), result);
+    loadWithDelay(static_cast<CpuReg>(instruction.i.rt), result);
 }
 
 
@@ -1002,6 +1042,12 @@ void CPU::executeSyscall(const Instruction &instruction)
     triggerException(ExceptionType::Syscall);
 }
 
+void CPU::executeBreak(const Instruction &instruction)
+{
+    (void)instruction;
+    triggerException(ExceptionType::Breakpoint);
+}
+
 void CPU::returnFromException(const Instruction &instruction)
 {
     (void)instruction;
@@ -1051,9 +1097,8 @@ void CPU::triggerException(ExceptionType exception)
 
 void CPU::illegalInstruction(const Instruction &instruction)
 {
-    fprintf(stderr, "Illegal instruction: ");
-    std::cerr << Disassembler::disassemble(m_pc, instruction) << std::endl;
+    fmt::println(stderr, "Illegal instruction: ");
+    fmt::println(stderr, "{}", Disassembler::disassemble(m_pc, instruction));
 
-    // Temporary exit until exception handling is properly implemented
-    exit(1);
+    triggerException(ExceptionType::RI);
 }

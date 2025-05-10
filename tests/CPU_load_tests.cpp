@@ -22,14 +22,19 @@ class CpuLoadTest : public testing::Test
             cpu.setReg(CpuReg::PC, 0x10000);
         }
 
-        void runLoad(PrimaryOpCode opcode, CpuReg rs, CpuReg rt, int16_t imm)
+        Instruction newLoadInstruction(PrimaryOpCode opcode, CpuReg rs, CpuReg rt, int16_t imm)
         {
             Instruction i;
-            i.r.opcode = static_cast<uint8_t>(opcode);
+            i.i.opcode = static_cast<uint8_t>(opcode);
             i.i.rs = static_cast<uint8_t>(rs);
             i.i.rt = static_cast<uint8_t>(rt);
             i.i.immediate = static_cast<uint16_t>(imm);
+            return i;
+        }
 
+        void runLoad(PrimaryOpCode opcode, CpuReg rs, CpuReg rt, int16_t imm)
+        {
+            Instruction i = newLoadInstruction(opcode, rs, rt, imm);
             auto pc = cpu.getReg(CpuReg::PC);
             bus.storeWord(pc, i.raw);
             cpu.setReg(rt, defaultRegVal);
@@ -83,6 +88,8 @@ TEST_F(CpuLoadTest, LW_AlignedAddress)
     cpu.setReg(rs, base);
     bus.storeWord(base + offset, value);
     runLW(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
+    cpu.step();
     EXPECT_EQ(cpu.getReg(rt), value);
 }
 
@@ -140,6 +147,8 @@ TEST_F(CpuLoadTest, LW_PositiveOffset)
     cpu.setReg(rs, base);
     bus.storeWord(base + offset, value);
     runLW(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
+    cpu.step();
     EXPECT_EQ(cpu.getReg(rt), value);
 }
 
@@ -154,6 +163,8 @@ TEST_F(CpuLoadTest, LW_NegativeOffset)
     cpu.setReg(rs, base);
     bus.storeWord(base + offset, value);  // base - 16
     runLW(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
+    cpu.step();
     EXPECT_EQ(cpu.getReg(rt), value);
 }
 
@@ -168,6 +179,8 @@ TEST_F(CpuLoadTest, LW_MaxOffset)
     cpu.setReg(rs, base);
     bus.storeWord(base + offset, value);
     runLW(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
+    cpu.step();
     EXPECT_EQ(cpu.getReg(rt), value);
 }
 
@@ -182,6 +195,8 @@ TEST_F(CpuLoadTest, LW_MinOffset)
     cpu.setReg(rs, base);
     bus.storeWord(base + offset, value);  // base - 32768
     runLW(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
+    cpu.step();
     EXPECT_EQ(cpu.getReg(rt), value);
 }
 
@@ -195,6 +210,8 @@ TEST_F(CpuLoadTest, LW_BaseRegisterZero)
 
     bus.storeWord(base + offset, value);
     runLW(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
+    cpu.step();
     EXPECT_EQ(cpu.getReg(rt), value);
 }
 
@@ -210,6 +227,8 @@ TEST_F(CpuLoadTest, LW_TargetRegisterZero)
     bus.storeWord(base + offset, value);
     runLW(rt, rs, offset);
     EXPECT_EQ(cpu.getReg(rt), 0);
+    cpu.step();
+    EXPECT_EQ(cpu.getReg(rt), 0);
 }
 
 TEST_F(CpuLoadTest, LH_PositiveOffset)
@@ -223,6 +242,8 @@ TEST_F(CpuLoadTest, LH_PositiveOffset)
     cpu.setReg(rs, base);
     bus.storeHalfWord(base + offset, value);
     runLH(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
+    cpu.step();
     EXPECT_EQ(cpu.getReg(rt), static_cast<uint32_t>(value));
 }
 
@@ -237,6 +258,8 @@ TEST_F(CpuLoadTest, LH_NegativeOffset)
     cpu.setReg(rs, base);
     bus.storeHalfWord(base + offset, value);
     runLH(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
+    cpu.step();
     EXPECT_EQ(cpu.getReg(rt), static_cast<uint32_t>(value));
 }
 
@@ -251,6 +274,8 @@ TEST_F(CpuLoadTest, LH_MinNegativeValue)
     cpu.setReg(rs, base);
     bus.storeHalfWord(base + offset, value);
     runLH(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
+    cpu.step();
     EXPECT_EQ(cpu.getReg(rt), 0xFFFF8000);
 }
 
@@ -289,6 +314,8 @@ TEST_F(CpuLoadTest, LH_MaxPositiveOffset)
     cpu.setReg(rs, base);
     bus.storeHalfWord(base + offset, value);
     runLH(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
+    cpu.step();
     EXPECT_EQ(cpu.getReg(rt), static_cast<uint32_t>(value));
 }
 
@@ -303,6 +330,8 @@ TEST_F(CpuLoadTest, LH_MaxNegativeOffset)
     cpu.setReg(rs, base);
     bus.storeHalfWord(base + offset, value);
     runLH(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
+    cpu.step();
     EXPECT_EQ(cpu.getReg(rt), static_cast<uint32_t>(value));
 }
 
@@ -317,6 +346,8 @@ TEST_F(CpuLoadTest, LH_SignExtension)
     cpu.setReg(rs, base);
     bus.storeHalfWord(base + offset, value);
     runLH(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
+    cpu.step();
     EXPECT_EQ(cpu.getReg(rt), 0xFFFFFABC);
 }
 
@@ -331,6 +362,8 @@ TEST_F(CpuLoadTest, LB_RegularLoad)
     cpu.setReg(rs, base);
     bus.storeByte(base + offset, value);
     runLB(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
+    cpu.step();
     EXPECT_EQ(cpu.getReg(rt), static_cast<uint32_t>(value));
 }
 
@@ -345,6 +378,8 @@ TEST_F(CpuLoadTest, LB_SignExtension_NegativeValue)
     cpu.setReg(rs, base);
     bus.storeByte(base + offset, value);
     runLB(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
+    cpu.step();
     EXPECT_EQ(cpu.getReg(rt), 0xFFFFFFAB);
 }
 
@@ -359,6 +394,8 @@ TEST_F(CpuLoadTest, LB_SignExtension_PositiveValue)
     cpu.setReg(rs, base);
     bus.storeByte(base + offset, value);
     runLB(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
+    cpu.step();
     EXPECT_EQ(cpu.getReg(rt), 0x0000007F);
 }
 
@@ -373,6 +410,8 @@ TEST_F(CpuLoadTest, LHU_PositiveOffset)
     cpu.setReg(rs, base);
     bus.storeHalfWord(base + offset, value);
     runLHU(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
+    cpu.step();
     EXPECT_EQ(cpu.getReg(rt), static_cast<uint32_t>(value));
 }
 
@@ -387,6 +426,8 @@ TEST_F(CpuLoadTest, LHU_NegativeOffset)
     cpu.setReg(rs, base);
     bus.storeHalfWord(base + offset, value);
     runLHU(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
+    cpu.step();
     EXPECT_EQ(cpu.getReg(rt), static_cast<uint32_t>(value));
 }
 
@@ -401,6 +442,8 @@ TEST_F(CpuLoadTest, LHU_ZeroOffset)
     cpu.setReg(rs, base);
     bus.storeHalfWord(base + offset, value);
     runLHU(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
+    cpu.step();
     EXPECT_EQ(cpu.getReg(rt), static_cast<uint32_t>(value));
 }
 
@@ -415,6 +458,8 @@ TEST_F(CpuLoadTest, LHU_MaxOffset)
     cpu.setReg(rs, base);
     bus.storeHalfWord(base + offset, value);
     runLHU(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
+    cpu.step();
     EXPECT_EQ(cpu.getReg(rt), static_cast<uint32_t>(value));
 }
 
@@ -429,6 +474,8 @@ TEST_F(CpuLoadTest, LHU_MinOffset)
     cpu.setReg(rs, base);
     bus.storeHalfWord(base + offset, value);
     runLHU(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
+    cpu.step();
     EXPECT_EQ(cpu.getReg(rt), static_cast<uint32_t>(value));
 }
 
@@ -467,6 +514,8 @@ TEST_F(CpuLoadTest, LHU_ZeroExtension)
     cpu.setReg(rs, base);
     bus.storeHalfWord(base + offset, value);
     runLHU(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
+    cpu.step();
     EXPECT_EQ(cpu.getReg(rt), 0X0000ABCD);
 }
 
@@ -481,6 +530,8 @@ TEST_F(CpuLoadTest, LBU_PositiveOffset)
     cpu.setReg(rs, base);
     bus.storeByte(base + offset, value);
     runLBU(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
+    cpu.step();
     EXPECT_EQ(cpu.getReg(rt), static_cast<uint32_t>(value));
 }
 
@@ -495,6 +546,8 @@ TEST_F(CpuLoadTest, LBU_NegativeOffset)
     cpu.setReg(rs, base);
     bus.storeByte(base + offset, value);
     runLBU(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
+    cpu.step();
     EXPECT_EQ(cpu.getReg(rt), static_cast<uint32_t>(value));
 }
 
@@ -509,6 +562,8 @@ TEST_F(CpuLoadTest, LBU_ZeroOffset)
     cpu.setReg(rs, base);
     bus.storeByte(base + offset, value);
     runLBU(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
+    cpu.step();
     EXPECT_EQ(cpu.getReg(rt), static_cast<uint32_t>(value));
 }
 
@@ -523,6 +578,8 @@ TEST_F(CpuLoadTest, LBU_MaxOffset)
     cpu.setReg(rs, base);
     bus.storeByte(base + offset, value);
     runLBU(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
+    cpu.step();
     EXPECT_EQ(cpu.getReg(rt), static_cast<uint32_t>(value));
 }
 
@@ -537,6 +594,8 @@ TEST_F(CpuLoadTest, LBU_MinOffset)
     cpu.setReg(rs, base);
     bus.storeByte(base + offset, value);
     runLBU(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
+    cpu.step();
     EXPECT_EQ(cpu.getReg(rt), static_cast<uint32_t>(value));
 }
 
@@ -551,6 +610,8 @@ TEST_F(CpuLoadTest, LBU_ZeroExtension)
     cpu.setReg(rs, base);
     bus.storeByte(base + offset, value);
     runLBU(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
+    cpu.step();
     EXPECT_EQ(cpu.getReg(rt), 0x000000AB);
 }
 
@@ -565,6 +626,8 @@ TEST_F(CpuLoadTest, LWL_AlignedLoad)
     cpu.setReg(rs, base);
     bus.storeWord(base, value);
     runLWL(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
+    cpu.step();
     EXPECT_EQ(cpu.getReg(rt), 0xDDADBEEF);
 }
 
@@ -579,6 +642,8 @@ TEST_F(CpuLoadTest, LWL_Offset1)
     cpu.setReg(rs, base);
     bus.storeWord(base, value);
     runLWL(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
+    cpu.step();
     EXPECT_EQ(cpu.getReg(rt), 0xCCDDBEEF);
 }
 
@@ -593,6 +658,8 @@ TEST_F(CpuLoadTest, LWL_Offset2)
     cpu.setReg(rs, base);
     bus.storeWord(base, value);
     runLWL(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
+    cpu.step();
     EXPECT_EQ(cpu.getReg(rt), 0xBBCCDDEF);
 }
 
@@ -607,6 +674,8 @@ TEST_F(CpuLoadTest, LWL_Offset3)
     cpu.setReg(rs, base);
     bus.storeWord(base, value);
     runLWL(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
+    cpu.step();
     EXPECT_EQ(cpu.getReg(rt), value);
 }
 
@@ -621,6 +690,8 @@ TEST_F(CpuLoadTest, LWR_AlignedLoad)
     cpu.setReg(rs, base);
     bus.storeWord(base, value);
     runLWR(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
+    cpu.step();
     EXPECT_EQ(cpu.getReg(rt), value);
 }
 
@@ -635,6 +706,8 @@ TEST_F(CpuLoadTest, LWR_Offset1)
     cpu.setReg(rs, base);
     bus.storeWord(base, value);
     runLWR(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
+    cpu.step();
     EXPECT_EQ(cpu.getReg(rt), 0xDEAABBCC);
 }
 
@@ -649,6 +722,8 @@ TEST_F(CpuLoadTest, LWR_Offset2)
     cpu.setReg(rs, base);
     bus.storeWord(base, value);
     runLWR(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
+    cpu.step();
     EXPECT_EQ(cpu.getReg(rt), 0xDEADAABB);
 }
 
@@ -663,5 +738,487 @@ TEST_F(CpuLoadTest, LWR_Offset3)
     cpu.setReg(rs, base);
     bus.storeWord(base, value);
     runLWR(rt, rs, offset);
+    EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
+    cpu.step();
     EXPECT_EQ(cpu.getReg(rt), 0xDEADBEAA);
+}
+
+TEST_F(CpuLoadTest, LWL_LWR_0_0)
+{
+    cpu.setReg(CpuReg::T0, 0);
+    cpu.setReg(CpuReg::PC, 0x1000);
+    bus.storeWord(0, 0xCAFEBABE);
+    bus.storeWord(4, 0x12345678);
+    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 0).raw);
+    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 0).raw);
+    cpu.step();
+    cpu.setReg(CpuReg::T0, 4);
+    cpu.step();
+    cpu.step();
+    EXPECT_EQ(cpu.getReg(CpuReg::T1), 0x12345678);
+}
+
+TEST_F(CpuLoadTest, LWL_LWR_0_1)
+{
+    cpu.setReg(CpuReg::T0, 0);
+    cpu.setReg(CpuReg::PC, 0x1000);
+    bus.storeWord(0, 0xCAFEBABE);
+    bus.storeWord(4, 0x12345678);
+    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 0).raw);
+    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 1).raw);
+    cpu.step();
+    cpu.setReg(CpuReg::T0, 4);
+    cpu.step();
+    cpu.step();
+    EXPECT_EQ(cpu.getReg(CpuReg::T1), 0xBE123456);
+}
+
+TEST_F(CpuLoadTest, LWL_LWR_0_2)
+{
+    cpu.setReg(CpuReg::T0, 0);
+    cpu.setReg(CpuReg::PC, 0x1000);
+    bus.storeWord(0, 0xCAFEBABE);
+    bus.storeWord(4, 0x12345678);
+    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 0).raw);
+    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 2).raw);
+    cpu.step();
+    cpu.setReg(CpuReg::T0, 4);
+    cpu.step();
+    cpu.step();
+    EXPECT_EQ(cpu.getReg(CpuReg::T1), 0xBE001234);
+}
+
+TEST_F(CpuLoadTest, LWL_LWR_0_3)
+{
+    cpu.setReg(CpuReg::T0, 0);
+    cpu.setReg(CpuReg::PC, 0x1000);
+    bus.storeWord(0, 0xCAFEBABE);
+    bus.storeWord(4, 0x12345678);
+    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 0).raw);
+    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 3).raw);
+    cpu.step();
+    cpu.setReg(CpuReg::T0, 4);
+    cpu.step();
+    cpu.step();
+    EXPECT_EQ(cpu.getReg(CpuReg::T1), 0xBE000012);
+}
+
+TEST_F(CpuLoadTest, LWL_LWR_1_0)
+{
+    cpu.setReg(CpuReg::T0, 0);
+    cpu.setReg(CpuReg::PC, 0x1000);
+    bus.storeWord(0, 0xCAFEBABE);
+    bus.storeWord(4, 0x12345678);
+    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 1).raw);
+    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 0).raw);
+    cpu.step();
+    cpu.setReg(CpuReg::T0, 4);
+    cpu.step();
+    cpu.step();
+    EXPECT_EQ(cpu.getReg(CpuReg::T1), 0x12345678);
+}
+
+TEST_F(CpuLoadTest, LWL_LWR_1_1)
+{
+    cpu.setReg(CpuReg::T0, 0);
+    cpu.setReg(CpuReg::PC, 0x1000);
+    bus.storeWord(0, 0xCAFEBABE);
+    bus.storeWord(4, 0x12345678);
+    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 1).raw);
+    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 1).raw);
+    cpu.step();
+    cpu.setReg(CpuReg::T0, 4);
+    cpu.step();
+    cpu.step();
+    EXPECT_EQ(cpu.getReg(CpuReg::T1), 0xBA123456);
+}
+
+TEST_F(CpuLoadTest, LWL_LWR_1_2)
+{
+    cpu.setReg(CpuReg::T0, 0);
+    cpu.setReg(CpuReg::PC, 0x1000);
+    bus.storeWord(0, 0xCAFEBABE);
+    bus.storeWord(4, 0x12345678);
+    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 1).raw);
+    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 2).raw);
+    cpu.step();
+    cpu.setReg(CpuReg::T0, 4);
+    cpu.step();
+    cpu.step();
+    EXPECT_EQ(cpu.getReg(CpuReg::T1), 0xBABE1234);
+}
+
+TEST_F(CpuLoadTest, LWL_LWR_1_3)
+{
+    cpu.setReg(CpuReg::T0, 0);
+    cpu.setReg(CpuReg::PC, 0x1000);
+    bus.storeWord(0, 0xCAFEBABE);
+    bus.storeWord(4, 0x12345678);
+    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 1).raw);
+    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 3).raw);
+    cpu.step();
+    cpu.setReg(CpuReg::T0, 4);
+    cpu.step();
+    cpu.step();
+    EXPECT_EQ(cpu.getReg(CpuReg::T1), 0xBABE0012);
+}
+
+TEST_F(CpuLoadTest, LWL_LWR_2_0)
+{
+    cpu.setReg(CpuReg::T0, 0);
+    cpu.setReg(CpuReg::PC, 0x1000);
+    bus.storeWord(0, 0xCAFEBABE);
+    bus.storeWord(4, 0x12345678);
+    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 2).raw);
+    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 0).raw);
+    cpu.step();
+    cpu.setReg(CpuReg::T0, 4);
+    cpu.step();
+    cpu.step();
+    EXPECT_EQ(cpu.getReg(CpuReg::T1), 0x12345678);
+}
+
+TEST_F(CpuLoadTest, LWL_LWR_2_1)
+{
+    cpu.setReg(CpuReg::T0, 0);
+    cpu.setReg(CpuReg::PC, 0x1000);
+    bus.storeWord(0, 0xCAFEBABE);
+    bus.storeWord(4, 0x12345678);
+    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 2).raw);
+    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 1).raw);
+    cpu.step();
+    cpu.setReg(CpuReg::T0, 4);
+    cpu.step();
+    cpu.step();
+    EXPECT_EQ(cpu.getReg(CpuReg::T1), 0xFE123456);
+}
+
+TEST_F(CpuLoadTest, LWL_LWR_2_2)
+{
+    cpu.setReg(CpuReg::T0, 0);
+    cpu.setReg(CpuReg::PC, 0x1000);
+    bus.storeWord(0, 0xCAFEBABE);
+    bus.storeWord(4, 0x12345678);
+    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 2).raw);
+    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 2).raw);
+    cpu.step();
+    cpu.setReg(CpuReg::T0, 4);
+    cpu.step();
+    cpu.step();
+    EXPECT_EQ(cpu.getReg(CpuReg::T1), 0xFEBA1234);
+}
+
+TEST_F(CpuLoadTest, LWL_LWR_2_3)
+{
+    cpu.setReg(CpuReg::T0, 0);
+    cpu.setReg(CpuReg::PC, 0x1000);
+    bus.storeWord(0, 0xCAFEBABE);
+    bus.storeWord(4, 0x12345678);
+    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 2).raw);
+    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 3).raw);
+    cpu.step();
+    cpu.setReg(CpuReg::T0, 4);
+    cpu.step();
+    cpu.step();
+    EXPECT_EQ(cpu.getReg(CpuReg::T1), 0xFEBABE12);
+}
+
+TEST_F(CpuLoadTest, LWL_LWR_3_0)
+{
+    cpu.setReg(CpuReg::T0, 0);
+    cpu.setReg(CpuReg::PC, 0x1000);
+    bus.storeWord(0, 0xCAFEBABE);
+    bus.storeWord(4, 0x12345678);
+    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 3).raw);
+    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 0).raw);
+    cpu.step();
+    cpu.setReg(CpuReg::T0, 4);
+    cpu.step();
+    cpu.step();
+    EXPECT_EQ(cpu.getReg(CpuReg::T1), 0x12345678);
+}
+
+TEST_F(CpuLoadTest, LWL_LWR_3_1)
+{
+    cpu.setReg(CpuReg::T0, 0);
+    cpu.setReg(CpuReg::PC, 0x1000);
+    bus.storeWord(0, 0xCAFEBABE);
+    bus.storeWord(4, 0x12345678);
+    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 3).raw);
+    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 1).raw);
+    cpu.step();
+    cpu.setReg(CpuReg::T0, 4);
+    cpu.step();
+    cpu.step();
+    EXPECT_EQ(cpu.getReg(CpuReg::T1), 0xCA123456);
+}
+
+TEST_F(CpuLoadTest, LWL_LWR_3_2)
+{
+    cpu.setReg(CpuReg::T0, 0);
+    cpu.setReg(CpuReg::PC, 0x1000);
+    bus.storeWord(0, 0xCAFEBABE);
+    bus.storeWord(4, 0x12345678);
+    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 3).raw);
+    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 2).raw);
+    cpu.step();
+    cpu.setReg(CpuReg::T0, 4);
+    cpu.step();
+    cpu.step();
+    EXPECT_EQ(cpu.getReg(CpuReg::T1), 0xCAFE1234);
+}
+
+TEST_F(CpuLoadTest, LWL_LWR_3_3)
+{
+    cpu.setReg(CpuReg::T0, 0);
+    cpu.setReg(CpuReg::PC, 0x1000);
+    bus.storeWord(0, 0xCAFEBABE);
+    bus.storeWord(4, 0x12345678);
+    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 3).raw);
+    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 3).raw);
+    cpu.step();
+    cpu.setReg(CpuReg::T0, 4);
+    cpu.step();
+    cpu.step();
+    EXPECT_EQ(cpu.getReg(CpuReg::T1), 0xCAFEBA12);
+}
+
+TEST_F(CpuLoadTest, LWR_LWL_0_0)
+{
+    cpu.setReg(CpuReg::T0, 0);
+    cpu.setReg(CpuReg::PC, 0x1000);
+    bus.storeWord(0, 0xCAFEBABE);
+    bus.storeWord(4, 0x12345678);
+    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 0).raw);
+    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 0).raw);
+    cpu.step();
+    cpu.setReg(CpuReg::T0, 4);
+    cpu.step();
+    cpu.step();
+    EXPECT_EQ(cpu.getReg(CpuReg::T1), 0x78FEBABE);
+}
+
+TEST_F(CpuLoadTest, LWR_LWL_0_1)
+{
+    cpu.setReg(CpuReg::T0, 0);
+    cpu.setReg(CpuReg::PC, 0x1000);
+    bus.storeWord(0, 0xCAFEBABE);
+    bus.storeWord(4, 0x12345678);
+    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 0).raw);
+    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 1).raw);
+    cpu.step();
+    cpu.setReg(CpuReg::T0, 4);
+    cpu.step();
+    cpu.step();
+    EXPECT_EQ(cpu.getReg(CpuReg::T1), 0x5678BABE);
+}
+
+TEST_F(CpuLoadTest, LWR_LWL_0_2)
+{
+    cpu.setReg(CpuReg::T0, 0);
+    cpu.setReg(CpuReg::PC, 0x1000);
+    bus.storeWord(0, 0xCAFEBABE);
+    bus.storeWord(4, 0x12345678);
+    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 0).raw);
+    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 2).raw);
+    cpu.step();
+    cpu.setReg(CpuReg::T0, 4);
+    cpu.step();
+    cpu.step();
+    EXPECT_EQ(cpu.getReg(CpuReg::T1), 0x345678BE);
+}
+
+TEST_F(CpuLoadTest, LWR_LWL_0_3)
+{
+    cpu.setReg(CpuReg::T0, 0);
+    cpu.setReg(CpuReg::PC, 0x1000);
+    bus.storeWord(0, 0xCAFEBABE);
+    bus.storeWord(4, 0x12345678);
+    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 0).raw);
+    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 3).raw);
+    cpu.step();
+    cpu.setReg(CpuReg::T0, 4);
+    cpu.step();
+    cpu.step();
+    EXPECT_EQ(cpu.getReg(CpuReg::T1), 0x12345678);
+}
+
+TEST_F(CpuLoadTest, LWR_LWL_1_0)
+{
+    cpu.setReg(CpuReg::T0, 0);
+    cpu.setReg(CpuReg::PC, 0x1000);
+    bus.storeWord(0, 0xCAFEBABE);
+    bus.storeWord(4, 0x12345678);
+    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 1).raw);
+    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 0).raw);
+    cpu.step();
+    cpu.setReg(CpuReg::T0, 4);
+    cpu.step();
+    cpu.step();
+    EXPECT_EQ(cpu.getReg(CpuReg::T1), 0x78CAFEBA);
+}
+
+TEST_F(CpuLoadTest, LWR_LWL_1_1)
+{
+    cpu.setReg(CpuReg::T0, 0);
+    cpu.setReg(CpuReg::PC, 0x1000);
+    bus.storeWord(0, 0xCAFEBABE);
+    bus.storeWord(4, 0x12345678);
+    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 1).raw);
+    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 1).raw);
+    cpu.step();
+    cpu.setReg(CpuReg::T0, 4);
+    cpu.step();
+    cpu.step();
+    EXPECT_EQ(cpu.getReg(CpuReg::T1), 0x5678FEBA);
+}
+
+TEST_F(CpuLoadTest, LWR_LWL_1_2)
+{
+    cpu.setReg(CpuReg::T0, 0);
+    cpu.setReg(CpuReg::PC, 0x1000);
+    bus.storeWord(0, 0xCAFEBABE);
+    bus.storeWord(4, 0x12345678);
+    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 1).raw);
+    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 2).raw);
+    cpu.step();
+    cpu.setReg(CpuReg::T0, 4);
+    cpu.step();
+    cpu.step();
+    EXPECT_EQ(cpu.getReg(CpuReg::T1), 0x345678BA);
+}
+
+TEST_F(CpuLoadTest, LWR_LWL_1_3)
+{
+    cpu.setReg(CpuReg::T0, 0);
+    cpu.setReg(CpuReg::PC, 0x1000);
+    bus.storeWord(0, 0xCAFEBABE);
+    bus.storeWord(4, 0x12345678);
+    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 1).raw);
+    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 3).raw);
+    cpu.step();
+    cpu.setReg(CpuReg::T0, 4);
+    cpu.step();
+    cpu.step();
+    EXPECT_EQ(cpu.getReg(CpuReg::T1), 0x12345678);
+}
+
+TEST_F(CpuLoadTest, LWR_LWL_2_0)
+{
+    cpu.setReg(CpuReg::T0, 0);
+    cpu.setReg(CpuReg::PC, 0x1000);
+    bus.storeWord(0, 0xCAFEBABE);
+    bus.storeWord(4, 0x12345678);
+    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 2).raw);
+    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 0).raw);
+    cpu.step();
+    cpu.setReg(CpuReg::T0, 4);
+    cpu.step();
+    cpu.step();
+    EXPECT_EQ(cpu.getReg(CpuReg::T1), 0x7800CAFE);
+}
+
+TEST_F(CpuLoadTest, LWR_LWL_2_1)
+{
+    cpu.setReg(CpuReg::T0, 0);
+    cpu.setReg(CpuReg::PC, 0x1000);
+    bus.storeWord(0, 0xCAFEBABE);
+    bus.storeWord(4, 0x12345678);
+    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 2).raw);
+    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 1).raw);
+    cpu.step();
+    cpu.setReg(CpuReg::T0, 4);
+    cpu.step();
+    cpu.step();
+    EXPECT_EQ(cpu.getReg(CpuReg::T1), 0x5678CAFE);
+}
+
+TEST_F(CpuLoadTest, LWR_LWL_2_2)
+{
+    cpu.setReg(CpuReg::T0, 0);
+    cpu.setReg(CpuReg::PC, 0x1000);
+    bus.storeWord(0, 0xCAFEBABE);
+    bus.storeWord(4, 0x12345678);
+    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 2).raw);
+    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 2).raw);
+    cpu.step();
+    cpu.setReg(CpuReg::T0, 4);
+    cpu.step();
+    cpu.step();
+    EXPECT_EQ(cpu.getReg(CpuReg::T1), 0x345678FE);
+}
+
+TEST_F(CpuLoadTest, LWR_LWL_2_3)
+{
+    cpu.setReg(CpuReg::T0, 0);
+    cpu.setReg(CpuReg::PC, 0x1000);
+    bus.storeWord(0, 0xCAFEBABE);
+    bus.storeWord(4, 0x12345678);
+    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 2).raw);
+    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 3).raw);
+    cpu.step();
+    cpu.setReg(CpuReg::T0, 4);
+    cpu.step();
+    cpu.step();
+    EXPECT_EQ(cpu.getReg(CpuReg::T1), 0x12345678);
+}
+
+TEST_F(CpuLoadTest, LWR_LWL_3_0)
+{
+    cpu.setReg(CpuReg::T0, 0);
+    cpu.setReg(CpuReg::PC, 0x1000);
+    bus.storeWord(0, 0xCAFEBABE);
+    bus.storeWord(4, 0x12345678);
+    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 3).raw);
+    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 0).raw);
+    cpu.step();
+    cpu.setReg(CpuReg::T0, 4);
+    cpu.step();
+    cpu.step();
+    EXPECT_EQ(cpu.getReg(CpuReg::T1), 0x780000CA);
+}
+
+TEST_F(CpuLoadTest, LWR_LWL_3_1)
+{
+    cpu.setReg(CpuReg::T0, 0);
+    cpu.setReg(CpuReg::PC, 0x1000);
+    bus.storeWord(0, 0xCAFEBABE);
+    bus.storeWord(4, 0x12345678);
+    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 3).raw);
+    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 1).raw);
+    cpu.step();
+    cpu.setReg(CpuReg::T0, 4);
+    cpu.step();
+    cpu.step();
+    EXPECT_EQ(cpu.getReg(CpuReg::T1), 0x567800CA);
+}
+
+TEST_F(CpuLoadTest, LWR_LWL_3_2)
+{
+    cpu.setReg(CpuReg::T0, 0);
+    cpu.setReg(CpuReg::PC, 0x1000);
+    bus.storeWord(0, 0xCAFEBABE);
+    bus.storeWord(4, 0x12345678);
+    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 3).raw);
+    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 2).raw);
+    cpu.step();
+    cpu.setReg(CpuReg::T0, 4);
+    cpu.step();
+    cpu.step();
+    EXPECT_EQ(cpu.getReg(CpuReg::T1), 0x345678CA);
+}
+
+TEST_F(CpuLoadTest, LWR_LWL_3_3)
+{
+    cpu.setReg(CpuReg::T0, 0);
+    cpu.setReg(CpuReg::PC, 0x1000);
+    bus.storeWord(0, 0xCAFEBABE);
+    bus.storeWord(4, 0x12345678);
+    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 3).raw);
+    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 3).raw);
+    cpu.step();
+    cpu.setReg(CpuReg::T0, 4);
+    cpu.step();
+    cpu.step();
+    EXPECT_EQ(cpu.getReg(CpuReg::T1), 0x12345678);
 }
