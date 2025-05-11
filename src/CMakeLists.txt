@@ -7,15 +7,7 @@ find_package(imgui CONFIG REQUIRED)
 
 set(SRC_FILES
     main.cpp
-    BIOS.cpp
-    RAM.cpp
-    Bus.cpp
-    CPU.cpp
-    Disassembler.cpp
     System.cpp
-    MemoryMap.cpp
-    Memory.cpp
-    PsxExecutable.cpp
     Debugger/Debugger.cpp
     Debugger/AssemblyWindow.cpp
     Debugger/RegisterWindow.cpp
@@ -25,15 +17,18 @@ set(SRC_FILES
     Debugger/SettingsWindow.cpp
 )
 
+add_subdirectory(core)
+
 add_executable(${BINARY_NAME} ${SRC_FILES})
 
-include_directories(
-    ${CMAKE_SOURCE_DIR}/src
+target_include_directories(${BINARY_NAME} PUBLIC
+    ${CMAKE_SOURCE_DIR}/src/
     ${CMAKE_SOURCE_DIR}/src/Debugger
     ${CMAKE_SOURCE_DIR}/third_party/
 )
 
 target_link_libraries(${BINARY_NAME} PRIVATE
+    rgmcore
     fmt::fmt
     glfw
     OpenGL::GL

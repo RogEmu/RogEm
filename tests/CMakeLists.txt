@@ -1,22 +1,11 @@
 option(ENABLE_COVERAGE OFF)
 
 set(TEST_BINARY_NAME rogem_tests)
-set(SRC_FILES
-    ${CMAKE_SOURCE_DIR}/src/BIOS.cpp
-    ${CMAKE_SOURCE_DIR}/src/RAM.cpp
-    ${CMAKE_SOURCE_DIR}/src/Bus.cpp
-    ${CMAKE_SOURCE_DIR}/src/CPU.cpp
-    ${CMAKE_SOURCE_DIR}/src/MemoryMap.cpp
-    ${CMAKE_SOURCE_DIR}/src/Memory.cpp
-    ${CMAKE_SOURCE_DIR}/src/Disassembler.cpp
-)
 
 find_package(GTest CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 
-add_executable(
-    ${TEST_BINARY_NAME}
-    ${SRC_FILES}
+add_executable(${TEST_BINARY_NAME}
     Bus_tests.cpp
     CPU_arithmetic_tests.cpp
     CPU_branch_tests.cpp
@@ -40,10 +29,7 @@ target_link_libraries( ${TEST_BINARY_NAME} PRIVATE
     GTest::gtest
     GTest::gtest_main
     fmt::fmt
-)
-
-target_include_directories(${TEST_BINARY_NAME} PUBLIC
-    ${CMAKE_SOURCE_DIR}/src
+    rgmcore
 )
 
 include(GoogleTest)

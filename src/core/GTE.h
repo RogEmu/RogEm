@@ -16,16 +16,15 @@
 class GTE : public Coprocessor {
     public:
         GTE();
-    
-        void reset();
 
+        void reset();
 
         void execute(uint32_t opcode) override;
         void mtc(uint8_t reg, uint32_t value) override;
         void ctc(uint8_t reg, uint32_t value) override;
         uint32_t mfc(uint8_t reg) override;
         uint32_t cfc(uint8_t reg) override;
-    
+
     private:
             // Coprocessor 2 Control Registers (Cop2C)
         std::array<int32_t, 32> m_ctrlReg{};
@@ -46,6 +45,6 @@ class GTE : public Coprocessor {
         static constexpr int32_t IR_LIMIT_LOW = -0x8000;
         static constexpr int32_t IR_LIMIT_HIGH = 0x7FFF;
         void updateFlags(int32_t value, int limitHigh, int limitLow, uint32_t flagBit);
-    };
+};
 
 #endif /* !GTE_H_ */

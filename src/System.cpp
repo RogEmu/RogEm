@@ -17,11 +17,7 @@
 #include <chrono>
 #include <thread>
 
-#include "RAM.h"
-#include "CPU.h"
-#include "BIOS.h"
-#include "Bus.h"
-#include "PsxExecutable.hpp"
+#include "core/PsxExecutable.hpp"
 
 System::System() :
     m_lastTime(0.0)

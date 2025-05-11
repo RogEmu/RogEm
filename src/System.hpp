@@ -4,13 +4,13 @@
 #include <memory>
 #include <string>
 
-#include "Debugger.hpp"
-#include "CPU.h"
-#include "GLFW/glfw3.h"
+#include <GLFW/glfw3.h>
 
-class BIOS;
-class RAM;
-class Bus;
+#include "Debugger.hpp"
+#include "core/CPU.h"
+#include "core/BIOS.h"
+#include "core/RAM.h"
+#include "core/Bus.h"
 
 struct EmulatorConfig
 {
