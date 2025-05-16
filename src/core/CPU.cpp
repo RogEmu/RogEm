@@ -607,6 +607,9 @@ void CPU::xorImmediateWord(const Instruction &instruction)
 
 void CPU::loadWithDelay(CpuReg reg, uint32_t value)
 {
+    if (m_loadDelaySlots[0].reg == reg) {
+        m_loadDelaySlots[0].pending = false;
+    }
     m_loadDelaySlots[1].value = value;
     m_loadDelaySlots[1].reg = reg;
     m_loadDelaySlots[1].pending = true;
@@ -682,17 +685,17 @@ void CPU::loadWordRight(const Instruction &instruction)
     uint32_t mask = 0xFFFFFFFF << shift;
 
     uint32_t currentRegValue = 0;
+    CpuReg targetReg = static_cast<CpuReg>(instruction.i.rt);
 
-    if (m_loadDelaySlots[0].pending) {
+    if (m_loadDelaySlots[0].pending && m_loadDelaySlots[0].reg == targetReg) {
         currentRegValue = m_loadDelaySlots[0].value;
-        m_loadDelaySlots[0].pending = false;
     } else {
-        currentRegValue = getReg(static_cast<CpuReg>(instruction.i.rt));
+        currentRegValue = getReg(targetReg);
     }
 
     uint32_t loadedSection = (loadedWord & mask) >> shift;
     uint32_t result = (currentRegValue & ~(mask >> shift)) | loadedSection;
-    loadWithDelay(static_cast<CpuReg>(instruction.i.rt), result);
+    loadWithDelay(targetReg, result);
 }
 
 void CPU::loadWordLeft(const Instruction &instruction)
@@ -705,17 +708,17 @@ void CPU::loadWordLeft(const Instruction &instruction)
     uint32_t mask = 0xFFFFFFFF >> shift;
 
     uint32_t currentRegValue = 0;
+    CpuReg targetReg = static_cast<CpuReg>(instruction.i.rt);
 
-    if (m_loadDelaySlots[0].pending) {
+    if (m_loadDelaySlots[0].pending && m_loadDelaySlots[0].reg == targetReg) {
         currentRegValue = m_loadDelaySlots[0].value;
-        m_loadDelaySlots[0].pending = false;
     } else {
-        currentRegValue = getReg(static_cast<CpuReg>(instruction.i.rt));
+        currentRegValue = getReg(targetReg);
     }
 
     uint32_t loadedSection = (loadedWord & mask) << shift;
     uint32_t result = loadedSection | (currentRegValue & ~(mask << shift));
-    loadWithDelay(static_cast<CpuReg>(instruction.i.rt), result);
+    loadWithDelay(targetReg, result);
 }
 
 
