@@ -26,7 +26,7 @@ class GTE : public Coprocessor {
         uint32_t cfc(uint8_t reg) override;
 
     private:
-            // Coprocessor 2 Control Registers (Cop2C)
+        // Coprocessor 2 Control Registers (Cop2C)
         std::array<int32_t, 32> m_ctrlReg{};
 
         // Coprocessor 2 Data Registers (Cop2D)
@@ -34,8 +34,10 @@ class GTE : public Coprocessor {
 
         void decodeAndExecute(uint32_t opcode);
 
+        //Coordinate Calculation Commands
         void executeRTPS();
         void executeRTPT();
+        void executeNCLIP();
 
         // Internal helper functions
         int16_t extractSigned16(uint32_t value, bool upper);

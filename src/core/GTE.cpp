@@ -64,7 +64,7 @@ void GTE::decodeAndExecute(uint32_t opcode) {
             executeRTPS();
             break;
         case GTEFunction::NCLIP:
-            std::cout << "[GTE] NCLIP - Not implemented yet\n";
+            executeNCLIP();
             break;
         case GTEFunction::OP:
             std::cout << "[GTE] OP - Not implemented yet\n";
@@ -252,6 +252,32 @@ void GTE::executeRTPT() {
     // Set SZ3 and OTZ to final Z
     m_dataReg[19] = m_dataReg[18]; // SZ3 = last depth
     m_dataReg[7] = m_dataReg[18] & 0xFFFF; // OTZ
+}
+
+void GTE::executeNCLIP()
+{
+    // get r12, r13 and 14
+    int32_t r12 = m_dataReg[12];
+    int32_t r13 = m_dataReg[13];
+    int32_t r14 = m_dataReg[14];
+
+    // extract x and y from r12, r13 and r14
+    int16_t sx0 = static_cast<int16_t>(r12 & 0xFFFF);
+    int16_t sy0 = static_cast<int16_t>(r12 >> 16);
+    int16_t sx1 = static_cast<int16_t>(r13 & 0xFFFF);
+    int16_t sy1 = static_cast<int16_t>(r13 >> 16);
+    int16_t sx2 = static_cast<int16_t>(r14 & 0xFFFF);
+    int16_t sy2 = static_cast<int16_t>(r14 >> 16);
+
+    int64_t mac0 = static_cast<int64_t>(sx0) * sy1 +
+                    static_cast<int64_t>(sx1) * sy2 +
+                    static_cast<int64_t>(sx2) * sy0 -
+                    static_cast<int64_t>(sx0) * sy2 -
+                    static_cast<int64_t>(sx1) * sy0 -
+                    static_cast<int64_t>(sx2) * sy1;
+
+    // Store in MAC0
+    m_dataReg[24] = static_cast<int32_t>(mac0);  // MAC0
 }
 
 int16_t GTE::extractSigned16(uint32_t value, bool upper) {
