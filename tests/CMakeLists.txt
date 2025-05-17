@@ -18,6 +18,7 @@ add_executable(${TEST_BINARY_NAME}
     CPU_muldiv_tests.cpp
     CPU_shift_tests.cpp
     CPU_store_tests.cpp
+    GTE_coordinate_tests.cpp
 )
 
 if (${ENABLE_COVERAGE})

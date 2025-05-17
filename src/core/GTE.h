@@ -25,6 +25,9 @@ class GTE : public Coprocessor {
         uint32_t mfc(uint8_t reg) override;
         uint32_t cfc(uint8_t reg) override;
 
+        int32_t getDataReg(int index) const { return m_dataReg.at(index); }
+        void setDataReg(int index, int32_t value) { m_dataReg.at(index) = value; }
+
     private:
         // Coprocessor 2 Control Registers (Cop2C)
         std::array<int32_t, 32> m_ctrlReg{};
