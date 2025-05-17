@@ -935,8 +935,8 @@ void CPU::jumpRegister(const Instruction &instruction)
 
 void CPU::jumpAndLinkRegister(const Instruction &instruction)
 {
-    setReg(static_cast<CpuReg>(instruction.r.rd), m_pc + 8);
     jumpRegister(instruction);
+    setReg(static_cast<CpuReg>(instruction.r.rd), m_pc + 8);
 }
 
 void CPU::executeBranch(const Instruction &instruction)
