@@ -98,13 +98,13 @@ TEST_F(CpuExceptionTest, RFE)
     // Clear EPC, Cause, Status
     cpu.setCop0Reg(static_cast<uint8_t>(CP0Reg::CAUSE), 0);
     cpu.setCop0Reg(static_cast<uint8_t>(CP0Reg::EPC), 0);
-    cpu.setCop0Reg(static_cast<uint8_t>(CP0Reg::SR), 0x0000002A);
+    cpu.setCop0Reg(static_cast<uint8_t>(CP0Reg::SR), 0x00000028);
 
     cpu.step();
 
     // Bits 6-7 should remain to 0 after shift
     EXPECT_EQ((cpu.getCop0Reg(static_cast<uint8_t>(CP0Reg::SR)) >> 6) & 0x3, 0);
 
-    // Bits 0-5 should be shifted 2 places right
-    EXPECT_EQ(cpu.getCop0Reg(static_cast<uint8_t>(CP0Reg::SR)) & 0x3F, 0xA);
+    // Bits 0-5 should be copied 2 places right and bits 4-5 should be left untouched
+    EXPECT_EQ(cpu.getCop0Reg(static_cast<uint8_t>(CP0Reg::SR)) & 0x3F, 0x2A);
 }
