@@ -239,24 +239,18 @@ void CPU::handleLoadDelay()
 
 void CPU::branchOnConditionZero(const Instruction &instruction)
 {
-    uint8_t branchFunc = instruction.i.rt & 0b10001;
-    switch (static_cast<BranchOnConditionZero>(branchFunc))
-    {
-    case BranchOnConditionZero::BLTZ:
-        branchOnLessThanZero(instruction);
-        break;
-    case BranchOnConditionZero::BGEZ:
-        branchOnGreaterThanOrEqualToZero(instruction);
-        break;
-    case BranchOnConditionZero::BLTZAL:
-        branchOnLessThanZeroAndLink(instruction);
-        break;
-    case BranchOnConditionZero::BGEZAL:
-        branchOnGreaterThanOrEqualToZeroAndLink(instruction);
-        break;
-    default:
-        illegalInstruction(instruction);
-        break;
+    if ((instruction.i.rt & 0x1E) == 0x10) {
+        if (instruction.i.rt & 1) {
+            branchOnGreaterThanOrEqualToZeroAndLink(instruction);
+        } else {
+            branchOnLessThanZeroAndLink(instruction);
+        }
+    } else {
+        if (instruction.i.rt & 1) {
+            branchOnGreaterThanOrEqualToZero(instruction);
+        } else {
+            branchOnLessThanZero(instruction);
+        }
     }
 }
 
