@@ -114,6 +114,11 @@ std::vector<uint8_t> *Debugger::memoryRange(uint32_t addr)
     return slice;
 }
 
+Disassembler &Debugger::getDisassembler()
+{
+    return m_disassembler;
+}
+
 //The following functions are required for nlohmann-json to work, but are called automatically upon conversion
 void to_json(nlohmann::json& j, const Breakpoint& b)
 {

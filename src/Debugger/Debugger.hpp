@@ -76,6 +76,8 @@ class Debugger
 
         std::vector<uint8_t> *memoryRange(uint32_t addr);
 
+        Disassembler &getDisassembler();
+
     private:
         System *m_system;
 
@@ -84,6 +86,8 @@ class Debugger
 
         std::vector<Breakpoint> m_breakpoints;
         std::string breakpointsFilePath = "breakpoints.json";
+
+        Disassembler m_disassembler;
 
         bool m_paused;
         float m_simSpeed;

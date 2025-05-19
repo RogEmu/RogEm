@@ -117,23 +117,23 @@ void RegisterWindow::drawCop0Regs()
     {
         if(ImGui::BeginTable("Registers", 2, tableFlags))
         {
-
             ImGui::TableSetupScrollFreeze(0, 1);
             ImGui::TableSetupColumn("Register", ImGuiTableColumnFlags_NoResize | ImGuiTableColumnFlags_WidthFixed);
             ImGui::TableSetupColumn("Value");
             ImGui::TableHeadersRow();
 
-            ImGui::TableNextColumn();
-            m_prevCop0Regs[0] = m_debugger->getCop0Reg(12);
-            ImGui::Text("COP0-SR");
-            ImGui::TableNextColumn();
-            ImGui::Text("%08X", m_debugger->getCop0Reg(12));
+            for (uint8_t i = 0; i < COP0_NB_REG; i++) {
+                ImGui::TableNextColumn();
+                uint32_t regVal = m_debugger->getCop0Reg(i);
 
-            ImGui::TableNextColumn();
-            ImGui::Text("COP0-CAUSE");
-            ImGui::TableNextColumn();
-            m_prevCop0Regs[1] = m_debugger->getCop0Reg(13);
-            ImGui::Text("%08X", m_debugger->getCop0Reg(13));
+                ImColor textColor(regVal != 0 ?
+                                ImGui::GetColorU32(ImGuiCol_Text)
+                                : ImGui::GetColorU32(ImGuiCol_TextDisabled));
+                m_prevCop0Regs[i] = regVal;
+                ImGui::Text("%s", m_debugger->getDisassembler().copRegName(0, i).c_str());
+                ImGui::TableNextColumn();
+                ImGui::TextColored(textColor, "%08X", regVal);
+            }
             ImGui::EndTable();
         }
         ImGui::EndTabItem();
@@ -178,7 +178,7 @@ void RegisterWindow::drawRegister(uint8_t index)
 {
     ImColor textColor(ImGui::GetColorU32(ImGuiCol_Text));
     auto value = m_debugger->getCpuReg(static_cast<CpuReg>(index));
-    auto name = Disassembler::getRegisterName(index).c_str();
+    auto name = m_debugger->getDisassembler().cpuRegName(index).c_str();
 
     if (value == 0)
         textColor = ImGui::GetColorU32(ImGuiCol_TextDisabled);

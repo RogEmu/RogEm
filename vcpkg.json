@@ -7,6 +7,12 @@
     "nlohmann-json",
     "argparse",
     {
+      "name": "capstone",
+      "features": [
+        "mips"
+      ]
+    },
+    {
       "name": "imgui",
       "features": [
         "glfw-binding",

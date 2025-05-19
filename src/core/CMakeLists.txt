@@ -2,6 +2,9 @@ find_package(fmt CONFIG REQUIRED)
 
 set(CORE_LIB_NAME "rgmcore")
 
+find_package(fmt CONFIG REQUIRED)
+find_package(capstone CONFIG REQUIRED)
+
 set(CORE_SRC_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/BIOS.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RAM.cpp
@@ -19,6 +22,7 @@ target_include_directories(${CORE_LIB_NAME} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-target_link_libraries(${CORE_LIB_NAME} PRIVATE
+target_link_libraries(${CORE_LIB_NAME} PUBLIC
     fmt::fmt
+    capstone::capstone
 )

@@ -1094,8 +1094,7 @@ void CPU::triggerException(ExceptionType exception)
 
 void CPU::illegalInstruction(const Instruction &instruction)
 {
-    fmt::println(stderr, "Illegal instruction: ");
-    fmt::println(stderr, "{}", Disassembler::disassemble(m_pc, instruction));
+    fmt::println(stderr, "Illegal instruction: 0x{:08X}", instruction.raw);
 
     triggerException(ExceptionType::RI);
 }

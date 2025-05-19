@@ -223,10 +223,12 @@ void AssemblyWindow::drawAssemblyLine(uint32_t addr)
             m_debugger->addBreakpoint(addr, BreakpointType::EXEC, fmt::format("Breakpoint at 0x{:08X}", addr), false);
     }
 
+    InstructionData idata = m_debugger->getDisassembler().disasm(currentInstruction, addr);
     ImGui::TableNextColumn();
-    ImGui::TextColored(lineColor, "%s", Disassembler::formatAsHexBytes(currentInstruction).c_str());
+    ImGui::TextColored(lineColor, "%s", idata.bytes.c_str());
     ImGui::TableNextColumn();
-    ImGui::TextColored(lineColor, "%s", Disassembler::disassemble(addr, currentInstruction).c_str());
+    std::string assemblyStr = fmt::format("{:12}{}", idata.mnemonic, idata.operands);
+    ImGui::TextColored(lineColor, "%s", assemblyStr.c_str());
 }
 
 uint32_t AssemblyWindow::getAddressFromLine(int line)

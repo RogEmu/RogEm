@@ -12,14 +12,27 @@
 #include <string>
 
 #include "Instruction.h"
+#include <capstone/capstone.h>
 
-namespace Disassembler
+struct InstructionData
 {
-std::string disassemble(uint32_t pc, uint32_t word);
-std::string disassemble(uint32_t pc, Instruction i);
-std::string formatAsHexBytes(uint32_t value);
-std::string getRegisterName(uint8_t reg);
+    std::string mnemonic;
+    std::string operands;
+    std::string bytes;
 };
 
+class Disassembler
+{
+    public:
+        Disassembler();
+        ~Disassembler();
+
+        InstructionData disasm(uint32_t inst, uint32_t addr) const;
+        std::string cpuRegName(uint8_t reg) const;
+        std::string copRegName(int cop, uint8_t reg) const;
+
+    private:
+        csh m_csHandle;
+};
 
 #endif /* !DISASSEMBLER_H_ */
