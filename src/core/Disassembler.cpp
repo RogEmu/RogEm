@@ -79,6 +79,7 @@ InstructionData Disassembler::disasm(uint32_t inst, uint32_t addr) const
     if (count > 0) {
         data.mnemonic = disInst->mnemonic;
         data.operands = disInst->op_str;
+        cs_free(disInst, count);
     }
     return data;
 }
