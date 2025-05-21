@@ -15,6 +15,7 @@ set(CORE_SRC_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/MemoryMap.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Memory.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/PsxExecutable.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/SystemControlCop.cpp
 )
 
 add_library(${CORE_LIB_NAME} STATIC ${CORE_SRC_FILES})

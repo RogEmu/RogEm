@@ -68,7 +68,7 @@ void CPU::reset()
     m_pc = RESET_VECTOR;
     std::memset(m_loadDelaySlots, 0, sizeof(m_loadDelaySlots));
     std::memset(m_gpr, 0, NB_GPR * sizeof(m_gpr[0]));
-    std::memset(m_cop0Reg, 0, COP0_NB_REG * sizeof(m_cop0Reg[0]));
+    m_cop0.reset();
     m_isTtyOutput = false;
 }
 
@@ -382,18 +382,14 @@ void CPU::setReg(CpuReg reg, uint32_t val)
     }
 }
 
-uint32_t CPU::getCop0Reg(uint8_t reg) const
+uint32_t CPU::getCop0Reg(uint8_t reg)
 {
-    if (reg >= COP0_NB_REG)
-        return 0;
-    return m_cop0Reg[reg];
+    return m_cop0.mfc(reg);
 }
 
 void CPU::setCop0Reg(uint8_t reg, uint32_t val)
 {
-    if (reg >= COP0_NB_REG)
-        return;
-    m_cop0Reg[reg] = val;
+    m_cop0.mtc(reg, val);
 }
 
 void CPU::loadUpperImmediate(const Instruction &instruction)

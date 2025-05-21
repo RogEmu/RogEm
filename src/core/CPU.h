@@ -13,6 +13,7 @@
 #include <string>
 #include "Instruction.h"
 #include "Bus.h"
+#include "SystemControlCop.hpp"
 
 #define RESET_VECTOR (uint32_t)0xBFC00000
 #define NB_GPR 32
@@ -99,7 +100,7 @@ class CPU {
         uint32_t getReg(CpuReg reg) const;
         void setReg(CpuReg reg, uint32_t val);
 
-        uint32_t getCop0Reg(uint8_t reg) const;
+        uint32_t getCop0Reg(uint8_t reg);
         void setCop0Reg(uint8_t reg, uint32_t val);
 
     private:
@@ -210,8 +211,7 @@ class CPU {
         uint32_t m_hi;
         uint32_t m_lo;
 
-        // COP0 registers
-        uint32_t m_cop0Reg[COP0_NB_REG];
+        SystemControlCop m_cop0;
 
         uint32_t m_nextPc;
 
