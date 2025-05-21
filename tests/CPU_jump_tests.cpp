@@ -8,12 +8,9 @@ class CpuJumpTest : public testing::Test
 {
     protected:
         Bus bus;
-        BIOS bios;
-        RAM ram;
         CPU cpu;
 
         CpuJumpTest() :
-            bus(&bios, &ram),
             cpu(&bus)
         {
             cpu.setReg(CpuReg::PC, 0x10000);

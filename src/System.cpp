@@ -19,8 +19,7 @@
 
 #include "core/PsxExecutable.hpp"
 
-System::System() :
-    m_lastTime(0.0)
+System::System()
 {
 }
 
@@ -48,72 +47,40 @@ Bus *System::getBus()
     return m_bus.get();
 }
 
-void newFrame()
-{
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-}
-
-void renderFrame()
-{
-    ImGui::Render();
-    int display_w, display_h;
-    glfwGetFramebufferSize(glfwGetCurrentContext(), &display_w, &display_h);
-    glViewport(0, 0, display_w, display_h);
-    glClear(GL_COLOR_BUFFER_BIT);
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-    glfwSwapBuffers(glfwGetCurrentContext());
-}
-
 int System::init(const EmulatorConfig &config)
 {
+    if (initGFLW() || initImGUi())
+        return 1;
+
     m_emuConfig = config;
-    m_bios = std::make_unique<BIOS>(config.biosFilePath);
-    m_ram = std::make_unique<RAM>();
-    m_bus = std::make_unique<Bus>(m_bios.get(), m_ram.get());
+    m_bus = std::make_unique<Bus>();
     m_cpu = std::make_unique<CPU>(m_bus.get());
     m_debug = std::make_unique<Debugger>(this);
 
-    if (initGFLW() || initImGUi())
-        return 1;
+    if (m_bus) {
+        BIOS *bios = static_cast<BIOS *>(m_bus->getDevice(PsxDeviceType::BIOS));
+        if (!bios->loadFromFile(config.biosFilePath)) {
+            return 1;
+        }
+    }
     return 0;
 }
 
 void System::run()
 {
-    double uiFps = 1/60.0;
-    double uiTimer = 0.0;
+    int cpuFreq = 33868800;
+    float cyclesPerFrame = cpuFreq / 60.0f;
+    int currentCycles = 0;
 
     m_isRunning = true;
     while (m_isRunning)
     {
-        m_debug->update();
-        if (!m_debug->isPaused())
-        {
-            if (m_cpu->getReg(CpuReg::PC) == 0x80030000 && !m_emuConfig.exeFilePath.empty()) {
-                loadPsxExe(m_emuConfig.exeFilePath.c_str());
-            }
-            m_cpu->step();
+        update();
+        if (currentCycles >= cyclesPerFrame) {
+            render();
+            currentCycles = 0;
         }
-        if (uiTimer > uiFps)
-        {
-            glfwPollEvents();
-
-            if (glfwGetWindowAttrib(m_window, GLFW_ICONIFIED) != 0) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            }
-            if (glfwWindowShouldClose(m_window))
-            {
-                m_isRunning = false;
-            }
-            newFrame();
-            ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport());
-            m_debug->draw();
-            renderFrame();
-            uiTimer = 0;
-        }
-        uiTimer += deltaTime();
+        currentCycles += 4;
     }
 }
 
@@ -157,25 +124,64 @@ int System::initImGUi()
     return 0;
 }
 
-double System::deltaTime()
+void System::update()
 {
-    double currentTime = glfwGetTime();
-    double dt = currentTime - m_lastTime;
+    if (!m_debug->isPaused())
+    {
+        if (m_cpu->getReg(CpuReg::PC) == 0x80030000 && !m_emuConfig.exeFilePath.empty()) {
+            loadPsxExe(m_emuConfig.exeFilePath.c_str());
+        }
+        m_cpu->step();
+    }
+    m_debug->update();
+}
 
-    m_lastTime = currentTime;
-    return dt;
+static void newImGuiFrame()
+{
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+}
+
+static void renderImGuiFrame()
+{
+    ImGui::Render();
+    int display_w, display_h;
+    glfwGetFramebufferSize(glfwGetCurrentContext(), &display_w, &display_h);
+    glViewport(0, 0, display_w, display_h);
+    glClear(GL_COLOR_BUFFER_BIT);
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+    glfwSwapBuffers(glfwGetCurrentContext());
+}
+
+void System::render()
+{
+    glfwPollEvents();
+    if (glfwGetWindowAttrib(m_window, GLFW_ICONIFIED) != 0) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+    if (glfwWindowShouldClose(m_window))
+    {
+        m_isRunning = false;
+    }
+    newImGuiFrame();
+    ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport());
+    m_debug->draw();
+    renderImGuiFrame();
 }
 
 void System::loadPsxExe(const char *path)
 {
     PsxExecutable exe(path);
 
+    auto ram = static_cast<RAM *>(m_bus->getDevice(PsxDeviceType::RAM));
+
     if (exe.load()) {
         m_cpu->setReg(CpuReg::PC, exe.initialPc);
         m_cpu->setReg(CpuReg::GP, exe.initialGp);
         m_cpu->setReg(CpuReg::SP, exe.initialSpBase);
         m_cpu->setReg(CpuReg::FP, exe.initialSpBase);
-        m_ram->loadExecutable(exe.ramDestination, exe.exeData);
+        ram->loadExecutable(exe.ramDestination, exe.exeData);
         fmt::println("Loaded PSX-EXE file successfuly");
     } else {
         fmt::println("Error while loading PSX-EXE file");

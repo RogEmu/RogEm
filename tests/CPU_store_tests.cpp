@@ -8,14 +8,11 @@ class CpuStoreTest : public testing::Test
 {
     protected:
         Bus bus;
-        BIOS bios;
-        RAM ram;
         CPU cpu;
 
         const uint32_t defaultRegVal = 0xDEADBEEF;
 
         CpuStoreTest() :
-            bus(&bios, &ram),
             cpu(&bus)
         {
             cpu.reset();

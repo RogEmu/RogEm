@@ -10,10 +10,14 @@
 #include <fstream>
 #include <fmt/format.h>
 
+#include "MemoryMap.hpp"
+
 BIOS::BIOS() :
-    Memory(BIOS_SIZE)
+    Memory(MemoryMap::BIOS_RANGE.length)
 {
     setReadOnly(true);
+    m_memoryRange.start = MemoryMap::BIOS_RANGE.start;
+    m_memoryRange.length = MemoryMap::BIOS_RANGE.length;
 }
 
 BIOS::BIOS(const std::string &path) :
@@ -31,15 +35,15 @@ bool BIOS::loadFromFile(const std::string &path)
         fmt::println(stderr, "Cannot open BIOS file \"{}\"", path);
         return false;
     }
-    file.read(reinterpret_cast<char*>(m_data.data()), BIOS_SIZE);
+    file.read(reinterpret_cast<char*>(m_data.data()), MemoryMap::BIOS_RANGE.length);
     if (file.fail())
     {
         fmt::println(stderr, "Cannot read BIOS file \"{}\"", path);
         return false;
     }
-    if (file.gcount() != BIOS_SIZE)
+    if (file.gcount() != MemoryMap::BIOS_RANGE.length)
     {
-        fmt::println(stderr, "The provided BIOS file is invalid: Expected size: {} but got {}", BIOS_SIZE, file.gcount());
+        fmt::println(stderr, "The provided BIOS file is invalid: Expected size: {} but got {}", MemoryMap::BIOS_RANGE.length, file.gcount());
         return false;
     }
     return true;

@@ -35,14 +35,13 @@ class System
         int initGFLW();
         int initImGUi();
 
-        double deltaTime();
+        void update();
+        void render();
 
         void loadPsxExe(const char *path);
 
     private:
         std::unique_ptr<CPU> m_cpu;
-        std::unique_ptr<RAM> m_ram;
-        std::unique_ptr<BIOS> m_bios;
         std::unique_ptr<Bus> m_bus;
 
         std::unique_ptr<Debugger> m_debug;
@@ -51,8 +50,6 @@ class System
 
         GLFWwindow* m_window;
         bool m_isRunning;
-
-        double m_lastTime;
 };
 
 #endif /* !SYSTEM_HPP_ */

@@ -12,8 +12,6 @@
 
 #include <string>
 
-constexpr uint32_t BIOS_SIZE = 512 * 1024;
-
 class BIOS : public Memory
 {
     public:

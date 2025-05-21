@@ -15,6 +15,11 @@ set(CORE_SRC_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/MemoryMap.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Memory.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/PsxExecutable.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ScratchPad.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/DMA.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/SPU.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Timers.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/InterruptController.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/SystemControlCop.cpp
 )
 

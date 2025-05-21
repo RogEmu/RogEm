@@ -11,15 +11,25 @@
 #include <cstdint>
 #include <vector>
 #include <memory>
+#include <unordered_map>
 
-class BIOS;
-class RAM;
-class Memory;
+#include "PsxDevice.hpp"
+
+enum class PsxDeviceType {
+    RAM,
+    BIOS,
+    DMA,
+    SPU,
+    GPU,
+    Scratchpad,
+    Timers,
+    IRQController
+};
 
 class Bus
 {
     public:
-        Bus(BIOS *bios, RAM *ram);
+        Bus();
         ~Bus();
 
         uint32_t loadWord(uint32_t addr) const;
@@ -32,11 +42,10 @@ class Bus
         std::vector<uint8_t> *getMemoryRange(uint32_t addr);
         const std::vector<uint8_t> *getMemoryRange(uint32_t addr) const;
 
+        PsxDevice *getDevice(PsxDeviceType deviceType);
+
     private:
-        BIOS *m_bios;
-        RAM *m_ram;
-        std::unique_ptr<Memory> m_ioPorts;
-        std::unique_ptr<Memory> m_scratchpad;
+        std::unordered_map<PsxDeviceType, std::unique_ptr<PsxDevice>> m_devices;
 
         uint32_t m_cacheControl;
 };

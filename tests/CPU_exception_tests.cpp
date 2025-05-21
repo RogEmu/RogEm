@@ -8,12 +8,9 @@ class CpuExceptionTest : public testing::Test
 {
     protected:
         Bus bus;
-        BIOS bios;
-        RAM ram;
         CPU cpu;
 
         CpuExceptionTest() :
-            bus(&bios, &ram),
             cpu(&bus)
         {
             cpu.setReg(CpuReg::PC, 0x10000);

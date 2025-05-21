@@ -8,14 +8,11 @@ class CpuBranchTest : public testing::Test
 {
     protected:
         Bus bus;
-        BIOS bios;
-        RAM ram;
         CPU cpu;
 
         const uint32_t defaultRegVal = 0xDEADBEEF;
 
         CpuBranchTest() :
-            bus(&bios, &ram),
             cpu(&bus)
         {
             cpu.setReg(CpuReg::PC, 0x10000);

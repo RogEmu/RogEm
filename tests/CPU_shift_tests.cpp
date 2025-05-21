@@ -8,14 +8,11 @@ class CpuShiftTest : public testing::Test
 {
     protected:
         Bus bus;
-        BIOS bios;
-        RAM ram;
         CPU cpu;
 
         const uint32_t defaultRegVal = 0xDEADBEEF;
 
         CpuShiftTest() :
-            bus(&bios, &ram),
             cpu(&bus)
         {
             cpu.reset();

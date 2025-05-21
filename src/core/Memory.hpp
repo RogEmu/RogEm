@@ -9,20 +9,21 @@
 #define MEMORY_HPP_
 
 #include <vector>
-#include <cstdint>
 
-class Memory
+#include "PsxDevice.hpp"
+
+class Memory : public PsxDevice
 {
     public:
         Memory(uint32_t size, uint8_t initVal = 0);
 
-        uint32_t loadWord(uint32_t addr) const;
-        uint16_t loadHalfWord(uint32_t addr) const;
-        uint8_t loadByte(uint32_t addr) const;
+        uint32_t read32(uint32_t addr) override;
+        uint16_t read16(uint32_t addr) override;
+        uint8_t read8(uint32_t addr) override;
 
-        void storeWord(uint32_t addr, uint32_t val);
-        void storeHalfWord(uint32_t addr, uint16_t val);
-        void storeByte(uint32_t addr, uint8_t val);
+        void write32(uint32_t val, uint32_t addr) override;
+        void write16(uint16_t val, uint32_t addr) override;
+        void write8(uint8_t val, uint32_t addr) override;
 
         std::vector<uint8_t> *data();
         const std::vector<uint8_t> *data() const;
@@ -32,8 +33,6 @@ class Memory
 
     protected:
         std::vector<uint8_t> m_data;
-
-    private:
         bool m_readOnly;
 };
 

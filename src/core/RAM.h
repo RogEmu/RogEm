@@ -10,8 +10,6 @@
 
 #include "Memory.hpp"
 
-constexpr uint32_t RAM_SIZE = (2048 * 1024);
-
 class RAM : public Memory
 {
     public:

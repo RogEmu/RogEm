@@ -10,17 +10,25 @@
 #include <fmt/format.h>
 
 #include "MemoryMap.hpp"
-#include "BIOS.h"
+#include "Memory.hpp"
 #include "RAM.h"
+#include "BIOS.h"
+#include "ScratchPad.hpp"
+#include "DMA.hpp"
+#include "SPU.hpp"
+#include "Timers.hpp"
+#include "InterruptController.hpp"
 
-Bus::Bus(BIOS* bios, RAM *ram) :
-    m_bios(bios),
-    m_ram(ram),
-    m_ioPorts(nullptr),
+Bus::Bus() :
     m_cacheControl(0)
 {
-    m_ioPorts = std::make_unique<Memory>(MemoryMap::IO_PORTS_RANGE.length);
-    m_scratchpad = std::make_unique<Memory>(MemoryMap::SCRATCHPAD_RANGE.length);
+    m_devices[PsxDeviceType::BIOS] = std::make_unique<BIOS>();
+    m_devices[PsxDeviceType::RAM] = std::make_unique<RAM>();
+    m_devices[PsxDeviceType::Scratchpad] = std::make_unique<ScratchPad>();
+    m_devices[PsxDeviceType::DMA] = std::make_unique<DMA>();
+    m_devices[PsxDeviceType::SPU] = std::make_unique<SPU>();
+    m_devices[PsxDeviceType::Timers] = std::make_unique<Timers>();
+    m_devices[PsxDeviceType::IRQController] = std::make_unique<InterruptController>();
 }
 
 Bus::~Bus()
@@ -33,25 +41,17 @@ uint32_t Bus::loadWord(uint32_t addr) const
 
     if (addr % 4 != 0)
     {
-        fmt::println(stderr, "Unaligned LW instruction\n");
+        fmt::println(stderr, "Unaligned word load");
         return 0;
     }
 
+    for (auto &[_, device] : m_devices) {
+        if (device->isAddressed(pAddress)) {
+            return device->read32(pAddress);
+        }
+    }
     if (addr == 0x1F801814) {
         return 0xFFFFFFFF;
-    }
-
-    if (MemoryMap::BIOS_RANGE.contains(pAddress))
-    {
-        return m_bios->loadWord(MemoryMap::BIOS_RANGE.remap(pAddress));
-    }
-    if (MemoryMap::RAM_RANGE.contains(pAddress))
-    {
-        return m_ram->loadWord(MemoryMap::RAM_RANGE.remap(pAddress));
-    }
-    if (MemoryMap::IO_PORTS_RANGE.contains(pAddress))
-    {
-        return m_ioPorts->loadWord(MemoryMap::IO_PORTS_RANGE.remap(pAddress));
     }
     if (MemoryMap::CACHE_CONTROL_RANGE.contains(pAddress))
     {
@@ -59,12 +59,8 @@ uint32_t Bus::loadWord(uint32_t addr) const
     }
     if (MemoryMap::EXP2_RANGE.contains(pAddress))
     {
-        fmt::println(stderr, "Read word from Expansion Region 2 (0x{:08x}): Not implemented", addr);
+        fmt::println("Read word from Expansion Region 2 (0x{:08x}): Not implemented", addr);
         return 0;
-    }
-    if (MemoryMap::SCRATCHPAD_RANGE.contains(pAddress))
-    {
-        return m_scratchpad->loadWord(MemoryMap::SCRATCHPAD_RANGE.remap(pAddress));
     }
     return 0;
 }
@@ -75,29 +71,23 @@ void Bus::storeWord(uint32_t addr, uint32_t value)
 
     if (addr % 4 != 0)
     {
-        fmt::println(stderr, "Unaligned SW instruction");
+        fmt::println(stderr, "Unaligned word store");
         return;
     }
 
-    if (MemoryMap::RAM_RANGE.contains(pAddress))
-    {
-        m_ram->storeWord(pAddress, value);
+    for (auto &[_, device] : m_devices) {
+        if (device->isAddressed(pAddress)) {
+            device->write32(value, pAddress);
+            return;
+        }
     }
-    else if (MemoryMap::IO_PORTS_RANGE.contains(pAddress))
-    {
-        m_ioPorts->storeWord(MemoryMap::IO_PORTS_RANGE.remap(pAddress), value);
-    }
-    else if (MemoryMap::CACHE_CONTROL_RANGE.contains(pAddress))
+    if (MemoryMap::CACHE_CONTROL_RANGE.contains(pAddress))
     {
         m_cacheControl = value;
     }
     else if (MemoryMap::EXP2_RANGE.contains(pAddress))
     {
-        fmt::println(stderr, "Write word 0x{:08X} to Expansion Region 2 (0x{:08X}): Not implemented", value, addr);
-    }
-    else if (MemoryMap::SCRATCHPAD_RANGE.contains(pAddress))
-    {
-        m_scratchpad->storeWord(MemoryMap::SCRATCHPAD_RANGE.remap(pAddress), value);
+        fmt::println("Write word 0x{:08X} to Expansion Region 2 (0x{:08X}): Not implemented", value, addr);
     }
     else
     {
@@ -111,35 +101,24 @@ uint16_t Bus::loadHalfWord(uint32_t addr) const
 
     if (addr % 2 != 0)
     {
-        fmt::println(stderr, "Unaligned LH instruction");
+        fmt::println(stderr, "Unaligned halfword load");
         return 0;
     }
 
-    if (MemoryMap::BIOS_RANGE.contains(pAddress))
-    {
-        return m_bios->loadHalfWord(MemoryMap::BIOS_RANGE.remap(pAddress));
-    }
-    if (MemoryMap::RAM_RANGE.contains(pAddress))
-    {
-        return m_ram->loadHalfWord(MemoryMap::RAM_RANGE.remap(pAddress));
-    }
-    if (MemoryMap::IO_PORTS_RANGE.contains(pAddress))
-    {
-        return m_ioPorts->loadHalfWord(MemoryMap::IO_PORTS_RANGE.remap(pAddress));
+    for (auto &[_, device] : m_devices) {
+        if (device->isAddressed(pAddress)) {
+            return device->read16(pAddress);
+        }
     }
     if (MemoryMap::CACHE_CONTROL_RANGE.contains(pAddress))
     {
-        fmt::println(stderr, "Read halfword from Cache Control Registers (0x{:08x}): Not implemented", addr);
+        fmt::println("Read halfword from Cache Control Registers (0x{:08x}): Not implemented", addr);
         return 0;
     }
     if (MemoryMap::EXP2_RANGE.contains(pAddress))
     {
-        fmt::println(stderr, "Read halfword from Expansion Region 2 (0x{:08x}): Not implemented", addr);
+        fmt::println("Read halfword from Expansion Region 2 (0x{:08x}): Not implemented", addr);
         return 0;
-    }
-    if (MemoryMap::SCRATCHPAD_RANGE.contains(pAddress))
-    {
-        return m_scratchpad->loadHalfWord(MemoryMap::SCRATCHPAD_RANGE.remap(pAddress));
     }
     return 0;
 }
@@ -150,28 +129,23 @@ void Bus::storeHalfWord(uint32_t addr, uint16_t value)
 
     if (addr % 2 != 0)
     {
-        fmt::println(stderr, "Unaligned SH instruction");
+        fmt::println(stderr, "Unaligned halfword store");
         return;
     }
-    if (MemoryMap::RAM_RANGE.contains(pAddress))
-    {
-        m_ram->storeHalfWord(pAddress, value);
+
+    for (auto &[_, device] : m_devices) {
+        if (device->isAddressed(pAddress)) {
+            device->write16(value, pAddress);
+            return;
+        }
     }
-    else if (MemoryMap::IO_PORTS_RANGE.contains(pAddress))
+    if (MemoryMap::CACHE_CONTROL_RANGE.contains(pAddress))
     {
-        m_ioPorts->storeHalfWord(MemoryMap::IO_PORTS_RANGE.remap(pAddress), value);
-    }
-    else if (MemoryMap::CACHE_CONTROL_RANGE.contains(pAddress))
-    {
-        fmt::println(stderr, "Write halfword 0x{:04X} to Cache Control Registers (0x{:08X}): Not implemented", value, addr);
+        fmt::println("Write halfword 0x{:04X} to Cache Control Registers (0x{:08X}): Not implemented", value, addr);
     }
     else if (MemoryMap::EXP2_RANGE.contains(pAddress))
     {
-        fmt::println(stderr, "Write halfword 0x{:04X} to Expansion Region 2 (0x{:08X}): Not implemented", value, addr);
-    }
-    else if (MemoryMap::SCRATCHPAD_RANGE.contains(pAddress))
-    {
-        m_scratchpad->storeHalfWord(MemoryMap::SCRATCHPAD_RANGE.remap(pAddress), value);
+        fmt::println("Write halfword 0x{:04X} to Expansion Region 2 (0x{:08X}): Not implemented", value, addr);
     }
     else
     {
@@ -183,31 +157,20 @@ uint8_t Bus::loadByte(uint32_t addr) const
 {
     uint32_t pAddress = MemoryMap::mapAddress(addr);
 
-    if (MemoryMap::BIOS_RANGE.contains(pAddress))
-    {
-        return m_bios->loadByte(MemoryMap::BIOS_RANGE.remap(pAddress));
-    }
-    if (MemoryMap::RAM_RANGE.contains(pAddress))
-    {
-        return m_ram->loadByte(MemoryMap::RAM_RANGE.remap(pAddress));
-    }
-    if (MemoryMap::IO_PORTS_RANGE.contains(pAddress))
-    {
-        return m_ioPorts->loadByte(MemoryMap::IO_PORTS_RANGE.remap(pAddress));
+    for (auto &[_, device] : m_devices) {
+        if (device->isAddressed(pAddress)) {
+            return device->read8(pAddress);
+        }
     }
     if (MemoryMap::CACHE_CONTROL_RANGE.contains(pAddress))
     {
-        fmt::println(stderr, "Read byte from Cache Control Registers (0x{:08x}): Not implemented", addr);
+        fmt::println("Read byte from Cache Control Registers (0x{:08x}): Not implemented", addr);
         return 0;
     }
     if (MemoryMap::EXP2_RANGE.contains(pAddress))
     {
-        fmt::println(stderr, "Read byte from Expansion Region 2 (0x{:08x}): Not implemented", addr);
+        fmt::println("Read byte from Expansion Region 2 (0x{:08x}): Not implemented", addr);
         return 0;
-    }
-    if (MemoryMap::SCRATCHPAD_RANGE.contains(pAddress))
-    {
-        return m_scratchpad->loadByte(MemoryMap::SCRATCHPAD_RANGE.remap(pAddress));
     }
     return 0;
 }
@@ -216,25 +179,20 @@ void Bus::storeByte(uint32_t addr, uint8_t value)
 {
     uint32_t pAddress = MemoryMap::mapAddress(addr);
 
-    if (MemoryMap::RAM_RANGE.contains(pAddress))
-    {
-        m_ram->storeByte(pAddress, value);
+
+    for (auto &[_, device] : m_devices) {
+        if (device->isAddressed(pAddress)) {
+            device->write8(value, pAddress);
+            return;
+        }
     }
-    else if (MemoryMap::IO_PORTS_RANGE.contains(pAddress))
+    if (MemoryMap::CACHE_CONTROL_RANGE.contains(pAddress))
     {
-        m_ioPorts->storeByte(MemoryMap::IO_PORTS_RANGE.remap(pAddress), value);
-    }
-    else if (MemoryMap::CACHE_CONTROL_RANGE.contains(pAddress))
-    {
-        fmt::println(stderr, "Write byte 0x{:02X} to Cache Control Registers (0x{:08X}): Not implemented", value, addr);
+        fmt::println("Write byte 0x{:02X} to Cache Control Registers (0x{:08X}): Not implemented", value, addr);
     }
     else if (MemoryMap::EXP2_RANGE.contains(pAddress))
     {
-        fmt::println(stderr, "Write byte 0x{:02X} to Expansion Region 2 (0x{:08X}): Not implemented", value, addr);
-    }
-    else if (MemoryMap::SCRATCHPAD_RANGE.contains(pAddress))
-    {
-        m_scratchpad->storeByte(MemoryMap::SCRATCHPAD_RANGE.remap(pAddress), value);
+        fmt::println("Write byte 0x{:02X} to Expansion Region 2 (0x{:08X}): Not implemented", value, addr);
     }
     else
     {
@@ -246,12 +204,14 @@ std::vector<uint8_t> *Bus::getMemoryRange(uint32_t addr)
 {
     auto mappedAddress = MemoryMap::mapAddress(addr);
 
-    if (MemoryMap::BIOS_RANGE.contains(mappedAddress))
-        return m_bios->data();
-    if (MemoryMap::RAM_RANGE.contains(mappedAddress))
-        return m_ram->data();
-    if (MemoryMap::IO_PORTS_RANGE.contains(mappedAddress))
-        return m_ioPorts->data();
+    for (auto &[_, device] : m_devices) {
+        if (device->isAddressed(mappedAddress)) {
+            auto memoryDev = dynamic_cast<Memory *>(device.get());
+            if (memoryDev) {
+                return memoryDev->data();
+            }
+        }
+    }
     return nullptr;
 }
 
@@ -259,11 +219,22 @@ const std::vector<uint8_t> *Bus::getMemoryRange(uint32_t addr) const
 {
     auto mappedAddress = MemoryMap::mapAddress(addr);
 
-    if (MemoryMap::BIOS_RANGE.contains(mappedAddress))
-        return m_bios->data();
-    if (MemoryMap::RAM_RANGE.contains(mappedAddress))
-        return m_ram->data();
-    if (MemoryMap::IO_PORTS_RANGE.contains(mappedAddress))
-        return m_ioPorts->data();
+    for (auto &[_, device] : m_devices) {
+        if (device->isAddressed(mappedAddress)) {
+            auto memoryDev = dynamic_cast<Memory *>(device.get());
+            if (memoryDev) {
+                return memoryDev->data();
+            }
+        }
+    }
+    return nullptr;
+}
+
+PsxDevice *Bus::getDevice(PsxDeviceType deviceType)
+{
+    auto it = m_devices.find(deviceType);
+    if (it != m_devices.end()) {
+        return it->second.get();
+    }
     return nullptr;
 }
