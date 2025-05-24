@@ -4,6 +4,7 @@ set(CORE_LIB_NAME "rgmcore")
 
 find_package(fmt CONFIG REQUIRED)
 find_package(capstone CONFIG REQUIRED)
+find_package(spdlog CONFIG REQUIRED)
 
 set(CORE_SRC_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/BIOS.cpp
@@ -32,4 +33,5 @@ target_include_directories(${CORE_LIB_NAME} PUBLIC
 target_link_libraries(${CORE_LIB_NAME} PUBLIC
     fmt::fmt
     capstone::capstone
+    spdlog::spdlog
 )

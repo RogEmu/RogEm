@@ -7,7 +7,7 @@
 
 #include "Bus.h"
 
-#include <fmt/format.h>
+#include <spdlog/spdlog.h>
 
 #include "MemoryMap.hpp"
 #include "Memory.hpp"
@@ -41,7 +41,7 @@ uint32_t Bus::loadWord(uint32_t addr) const
 
     if (addr % 4 != 0)
     {
-        fmt::println(stderr, "Unaligned word load");
+        spdlog::error("Unaligned word load");
         return 0;
     }
 
@@ -59,7 +59,7 @@ uint32_t Bus::loadWord(uint32_t addr) const
     }
     if (MemoryMap::EXP2_RANGE.contains(pAddress))
     {
-        fmt::println("Read word from Expansion Region 2 (0x{:08x}): Not implemented", addr);
+        spdlog::warn("Read word from Expansion Region 2 (0x{:08x}): Not implemented", addr);
         return 0;
     }
     return 0;
@@ -71,7 +71,7 @@ void Bus::storeWord(uint32_t addr, uint32_t value)
 
     if (addr % 4 != 0)
     {
-        fmt::println(stderr, "Unaligned word store");
+        spdlog::error("Unaligned word store");
         return;
     }
 
@@ -87,11 +87,11 @@ void Bus::storeWord(uint32_t addr, uint32_t value)
     }
     else if (MemoryMap::EXP2_RANGE.contains(pAddress))
     {
-        fmt::println("Write word 0x{:08X} to Expansion Region 2 (0x{:08X}): Not implemented", value, addr);
+        spdlog::warn("Write word 0x{:08X} to Expansion Region 2 (0x{:08X}): Not implemented", value, addr);
     }
     else
     {
-        fmt::println(stderr, "Address 0x{:08X} is not supported", addr);
+        spdlog::error("Address 0x{:08X} is not supported", addr);
     }
 }
 
@@ -101,7 +101,7 @@ uint16_t Bus::loadHalfWord(uint32_t addr) const
 
     if (addr % 2 != 0)
     {
-        fmt::println(stderr, "Unaligned halfword load");
+        spdlog::error("Unaligned halfword load");
         return 0;
     }
 
@@ -112,12 +112,12 @@ uint16_t Bus::loadHalfWord(uint32_t addr) const
     }
     if (MemoryMap::CACHE_CONTROL_RANGE.contains(pAddress))
     {
-        fmt::println("Read halfword from Cache Control Registers (0x{:08x}): Not implemented", addr);
+        spdlog::warn("Read halfword from Cache Control Registers (0x{:08x}): Not implemented", addr);
         return 0;
     }
     if (MemoryMap::EXP2_RANGE.contains(pAddress))
     {
-        fmt::println("Read halfword from Expansion Region 2 (0x{:08x}): Not implemented", addr);
+        spdlog::warn("Read halfword from Expansion Region 2 (0x{:08x}): Not implemented", addr);
         return 0;
     }
     return 0;
@@ -129,7 +129,7 @@ void Bus::storeHalfWord(uint32_t addr, uint16_t value)
 
     if (addr % 2 != 0)
     {
-        fmt::println(stderr, "Unaligned halfword store");
+        spdlog::error("Unaligned halfword store");
         return;
     }
 
@@ -141,15 +141,15 @@ void Bus::storeHalfWord(uint32_t addr, uint16_t value)
     }
     if (MemoryMap::CACHE_CONTROL_RANGE.contains(pAddress))
     {
-        fmt::println("Write halfword 0x{:04X} to Cache Control Registers (0x{:08X}): Not implemented", value, addr);
+        spdlog::warn("Write halfword 0x{:04X} to Cache Control Registers (0x{:08X}): Not implemented", value, addr);
     }
     else if (MemoryMap::EXP2_RANGE.contains(pAddress))
     {
-        fmt::println("Write halfword 0x{:04X} to Expansion Region 2 (0x{:08X}): Not implemented", value, addr);
+        spdlog::warn("Write halfword 0x{:04X} to Expansion Region 2 (0x{:08X}): Not implemented", value, addr);
     }
     else
     {
-        fmt::println(stderr, "Address 0x{:08X} is not supported", addr);
+        spdlog::error("Address 0x{:08X} is not supported", addr);
     }
 }
 
@@ -164,12 +164,12 @@ uint8_t Bus::loadByte(uint32_t addr) const
     }
     if (MemoryMap::CACHE_CONTROL_RANGE.contains(pAddress))
     {
-        fmt::println("Read byte from Cache Control Registers (0x{:08x}): Not implemented", addr);
+        spdlog::warn("Read byte from Cache Control Registers (0x{:08x}): Not implemented", addr);
         return 0;
     }
     if (MemoryMap::EXP2_RANGE.contains(pAddress))
     {
-        fmt::println("Read byte from Expansion Region 2 (0x{:08x}): Not implemented", addr);
+        spdlog::warn("Read byte from Expansion Region 2 (0x{:08x}): Not implemented", addr);
         return 0;
     }
     return 0;
@@ -188,15 +188,15 @@ void Bus::storeByte(uint32_t addr, uint8_t value)
     }
     if (MemoryMap::CACHE_CONTROL_RANGE.contains(pAddress))
     {
-        fmt::println("Write byte 0x{:02X} to Cache Control Registers (0x{:08X}): Not implemented", value, addr);
+        spdlog::warn("Write byte 0x{:02X} to Cache Control Registers (0x{:08X}): Not implemented", value, addr);
     }
     else if (MemoryMap::EXP2_RANGE.contains(pAddress))
     {
-        fmt::println("Write byte 0x{:02X} to Expansion Region 2 (0x{:08X}): Not implemented", value, addr);
+        spdlog::warn("Write byte 0x{:02X} to Expansion Region 2 (0x{:08X}): Not implemented", value, addr);
     }
     else
     {
-        fmt::println(stderr, "Address 0x{:08X} is not supported", addr);
+        spdlog::error("Address 0x{:08X} is not supported", addr);
     }
 }
 

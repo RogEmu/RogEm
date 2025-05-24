@@ -7,7 +7,7 @@
 
 #include "MemoryMap.hpp"
 
-#include <fmt/format.h>
+#include <spdlog/spdlog.h>
 
 uint32_t MemoryMap::mapAddress(uint32_t addr)
 {
@@ -23,7 +23,7 @@ uint32_t MemoryMap::mapAddress(uint32_t addr)
         case MemorySegments::KSEG2:
             return addr;
         default:
-            fmt::println(stderr, "Unsupported address space: {:08X}", addr);
+            spdlog::error("Unsupported address space: {:08X}", addr);
             break;
     }
     return 0;

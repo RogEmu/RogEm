@@ -8,7 +8,7 @@
 #include "CPU.h"
 #include <iostream>
 #include <cstring>
-#include <fmt/format.h>
+#include <spdlog/spdlog.h>
 
 #include "Disassembler.h"
 
@@ -1090,7 +1090,7 @@ void CPU::triggerException(ExceptionType exception)
 
 void CPU::illegalInstruction(const Instruction &instruction)
 {
-    fmt::println(stderr, "Illegal instruction: 0x{:08X}", instruction.raw);
+    spdlog::error("Illegal instruction: 0x{:08X}", instruction.raw);
 
     triggerException(ExceptionType::RI);
 }

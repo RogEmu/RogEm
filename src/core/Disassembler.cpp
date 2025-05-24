@@ -8,6 +8,7 @@
 #include "Disassembler.h"
 
 #include <fmt/format.h>
+#include <spdlog/spdlog.h>
 
 static const char *cpuGprNames[32] = {
     "zero",
@@ -48,7 +49,7 @@ Disassembler::Disassembler()
     auto mode = static_cast<cs_mode>(CS_MODE_MIPS32 + CS_MODE_BIG_ENDIAN);
     auto status = cs_open(CS_ARCH_MIPS, mode, &m_csHandle);
     if (status != CS_ERR_OK) {
-        fmt::println(stderr, "Error initializing capstone engine: {}", cs_strerror(status));
+        spdlog::error("Error initializing capstone engine: {}", cs_strerror(status));
     }
 }
 

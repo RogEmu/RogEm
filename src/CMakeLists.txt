@@ -4,6 +4,7 @@ find_package(fmt CONFIG REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(imgui CONFIG REQUIRED)
+find_package(spdlog CONFIG REQUIRED)
 
 set(SRC_FILES
     main.cpp
@@ -33,4 +34,5 @@ target_link_libraries(${BINARY_NAME} PRIVATE
     glfw
     OpenGL::GL
     imgui::imgui
+    spdlog::spdlog
 )

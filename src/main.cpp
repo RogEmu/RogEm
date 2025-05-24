@@ -9,11 +9,13 @@
 #include <thread>
 
 #include <argparse/argparse.hpp>
+#include <spdlog/spdlog.h>
 
 #include "System.hpp"
 
 int main(int ac, char **av)
 {
+    spdlog::set_level(spdlog::level::debug);
     argparse::ArgumentParser args("RogEm");
 
     args.add_description("A PSX emulator written in C++ with love");
@@ -26,8 +28,8 @@ int main(int ac, char **av)
     }
     catch(const std::exception& e)
     {
-        std::cerr << e.what() << std::endl;
-        std::cerr << args;
+        spdlog::error("{}", e.what());
+        std::cout << args;
         return 1;
     }
 

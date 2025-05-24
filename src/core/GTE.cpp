@@ -9,7 +9,7 @@
 #include <stdexcept>
 #include <iostream>
 #include <limits>
-#include <fmt/format.h>
+#include <spdlog/spdlog.h>
 
 GTE::GTE() {
     reset();
@@ -22,7 +22,7 @@ void GTE::reset() {
 
 uint32_t GTE::mfc(uint8_t reg) {
     if (reg >= 32) {
-        fmt::println(stderr, "mfc error: Register index out of range");
+        spdlog::error("mfc error: Register index out of range");
         return 0;
     }
     return static_cast<uint32_t>(m_dataReg[reg]);
@@ -30,7 +30,7 @@ uint32_t GTE::mfc(uint8_t reg) {
 
 uint32_t GTE::cfc(uint8_t reg) {
     if (reg >= 32) {
-        fmt::println(stderr, "cfc error: Register index out of range");
+        spdlog::error("cfc error: Register index out of range");
         return 0;
     }
     return static_cast<uint32_t>(m_ctrlReg[reg]);
@@ -38,7 +38,7 @@ uint32_t GTE::cfc(uint8_t reg) {
 
 void GTE::mtc(uint8_t reg, uint32_t value) {
     if (reg >= 32) {
-        fmt::println(stderr, "mtc error: Register index out of range");
+        spdlog::error("mtc error: Register index out of range");
         return;
     }
     m_dataReg[reg] = static_cast<int32_t>(value);
@@ -46,7 +46,7 @@ void GTE::mtc(uint8_t reg, uint32_t value) {
 
 void GTE::ctc(uint8_t reg, uint32_t value) {
     if (reg >= 32) {
-        fmt::println(stderr, "ctc error: Register index out of range");
+        spdlog::error("ctc error: Register index out of range");
         return;
     }
     m_ctrlReg[reg] = static_cast<int32_t>(value);
@@ -67,67 +67,67 @@ void GTE::decodeAndExecute(uint32_t opcode) {
             executeNCLIP();
             break;
         case GTEFunction::OP:
-            std::cout << "[GTE] OP - Not implemented yet\n";
+            spdlog::warn("[GTE] OP - Not implemented yet");
             break;
         case GTEFunction::DPCS:
-            std::cout << "[GTE] DPCS - Not implemented yet\n";
+            spdlog::warn("[GTE] DPCS - Not implemented yet");
             break;
         case GTEFunction::INTPL:
-            std::cout << "[GTE] INTPL - Not implemented yet\n";
+            spdlog::warn("[GTE] INTPL - Not implemented yet");
             break;
         case GTEFunction::MVMVA:
-            std::cout << "[GTE] MVMVA - Not implemented yet\n";
+            spdlog::warn("[GTE] MVMVA - Not implemented yet");
             break;
         case GTEFunction::NCDS:
-            std::cout << "[GTE] NCDS - Not implemented yet\n";
+            spdlog::warn("[GTE] NCDS - Not implemented yet");
             break;
         case GTEFunction::CDP:
-            std::cout << "[GTE] CDP - Not implemented yet\n";
+            spdlog::warn("[GTE] CDP - Not implemented yet");
             break;
         case GTEFunction::NCDT:
-            std::cout << "[GTE] NCDT - Not implemented yet\n";
+            spdlog::warn("[GTE] NCDT - Not implemented yet");
             break;
         case GTEFunction::NCCS:
-            std::cout << "[GTE] NCCS - Not implemented yet\n";
+            spdlog::warn("[GTE] NCCS - Not implemented yet");
             break;
         case GTEFunction::CC:
-            std::cout << "[GTE] CC - Not implemented yet\n";
+            spdlog::warn("[GTE] CC - Not implemented yet");
             break;
         case GTEFunction::NCS:
-            std::cout << "[GTE] NCS - Not implemented yet\n";
+            spdlog::warn("[GTE] NCS - Not implemented yet");
             break;
         case GTEFunction::NCT:
-            std::cout << "[GTE] NCT - Not implemented yet\n";
+            spdlog::warn("[GTE] NCT - Not implemented yet");
             break;
         case GTEFunction::SQR:
-            std::cout << "[GTE] SQR - Not implemented yet\n";
+            spdlog::warn("[GTE] SQR - Not implemented yet");
             break;
         case GTEFunction::DCPL:
-            std::cout << "[GTE] DCPL - Not implemented yet\n";
+            spdlog::warn("[GTE] DCPL - Not implemented yet");
             break;
         case GTEFunction::DPCT:
-            std::cout << "[GTE] DPCT - Not implemented yet\n";
+            spdlog::warn("[GTE] DPCT - Not implemented yet");
             break;
         case GTEFunction::AVSZ3:
-            std::cout << "[GTE] AVSZ3 - Not implemented yet\n";
+            spdlog::warn("[GTE] AVSZ3 - Not implemented yet");
             break;
         case GTEFunction::AVSZ4:
-            std::cout << "[GTE] AVSZ4 - Not implemented yet\n";
+            spdlog::warn("[GTE] AVSZ4 - Not implemented yet");
             break;
         case GTEFunction::RTPT:
             executeRTPT();
             break;
         case GTEFunction::GPF:
-            std::cout << "[GTE] GPF - Not implemented yet\n";
+            spdlog::warn("[GTE] GPF - Not implemented yet");
             break;
         case GTEFunction::GPL:
-            std::cout << "[GTE] GPL - Not implemented yet\n";
+            spdlog::warn("[GTE] GPL - Not implemented yet");
             break;
         case GTEFunction::NCCT:
-            std::cout << "[GTE] NCCT - Not implemented yet\n";
+            spdlog::warn("[GTE] NCCT - Not implemented yet");
             break;
         default:
-            std::cerr << "[GTE] Unimplemented or unknown instruction function: 0x" << std::hex << (int)funct << std::dec << "\n";
+            spdlog::error("[GTE] Unimplemented or unknown instruction function: 0x{:02X}", opcode & 0x3F);
             break;
     }
 }

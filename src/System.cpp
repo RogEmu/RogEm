@@ -13,7 +13,7 @@
 #include <memory>
 #include <string>
 #include <fstream>
-#include <fmt/format.h>
+#include <spdlog/spdlog.h>
 #include <chrono>
 #include <thread>
 
@@ -182,8 +182,8 @@ void System::loadPsxExe(const char *path)
         m_cpu->setReg(CpuReg::SP, exe.initialSpBase);
         m_cpu->setReg(CpuReg::FP, exe.initialSpBase);
         ram->loadExecutable(exe.ramDestination, exe.exeData);
-        fmt::println("Loaded PSX-EXE file successfuly");
+        spdlog::info("Loaded PSX-EXE file successfuly");
     } else {
-        fmt::println("Error while loading PSX-EXE file");
+        spdlog::error("Error while loading PSX-EXE file");
     }
 }

@@ -8,7 +8,7 @@
 #include "BIOS.h"
 
 #include <fstream>
-#include <fmt/format.h>
+#include <spdlog/spdlog.h>
 
 #include "MemoryMap.hpp"
 
@@ -32,18 +32,18 @@ bool BIOS::loadFromFile(const std::string &path)
 
     if (!file.is_open())
     {
-        fmt::println(stderr, "Cannot open BIOS file \"{}\"", path);
+        spdlog::error("Cannot open BIOS file \"{}\"", path);
         return false;
     }
     file.read(reinterpret_cast<char*>(m_data.data()), MemoryMap::BIOS_RANGE.length);
     if (file.fail())
     {
-        fmt::println(stderr, "Cannot read BIOS file \"{}\"", path);
+        spdlog::error("Cannot read BIOS file \"{}\"", path);
         return false;
     }
     if (file.gcount() != MemoryMap::BIOS_RANGE.length)
     {
-        fmt::println(stderr, "The provided BIOS file is invalid: Expected size: {} but got {}", MemoryMap::BIOS_RANGE.length, file.gcount());
+        spdlog::error("The provided BIOS file is invalid: Expected size: {} but got {}", MemoryMap::BIOS_RANGE.length, file.gcount());
         return false;
     }
     return true;

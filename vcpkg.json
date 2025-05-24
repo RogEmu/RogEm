@@ -6,6 +6,7 @@
     "opengl",
     "nlohmann-json",
     "argparse",
+    "spdlog",
     {
       "name": "capstone",
       "features": [
