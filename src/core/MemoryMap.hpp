@@ -61,9 +61,10 @@ constexpr MemRange CACHE_CONTROL_RANGE =     {0xFFFE0000, 512};
 constexpr MemRange MEMORY_CONTROL_1_RANGE =  {0x1F801000, 36};
 constexpr MemRange MEMORY_CONTROL_2_RANGE =  {0x1F801060, 4};
 constexpr MemRange INTERRUPT_CONTROL_RANGE = {0x1F801070, 0x8};
-constexpr MemRange TIMERS_RANGE =            {0x1F801100, 0x2F};
-constexpr MemRange SPU_CONTROL_REGS_RANGE =  {0x1F801C00, 0x200};
 constexpr MemRange DMA_REGISTERS_RANGE =     {0x1F801080, 0x80};
+constexpr MemRange TIMERS_RANGE =            {0x1F801100, 0x2F};
+constexpr MemRange GPU_REGISTERS_RANGE =     {0x1F801810, 0x10};
+constexpr MemRange SPU_CONTROL_REGS_RANGE =  {0x1F801C00, 0x200};
 
 constexpr MemorySegments AddressSegments[] = {
     MemorySegments::KUSEG,

@@ -14,6 +14,7 @@
 #include "RAM.h"
 #include "BIOS.h"
 #include "ScratchPad.hpp"
+#include "GPU.hpp"
 #include "DMA.hpp"
 #include "SPU.hpp"
 #include "Timers.hpp"
@@ -26,6 +27,7 @@ Bus::Bus() :
     m_devices[PsxDeviceType::RAM] = std::make_unique<RAM>();
     m_devices[PsxDeviceType::Scratchpad] = std::make_unique<ScratchPad>();
     m_devices[PsxDeviceType::DMA] = std::make_unique<DMA>();
+    m_devices[PsxDeviceType::GPU] = std::make_unique<GPU>();
     m_devices[PsxDeviceType::SPU] = std::make_unique<SPU>();
     m_devices[PsxDeviceType::Timers] = std::make_unique<Timers>();
     m_devices[PsxDeviceType::IRQController] = std::make_unique<InterruptController>();
@@ -50,9 +52,11 @@ uint32_t Bus::loadWord(uint32_t addr) const
             return device->read32(pAddress);
         }
     }
-    if (addr == 0x1F801814) {
-        return 0xFFFFFFFF;
-    }
+    // Check if addressing the GPU Stat Register
+    // Doesn't trigger ResetCallback: Remove _96 .. when value is 0xFFFFFFFF ??
+    // if (addr == 0x1F801814) {
+    //     return 0x10000000;
+    // }
     if (MemoryMap::CACHE_CONTROL_RANGE.contains(pAddress))
     {
         return m_cacheControl;
