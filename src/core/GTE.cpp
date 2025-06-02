@@ -9,17 +9,30 @@
 #include <stdexcept>
 #include <iostream>
 #include <limits>
+#include <algorithm>
 #include <spdlog/spdlog.h>
 
+/**
+ * @brief Constructs the GTE coprocessor and initializes registers.
+ */
 GTE::GTE() {
     reset();
 }
 
+/**
+ * @brief Resets all control and data registers of the GTE to 0.
+ */
 void GTE::reset() {
     m_ctrlReg.fill(0);
     m_dataReg.fill(0);
 }
 
+/**
+ * @brief Moves a value from the GTE data register to the CPU (MFC2).
+ * 
+ * @param reg Index of the data register (0–31).
+ * @return uint32_t The current value of the data register.
+ */
 uint32_t GTE::mfc(uint8_t reg) {
     if (reg >= 32) {
         spdlog::error("mfc error: Register index out of range");
@@ -28,6 +41,13 @@ uint32_t GTE::mfc(uint8_t reg) {
     return static_cast<uint32_t>(m_dataReg[reg]);
 }
 
+
+/**
+ * @brief Moves a value from the GTE control register to the CPU (CFC2).
+ * 
+ * @param reg Index of the control register (0–31).
+ * @return uint32_t The current value of the control register.
+ */
 uint32_t GTE::cfc(uint8_t reg) {
     if (reg >= 32) {
         spdlog::error("cfc error: Register index out of range");
@@ -36,6 +56,12 @@ uint32_t GTE::cfc(uint8_t reg) {
     return static_cast<uint32_t>(m_ctrlReg[reg]);
 }
 
+/**
+ * @brief Moves a value from the CPU to a GTE data register (MTC2).
+ * 
+ * @param reg Index of the data register (0–31).
+ * @param value 32-bit value to store.
+ */
 void GTE::mtc(uint8_t reg, uint32_t value) {
     if (reg >= 32) {
         spdlog::error("mtc error: Register index out of range");
@@ -44,6 +70,12 @@ void GTE::mtc(uint8_t reg, uint32_t value) {
     m_dataReg[reg] = static_cast<int32_t>(value);
 }
 
+/**
+ * @brief Moves a value from the CPU to a GTE control register (CTC2).
+ * 
+ * @param reg Index of the control register (0–31).
+ * @param value 32-bit value to store.
+ */
 void GTE::ctc(uint8_t reg, uint32_t value) {
     if (reg >= 32) {
         spdlog::error("ctc error: Register index out of range");
@@ -52,16 +84,26 @@ void GTE::ctc(uint8_t reg, uint32_t value) {
     m_ctrlReg[reg] = static_cast<int32_t>(value);
 }
 
+/**
+ * @brief Executes a GTE instruction by decoding its function code.
+ * 
+ * @param opcode Full 32-bit encoded GTE instruction.
+ */
 void GTE::execute(uint32_t opcode) {
     decodeAndExecute(opcode);
 }
 
+/**
+ * @brief Decodes the GTE instruction and dispatches to the appropriate handler.
+ * 
+ * @param opcode The 32-bit instruction word.
+ */
 void GTE::decodeAndExecute(uint32_t opcode) {
     GTEFunction funct = static_cast<GTEFunction>(opcode & 0x3F);
 
     switch (funct) {
         case GTEFunction::RTPS:
-            executeRTPS();
+            std::cout << "[GTE] RTPS - Need to be redone\n";
             break;
         case GTEFunction::NCLIP:
             executeNCLIP();
@@ -109,13 +151,13 @@ void GTE::decodeAndExecute(uint32_t opcode) {
             spdlog::warn("[GTE] DPCT - Not implemented yet");
             break;
         case GTEFunction::AVSZ3:
-            spdlog::warn("[GTE] AVSZ3 - Not implemented yet");
+            executeAVSZ3();
             break;
         case GTEFunction::AVSZ4:
-            spdlog::warn("[GTE] AVSZ4 - Not implemented yet");
+            executeAVSZ4();
             break;
         case GTEFunction::RTPT:
-            executeRTPT();
+            std::cout << "[GTE] RTPT - Need to be redone\n";
             break;
         case GTEFunction::GPF:
             spdlog::warn("[GTE] GPF - Not implemented yet");
@@ -132,6 +174,7 @@ void GTE::decodeAndExecute(uint32_t opcode) {
     }
 }
 
+/* OBSOLETE TO REDO
 void GTE::executeRTPS() {
     // Read V0 (input vector)
     int16_t vx = extractSigned16(m_dataReg[0], false); // VXY0 low
@@ -139,17 +182,17 @@ void GTE::executeRTPS() {
     int16_t vz = extractSigned16(m_dataReg[1], false); // VZ0 low only
 
     // Read rotation matrix R (fixed-point 12.20 format)
-    int32_t r11 = static_cast<int16_t>(m_ctrlReg[0] >> 16);
-    int32_t r12 = static_cast<int16_t>(m_ctrlReg[0] & 0xFFFF);
-    int32_t r13 = static_cast<int16_t>(m_ctrlReg[1] >> 16);
+    int32_t r11 = static_cast<int16_t>(m_ctrlReg[0] >> 16) << 4;
+    int32_t r12 = static_cast<int16_t>(m_ctrlReg[0] & 0xFFFF) << 4;
+    int32_t r13 = static_cast<int16_t>(m_ctrlReg[1] >> 16) << 4;
 
-    int32_t r21 = static_cast<int16_t>(m_ctrlReg[1] & 0xFFFF);
-    int32_t r22 = static_cast<int16_t>(m_ctrlReg[2] >> 16);
-    int32_t r23 = static_cast<int16_t>(m_ctrlReg[2] & 0xFFFF);
+    int32_t r21 = static_cast<int16_t>(m_ctrlReg[1] & 0xFFFF) << 4;
+    int32_t r22 = static_cast<int16_t>(m_ctrlReg[2] >> 16) << 4;
+    int32_t r23 = static_cast<int16_t>(m_ctrlReg[2] & 0xFFFF) << 4;
 
-    int32_t r31 = static_cast<int16_t>(m_ctrlReg[3] >> 16);
-    int32_t r32 = static_cast<int16_t>(m_ctrlReg[3] & 0xFFFF);
-    int32_t r33 = static_cast<int16_t>(m_ctrlReg[4] >> 16);
+    int32_t r31 = static_cast<int16_t>(m_ctrlReg[3] >> 16) << 4;
+    int32_t r32 = static_cast<int16_t>(m_ctrlReg[3] & 0xFFFF) << 4;
+    int32_t r33 = static_cast<int16_t>(m_ctrlReg[4] >> 16) << 4;
 
     // Translation vector T
     int32_t trx = m_ctrlReg[5];
@@ -184,8 +227,11 @@ void GTE::executeRTPS() {
     // Perspective divide using IR3 as Z
     int32_t z = m_dataReg[11];
     int32_t zc = (z > 0) ? z : 1; // Avoid divide by 0 or negative
-    int32_t sx = ((m_dataReg[9] * h) / zc + ofx) & 0xFFFF;
-    int32_t sy = ((m_dataReg[10] * h) / zc + ofy) & 0xFFFF;
+    int32_t sx = ((m_dataReg[9] * h) / zc + ofx);
+    int32_t sy = ((m_dataReg[10] * h) / zc + ofy);
+
+    sx = std::clamp(sx, 0, 0xFFFF);
+    sy = std::clamp(sy, 0, 0xFFFF);
 
     // Output to screen XY register SXY2
     m_dataReg[14] = (sy << 16) | (sx & 0xFFFF);
@@ -205,15 +251,15 @@ void GTE::executeRTPT() {
     int32_t ofy = m_ctrlReg[25];
     int32_t h = m_ctrlReg[26];
 
-    int32_t r11 = static_cast<int16_t>(m_ctrlReg[0] >> 16);
-    int32_t r12 = static_cast<int16_t>(m_ctrlReg[0] & 0xFFFF);
-    int32_t r13 = static_cast<int16_t>(m_ctrlReg[1] >> 16);
-    int32_t r21 = static_cast<int16_t>(m_ctrlReg[1] & 0xFFFF);
-    int32_t r22 = static_cast<int16_t>(m_ctrlReg[2] >> 16);
-    int32_t r23 = static_cast<int16_t>(m_ctrlReg[2] & 0xFFFF);
-    int32_t r31 = static_cast<int16_t>(m_ctrlReg[3] >> 16);
-    int32_t r32 = static_cast<int16_t>(m_ctrlReg[3] & 0xFFFF);
-    int32_t r33 = static_cast<int16_t>(m_ctrlReg[4] >> 16);
+    int32_t r11 = static_cast<int16_t>(m_ctrlReg[0] >> 16) << 4;
+    int32_t r12 = static_cast<int16_t>(m_ctrlReg[0] & 0xFFFF) << 4;
+    int32_t r13 = static_cast<int16_t>(m_ctrlReg[1] >> 16) << 4;
+    int32_t r21 = static_cast<int16_t>(m_ctrlReg[1] & 0xFFFF) << 4;
+    int32_t r22 = static_cast<int16_t>(m_ctrlReg[2] >> 16) << 4;
+    int32_t r23 = static_cast<int16_t>(m_ctrlReg[2] & 0xFFFF) << 4;
+    int32_t r31 = static_cast<int16_t>(m_ctrlReg[3] >> 16) << 4;
+    int32_t r32 = static_cast<int16_t>(m_ctrlReg[3] & 0xFFFF) << 4;
+    int32_t r33 = static_cast<int16_t>(m_ctrlReg[4] >> 16) << 4;
 
     int32_t trx = m_ctrlReg[5];
     int32_t try_ = m_ctrlReg[6];
@@ -242,8 +288,11 @@ void GTE::executeRTPT() {
 
         int32_t z = m_dataReg[11];
         int32_t zc = (z > 0) ? z : 1;
-        int32_t sx = ((m_dataReg[9] * h) / zc + ofx) & 0xFFFF;
-        int32_t sy = ((m_dataReg[10] * h) / zc + ofy) & 0xFFFF;
+        int32_t sx = ((m_dataReg[9] * h) / zc + ofx);
+        int32_t sy = ((m_dataReg[10] * h) / zc + ofy);
+
+        sx = std::clamp(sx, 0, 0xFFFF);
+        sy = std::clamp(sy, 0, 0xFFFF);
 
         m_dataReg[sxyRegs[i]] = (sy << 16) | (sx & 0xFFFF);
         m_dataReg[szRegs[i]] = z;
@@ -253,6 +302,7 @@ void GTE::executeRTPT() {
     m_dataReg[19] = m_dataReg[18]; // SZ3 = last depth
     m_dataReg[7] = m_dataReg[18] & 0xFFFF; // OTZ
 }
+    */
 
 void GTE::executeNCLIP()
 {
@@ -280,10 +330,60 @@ void GTE::executeNCLIP()
     m_dataReg[24] = static_cast<int32_t>(mac0);  // MAC0
 }
 
+/**
+ * @brief Computes the average of SZ depths and stores it in OTZ (Ordering Table Z).
+ *
+ * This function is shared by both AVSZ3 and AVSZ4. It sums a number of depth values
+ * (SZ1 to SZ3 or SZ0 to SZ3), multiplies the total by a scale factor (ZSF3 or ZSF4),
+ * shifts the result down by 12 bits (which is like dividing by 4096), clamps it to the
+ * 16-bit unsigned range [0, 65535], and stores the final value in the OTZ register (dataReg[7]).
+ */
+void GTE::executeAVSZ(int szCount, int zsfRegister) {
+    int64_t szSum = 0;
+    for (int i = 0; i < szCount; ++i) {
+        szSum += m_dataReg[18 - i]; // Start from SZ3 and go backward
+    }
+
+    int32_t zsf = m_ctrlReg[zsfRegister] & 0xFFFF;
+
+    int64_t mac0 = szSum * zsf;
+    int64_t shifted = mac0 >> 12;
+
+    int64_t clamped = std::min<int64_t>(std::max<int64_t>(shifted, 0), 0xFFFF);
+    uint16_t otz = static_cast<uint16_t>(clamped);
+    m_dataReg[7] = (m_dataReg[7] & 0xFFFF0000) | otz;
+
+    m_dataReg[24] = static_cast<int32_t>(mac0); // Store MAC0 for debugging/inspection
+}
+
+void GTE::executeAVSZ3() {
+    executeAVSZ(3, 20);
+}
+
+void GTE::executeAVSZ4() {
+    executeAVSZ(4, 21);
+}
+
+/**
+ * @brief Extracts a 16-bit signed integer from a 32-bit packed register.
+ * 
+ * @param value The packed 32-bit value.
+ * @param upper True to extract the high 16 bits, false for low 16 bits.
+ * @return int16_t The extracted signed value.
+ */
 int16_t GTE::extractSigned16(uint32_t value, bool upper) {
     return static_cast<int16_t>(upper ? (value >> 16) : (value & 0xFFFF));
 }
 
+/**
+ * @brief Clamps a MAC result to IR range and sets the GTE FLAG register on overflow/underflow.
+ * 
+ * @param value Computed MAC value.
+ * @param limitHigh Upper limit (typically 0x7FFF).
+ * @param limitLow Lower limit (typically -0x8000).
+ * @param flagBit Bitmask to set in FLAG register if clamped.
+ * @return int32_t The clamped value.
+ */
 int32_t GTE::clampMAC(int64_t value, int limitHigh, int limitLow, uint32_t flagBit) {
     if (value > limitHigh) {
         m_ctrlReg[31] |= flagBit; // Set overflow flag bit
@@ -296,6 +396,14 @@ int32_t GTE::clampMAC(int64_t value, int limitHigh, int limitLow, uint32_t flagB
     return static_cast<int32_t>(value);
 }
 
+/**
+ * @brief Sets overflow/underflow bits in the FLAG register based on the value's range.
+ * 
+ * @param value The integer to check.
+ * @param limitHigh Upper bound.
+ * @param limitLow Lower bound.
+ * @param flagBit Bit to set if value is out of range.
+ */
 void GTE::updateFlags(int32_t value, int limitHigh, int limitLow, uint32_t flagBit) {
     if (value > limitHigh || value < limitLow) {
         m_ctrlReg[31] |= flagBit; // Set overflow or underflow bit in FLAG register

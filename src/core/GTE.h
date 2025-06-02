@@ -13,17 +13,65 @@
 #include "Instruction.h"
 #include "Coprocessor.h"
 
+/**
+ * @class GTE
+ * @brief Geometry Transformation Engine (Coprocessor 2) emulation for the PlayStation.
+ * 
+ * The GTE is a fixed-point math coprocessor designed for 3D transformation and lighting
+ * operations. This class provides emulated support for key instructions such as RTPS and RTPT.
+ */
 class GTE : public Coprocessor {
     public:
         GTE();
 
         void reset();
 
+        /**
+         * @brief Executes a GTE instruction.
+         * @param opcode 32-bit encoded instruction.
+         */
         void execute(uint32_t opcode) override;
+
+        /**
+         * @brief Move to Coprocessor Data Register (MTC2).
+         * @param reg Register index.
+         * @param value Value to store.
+         */
         void mtc(uint8_t reg, uint32_t value) override;
+
+        /**
+         * @brief Move to Coprocessor Control Register (CTC2).
+         * @param reg Register index.
+         * @param value Value to store.
+         */
         void ctc(uint8_t reg, uint32_t value) override;
+
+        /**
+         * @brief Move from Coprocessor Data Register (MFC2).
+         * @param reg Register index.
+         * @return Value stored in the register.
+         */
         uint32_t mfc(uint8_t reg) override;
+
+        /**
+         * @brief Move from Coprocessor Control Register (CFC2).
+         * @param reg Register index.
+         * @return Value stored in the register.
+         */
         uint32_t cfc(uint8_t reg) override;
+
+        /**
+         * @brief Clamps a value and sets appropriate GTE flag bits if limits are exceeded.
+         * @param value The value to clamp.
+         * @param limitHigh Upper bound.
+         * @param limitLow Lower bound.
+         * @param flagBit Bit to set in the FLAG register if out of range.
+         * @return Clamped value.
+         */
+        int32_t clampMAC(int64_t value, int limitHigh, int limitLow, uint32_t flagBit);
+        
+        static constexpr int32_t IR_LIMIT_LOW = -0x8000;
+        static constexpr int32_t IR_LIMIT_HIGH = 0x7FFF;
 
         int32_t getDataReg(int index) const { return m_dataReg.at(index); }
         void setDataReg(int index, int32_t value) { m_dataReg.at(index) = value; }
@@ -35,20 +83,59 @@ class GTE : public Coprocessor {
         // Coprocessor 2 Data Registers (Cop2D)
         std::array<int32_t, 32> m_dataReg{};
 
+        /**
+         * @brief Decodes and dispatches the GTE instruction to the appropriate execution method.
+         * @param opcode Encoded instruction.
+         */
         void decodeAndExecute(uint32_t opcode);
 
-        //Coordinate Calculation Commands
+        /*
+         * @brief Executes the RTPS instruction (Rotate, Translate, Perspective Single).
+        
         void executeRTPS();
+
+        
+         * @brief Executes the RTPT instruction (Rotate, Translate, Perspective Triple).
+         
         void executeRTPT();
+        */
         void executeNCLIP();
 
-        // Internal helper functions
-        int16_t extractSigned16(uint32_t value, bool upper);
-        int32_t clampMAC(int64_t value, int limitHigh, int limitLow, uint32_t flagBit);
+        /**
+         * @brief Third party function to simplify AVSZ3 and AVSZ4. Computes the average 
+         *        of SZ depths and stores it in OTZ (Ordering Table Z).
+         * 
+         * @param szCount Number of SZ values to include (3 for AVSZ3, 4 for AVSZ4).
+         * @param zsfRegister Index of the control register containing the ZSF factor.
+         */
+        void executeAVSZ(int szCount, int zsfRegister);
 
-        // Flag management
-        static constexpr int32_t IR_LIMIT_LOW = -0x8000;
-        static constexpr int32_t IR_LIMIT_HIGH = 0x7FFF;
+        /**
+         * @brief Executes AVSZ3 (Average of Z values) instruction.
+         */
+        void executeAVSZ3();
+
+        /**
+         * @brief Executes AVSZ4 (Average of Z values) instruction.
+         */
+        void executeAVSZ4();
+
+        // Internal helper functions
+        /**
+         * @brief Extracts a signed 16-bit integer from a 32-bit word.
+         * @param value Source word.
+         * @param upper Whether to extract the upper 16 bits (true) or lower (false).
+         * @return Extracted signed value.
+         */
+        int16_t extractSigned16(uint32_t value, bool upper);
+
+        /**
+         * @brief Sets the overflow/underflow bit in the FLAG register if needed.
+         * @param value The value to evaluate.
+         * @param limitHigh Upper bound.
+         * @param limitLow Lower bound.
+         * @param flagBit Bit to set if out of range.
+         */
         void updateFlags(int32_t value, int limitHigh, int limitLow, uint32_t flagBit);
 };
 
