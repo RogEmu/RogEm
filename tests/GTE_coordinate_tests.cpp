@@ -29,22 +29,22 @@ protected:
     }
 };
 
-TEST_F(GteCoordinateTest, PositiveAreaTriangle)
+TEST_F(GteCoordinateTest, NCLIP_PositiveAreaTriangle)
 {
     runNclipTest(0, 0, 10, 0, 5, 10, 100);
 }
 
-TEST_F(GteCoordinateTest, NegativeAreaTriangle)
+TEST_F(GteCoordinateTest, NCLIP_NegativeAreaTriangle)
 {
     runNclipTest(0, 0, 5, 10, 10, 0, -100);
 }
 
-TEST_F(GteCoordinateTest, ZeroAreaColinear)
+TEST_F(GteCoordinateTest, NCLIP_ZeroAreaColinear)
 {
     runNclipTest(0, 0, 10, 10, 20, 20, 0);
 }
 
-TEST_F(GteCoordinateTest, ReversedWindingSameAreaMagnitude)
+TEST_F(GteCoordinateTest, NCLIP_ReversedWindingSameAreaMagnitude)
 {
     runNclipTest(0, 0, 10, 0, 5, 10, 100);
     runNclipTest(0, 0, 5, 10, 10, 0, -100);

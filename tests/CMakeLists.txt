@@ -19,6 +19,10 @@ add_executable(${TEST_BINARY_NAME}
     CPU_shift_tests.cpp
     CPU_store_tests.cpp
     GTE_coordinate_tests.cpp
+    GTE_general_tests.cpp
+    GTE_instructions_tests.cpp
+    GTE_projections_tests.cpp
+    GTE_general_tests.cpp
     GTE_instructions_tests.cpp
     GTE_projections_tests.cpp
 )

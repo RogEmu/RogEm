@@ -11,6 +11,7 @@
 #include <limits>
 #include <algorithm>
 #include <spdlog/spdlog.h>
+#include <fmt/format.h>
 
 /**
  * @brief Constructs the GTE coprocessor and initializes registers.
@@ -29,7 +30,6 @@ void GTE::reset() {
 
 /**
  * @brief Moves a value from the GTE data register to the CPU (MFC2).
- * 
  * @param reg Index of the data register (0–31).
  * @return uint32_t The current value of the data register.
  */
@@ -41,10 +41,9 @@ uint32_t GTE::mfc(uint8_t reg) {
     return static_cast<uint32_t>(m_dataReg[reg]);
 }
 
-
 /**
  * @brief Moves a value from the GTE control register to the CPU (CFC2).
- * 
+ *
  * @param reg Index of the control register (0–31).
  * @return uint32_t The current value of the control register.
  */
@@ -58,7 +57,7 @@ uint32_t GTE::cfc(uint8_t reg) {
 
 /**
  * @brief Moves a value from the CPU to a GTE data register (MTC2).
- * 
+ *
  * @param reg Index of the data register (0–31).
  * @param value 32-bit value to store.
  */
@@ -72,7 +71,7 @@ void GTE::mtc(uint8_t reg, uint32_t value) {
 
 /**
  * @brief Moves a value from the CPU to a GTE control register (CTC2).
- * 
+ *
  * @param reg Index of the control register (0–31).
  * @param value 32-bit value to store.
  */
@@ -86,7 +85,6 @@ void GTE::ctc(uint8_t reg, uint32_t value) {
 
 /**
  * @brief Executes a GTE instruction by decoding its function code.
- * 
  * @param opcode Full 32-bit encoded GTE instruction.
  */
 void GTE::execute(uint32_t opcode) {
@@ -95,7 +93,6 @@ void GTE::execute(uint32_t opcode) {
 
 /**
  * @brief Decodes the GTE instruction and dispatches to the appropriate handler.
- * 
  * @param opcode The 32-bit instruction word.
  */
 void GTE::decodeAndExecute(uint32_t opcode) {
@@ -118,7 +115,7 @@ void GTE::decodeAndExecute(uint32_t opcode) {
             spdlog::warn("[GTE] INTPL - Not implemented yet");
             break;
         case GTEFunction::MVMVA:
-            spdlog::warn("[GTE] MVMVA - Not implemented yet");
+            executeMVMVA(opcode);
             break;
         case GTEFunction::NCDS:
             spdlog::warn("[GTE] NCDS - Not implemented yet");
@@ -181,7 +178,7 @@ void GTE::executeRTPS() {
     int16_t vy = extractSigned16(m_dataReg[0], true);  // VXY0 high
     int16_t vz = extractSigned16(m_dataReg[1], false); // VZ0 low only
 
-    // Read rotation matrix R (fixed-point 12.20 format)
+    // Read rotation Mat3x3 R (fixed-point 12.20 format)
     int32_t r11 = static_cast<int16_t>(m_ctrlReg[0] >> 16) << 4;
     int32_t r12 = static_cast<int16_t>(m_ctrlReg[0] & 0xFFFF) << 4;
     int32_t r13 = static_cast<int16_t>(m_ctrlReg[1] >> 16) << 4;
@@ -204,7 +201,7 @@ void GTE::executeRTPS() {
     int32_t ofy = m_ctrlReg[25];
     int32_t h = m_ctrlReg[26];
 
-    // Perform matrix * vector (with >>12 shift for fixed point)
+    // Perform Mat3x3 * vector (with >>12 shift for fixed point)
     int64_t mac1 = ((int64_t)r11 * vx + (int64_t)r12 * vy + (int64_t)r13 * vz) >> 12;
     int64_t mac2 = ((int64_t)r21 * vx + (int64_t)r22 * vy + (int64_t)r23 * vz) >> 12;
     int64_t mac3 = ((int64_t)r31 * vx + (int64_t)r32 * vy + (int64_t)r33 * vz) >> 12;
@@ -241,7 +238,8 @@ void GTE::executeRTPS() {
     m_dataReg[7] = z & 0xFFFF;     // OTZ (used for ordering table)
 }
 
-void GTE::executeRTPT() {
+void GTE::executeRTPT()
+{
     // Process V0, V1, V2 in sequence
     const int vectorRegs[3][2] = { {0, 1}, {2, 3}, {4, 5} }; // VXY0/VZ0, VXY1/VZ1, VXY2/VZ2
     const int sxyRegs[3] = { 12, 13, 14 }; // SXY0, SXY1, SXY2
@@ -328,6 +326,113 @@ void GTE::executeNCLIP()
 
     // Store in MAC0
     m_dataReg[24] = static_cast<int32_t>(mac0);  // MAC0
+}
+
+Mat3x3 GTE::getMat3x3FromMX(uint8_t mx)
+{
+    Mat3x3 m;
+    if (mx == 3)
+    {
+        m.r11 = -0x60;
+        m.r12 = 0x60;
+        m.r13 = extractSigned16(m_dataReg[8], false);
+        m.r21 = extractSigned16(m_ctrlReg[1], true);
+        m.r22 = extractSigned16(m_ctrlReg[1], true);
+        m.r23 = extractSigned16(m_ctrlReg[1], true);
+        m.r31 = extractSigned16(m_ctrlReg[2], true);
+        m.r32 = extractSigned16(m_ctrlReg[2], true);
+        m.r33 = extractSigned16(m_ctrlReg[2], true);
+    } else
+        extractMat3x3(mx * 8, m);
+    return m;
+}
+
+Vector3<int16_t> GTE::getVector3FromV(uint8_t v)
+{
+    Vector3<int16_t> vec;
+    if (v == 3)
+    {
+        vec.x = extractSigned16(m_dataReg[9], false);
+        vec.y = extractSigned16(m_dataReg[10], false);
+        vec.z = extractSigned16(m_dataReg[11], false);
+    } else {
+        vec.x = extractSigned16(m_dataReg[v * 2], false);
+        vec.y = extractSigned16(m_dataReg[v * 2], true);
+        vec.z = extractSigned16(m_dataReg[v * 2 + 1], false);
+    }
+    return vec;
+}
+
+Flag GTE::getFlags(uint32_t opcode)
+{
+    Flag f;
+    f.sf    = (opcode >> 19) & 0x01;   // Shift flag (bit 19)
+    f.mx = (opcode >> 17) & 0x03;   // Mat3x3 selection (bits 18-17)
+    f.cv = (opcode >> 13) & 0x03;   // Translation vector (bits 14-13)
+    f.v  = (opcode >> 15) & 0x03;   // Vector source (bits 16-15)
+    f.lm    = (opcode >> 10) & 0x01;   // Limit mode (bit 10)
+    return f;
+}
+
+void GTE::executeMVMVA(uint32_t opcode)
+{
+    Flag f = getFlags(opcode);
+    Mat3x3 m = getMat3x3FromMX(f.mx);
+    Vector3<int16_t> vec = getVector3FromV(f.v);
+    Vector3<int32_t> translation = extractTranslation(5 + f.cv * 8);
+
+    int64_t mac1, mac2, mac3;
+    int fc = f.cv != 2;
+
+    mac1 = (static_cast<int64_t>(m.r11) * vec.x * fc + static_cast<int64_t>(m.r12) * vec.y * fc + static_cast<int64_t>(m.r13) * vec.z + translation.x * fc) >> (12 * f.sf);
+    mac2 = (static_cast<int64_t>(m.r21) * vec.x * fc + static_cast<int64_t>(m.r22) * vec.y * fc + static_cast<int64_t>(m.r23) * vec.z + translation.y * fc) >> (12 * f.sf);
+    mac3 = (static_cast<int64_t>(m.r31) * vec.x * fc + static_cast<int64_t>(m.r32) * vec.y * fc + static_cast<int64_t>(m.r33) * vec.z + translation.z * fc) >> (12 * f.sf);
+
+    m_dataReg[25] = static_cast<int32_t>(mac1);
+    m_dataReg[26] = static_cast<int32_t>(mac2);
+    m_dataReg[27] = static_cast<int32_t>(mac3);
+
+    if (f.lm)
+    {
+        m_dataReg[9] = clampMAC(mac1, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0001);
+        m_dataReg[10] = clampMAC(mac2, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0002);
+        m_dataReg[11] = clampMAC(mac3, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0004);
+    }
+    else
+    {
+        m_dataReg[9] = static_cast<int16_t>(mac1 & 0xFFFF);
+        m_dataReg[10] = static_cast<int16_t>(mac2 & 0xFFFF);
+        m_dataReg[11] = static_cast<int16_t>(mac3 & 0xFFFF);
+    }
+}
+
+void GTE::extractMat3x3(int32_t base, Mat3x3 &Mat3x3)
+{
+    Mat3x3.r11 = extractSigned16(m_ctrlReg[base], true);
+    Mat3x3.r12 = extractSigned16(m_ctrlReg[base], false);
+    Mat3x3.r13 = extractSigned16(m_ctrlReg[base +1], true);
+    Mat3x3.r21 = extractSigned16(m_ctrlReg[base +1], false);
+    Mat3x3.r22 = extractSigned16(m_ctrlReg[base +2], true);
+    Mat3x3.r23 = extractSigned16(m_ctrlReg[base +2], false);
+    Mat3x3.r31 = extractSigned16(m_ctrlReg[base +3], true);
+    Mat3x3.r32 = extractSigned16(m_ctrlReg[base +3], false);
+    Mat3x3.r33 = extractSigned16(m_ctrlReg[base +4], true);
+}
+
+void GTE::extractVector3(int32_t base, Vector3<int16_t> &vector)
+{
+    vector.x = extractSigned16(m_dataReg[base], false);
+    vector.y = extractSigned16(m_dataReg[base], true);
+    vector.z = extractSigned16(m_dataReg[base + 1], false);
+}
+
+Vector3<int32_t> GTE::extractTranslation(int32_t base)
+{
+    Vector3<int32_t> translation;
+    translation.x = m_ctrlReg[base];
+    translation.y = m_ctrlReg[base + 1];
+    translation.z = m_ctrlReg[base + 2];
+    return translation;
 }
 
 /**

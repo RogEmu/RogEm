@@ -13,10 +13,39 @@
 #include "Instruction.h"
 #include "Coprocessor.h"
 
+template <typename size>
+struct  Vector3{
+	size x;
+  	size y;
+  	size z;
+};
+
+struct Flag
+{
+	bool sf;
+	uint8_t mx;
+	uint8_t v;
+	uint8_t cv;
+	bool lm;
+};
+
+struct Mat3x3
+{
+	int16_t r11;
+	int16_t r12;
+	int16_t r13;
+	int16_t r21;
+	int16_t r22;
+	int16_t r23;
+	int16_t r31;
+	int16_t r32;
+	int16_t r33;
+};
+
 /**
  * @class GTE
  * @brief Geometry Transformation Engine (Coprocessor 2) emulation for the PlayStation.
- * 
+ *
  * The GTE is a fixed-point math coprocessor designed for 3D transformation and lighting
  * operations. This class provides emulated support for key instructions such as RTPS and RTPT.
  */
@@ -69,7 +98,6 @@ class GTE : public Coprocessor {
          * @return Clamped value.
          */
         int32_t clampMAC(int64_t value, int limitHigh, int limitLow, uint32_t flagBit);
-        
         static constexpr int32_t IR_LIMIT_LOW = -0x8000;
         static constexpr int32_t IR_LIMIT_HIGH = 0x7FFF;
 
@@ -91,24 +119,32 @@ class GTE : public Coprocessor {
 
         /*
          * @brief Executes the RTPS instruction (Rotate, Translate, Perspective Single).
-        
         void executeRTPS();
 
-        
          * @brief Executes the RTPT instruction (Rotate, Translate, Perspective Triple).
-         
         void executeRTPT();
         */
+
+        /**
+         * @brief Execute the NCLIP instruction (normal clipping)
+         */
         void executeNCLIP();
 
         /**
          * @brief Third party function to simplify AVSZ3 and AVSZ4. Computes the average 
          *        of SZ depths and stores it in OTZ (Ordering Table Z).
-         * 
+         *
          * @param szCount Number of SZ values to include (3 for AVSZ3, 4 for AVSZ4).
          * @param zsfRegister Index of the control register containing the ZSF factor.
          */
         void executeAVSZ(int szCount, int zsfRegister);
+
+        // General Purpose Commands
+        /**
+         * @brief Executes MVMVA (Multiply vector by Mat3x3 and vector addition) instruction.
+         * @param opcode flag used in the instuction are extracted from the opcode
+         */
+        void executeMVMVA(uint32_t opcode);
 
         /**
          * @brief Executes AVSZ3 (Average of Z values) instruction.
@@ -122,10 +158,59 @@ class GTE : public Coprocessor {
 
         // Internal helper functions
         /**
+         * @brief Extracts a x, y and z value from vector
+         * @param base vector to extract from
+		 * @param vector vector to extract to
+         */
+		void extractVector3(int32_t base, Vector3<int16_t> &vector);
+
+        /**
+		 * @brief Extracts translation vector
+		 * @param base traslation vector to extract from
+		 * @return translation
+         */
+        Vector3<int32_t> extractTranslation(int32_t base);
+
+        /**
+         * @brief Extracts Mat3x3
+         * @param base Mat3x3 to extract from
+         * @param Mat3x3 Mat3x3 to extract to
+         */
+        void extractMat3x3(int32_t base, Mat3x3 &Mat3x3);
+
+        /**
          * @brief Extracts a signed 16-bit integer from a 32-bit word.
          * @param value Source word.
          * @param upper Whether to extract the upper 16 bits (true) or lower (false).
          * @return Extracted signed value.
+         */
+
+        /**
+         * @brief get all the Flags from the op code
+         * @param opcode opcode to get flages from
+         * @return flag struct with the extracted flags
+         */
+		Flag getFlags(uint32_t opcode);
+
+        /**
+         * @brief get Mat3x3 depending of MX flag
+         * @param mx mx flag
+         * @return Mat3x3 struct with the extracted Mat3x3
+         */
+		Mat3x3 getMat3x3FromMX(uint8_t mx);
+
+        /**
+         * @brief get Vector depending of V flag
+         * @param v v flag
+         * @return Vector3 struct with the extracted Mat3x3
+         */
+		Vector3<int16_t> getVector3FromV(uint8_t v);
+
+        /**
+         * @brief Extracts a 16-bit signed integer from a 32-bit packed register.
+         * @param value The packed 32-bit value.
+         * @param upper True to extract the high 16 bits, false for low 16 bits.
+         * @return int16_t The extracted signed value.
          */
         int16_t extractSigned16(uint32_t value, bool upper);
 
