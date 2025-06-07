@@ -7,8 +7,10 @@
 
 #include "Memory.hpp"
 
-Memory::Memory(uint32_t size, uint8_t initVal) :
-    PsxDevice()
+#include "Bus.h"
+
+Memory::Memory(Bus *bus, uint32_t size, uint8_t initVal) :
+    PsxDevice(bus)
 {
     m_data.resize(size, initVal);
     m_readOnly = false;

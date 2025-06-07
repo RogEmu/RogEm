@@ -12,11 +12,13 @@
 
 #include <string>
 
+#include "Bus.h"
+
 class BIOS : public Memory
 {
     public:
-        BIOS();
-        BIOS(const std::string &path);
+        BIOS(Bus *bus);
+        BIOS(Bus *bus, const std::string &path);
 
         bool loadFromFile(const std::string &path);
 };

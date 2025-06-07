@@ -13,7 +13,7 @@
 class GPU : public PsxDevice
 {
     public:
-        GPU();
+        GPU(Bus *bus);
         ~GPU();
 
         void reset();

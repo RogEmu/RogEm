@@ -13,7 +13,7 @@
 class ScratchPad : public Memory
 {
     public:
-        ScratchPad();
+        ScratchPad(Bus *bus);
         ~ScratchPad();
 };
 

@@ -23,7 +23,9 @@ enum class PsxDeviceType {
     GPU,
     Scratchpad,
     Timers,
-    IRQController
+    IRQController,
+    MemControl1,
+    MemControl2
 };
 
 class Bus

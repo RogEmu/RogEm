@@ -3,8 +3,10 @@
 #include <spdlog/spdlog.h>
 
 #include "MemoryMap.hpp"
+#include "Bus.h"
 
-InterruptController::InterruptController()
+InterruptController::InterruptController(Bus *bus) :
+    PsxDevice(bus)
 {
     m_memoryRange = MemoryMap::INTERRUPT_CONTROL_RANGE;
 }

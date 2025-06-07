@@ -2,8 +2,10 @@
 
 #include <spdlog/spdlog.h>
 
-GPU::GPU() :
-    PsxDevice()
+#include "Bus.h"
+
+GPU::GPU(Bus *bus) :
+    PsxDevice(bus)
 {
     m_memoryRange = MemoryMap::GPU_REGISTERS_RANGE;
     reset();
@@ -15,7 +17,7 @@ GPU::~GPU()
 
 void GPU::reset()
 {
-    m_statRegister = 0x10000000;
+    m_statRegister = 0x1C000000;
     m_cmdResponse = 0;
 }
 

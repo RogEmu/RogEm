@@ -13,7 +13,7 @@
 class SPU : public PsxDevice
 {
     public:
-        SPU();
+        SPU(Bus *bus);
         ~SPU();
 
         void write8(uint8_t value, uint32_t address) override;

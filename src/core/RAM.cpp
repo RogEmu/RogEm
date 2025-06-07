@@ -3,9 +3,10 @@
 #include <cstring>
 
 #include "MemoryMap.hpp"
+#include "Bus.h"
 
-RAM::RAM() :
-    Memory(MemoryMap::RAM_RANGE.length)
+RAM::RAM(Bus *bus) :
+    Memory(bus, MemoryMap::RAM_RANGE.length)
 {
     m_memoryRange.start = MemoryMap::RAM_RANGE.start;
     m_memoryRange.length = MemoryMap::RAM_RANGE.length;

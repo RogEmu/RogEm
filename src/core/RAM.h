@@ -13,7 +13,7 @@
 class RAM : public Memory
 {
     public:
-        RAM();
+        RAM(Bus *bus);
 
         void loadExecutable(uint32_t baseAddr, const std::vector<uint8_t> &code);
 };

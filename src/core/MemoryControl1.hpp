@@ -2,19 +2,19 @@
 ** EPITECH PROJECT, 2025
 ** rogem
 ** File description:
-** TIMERS
+** MemoryControl1
 */
 
-#ifndef TIMERS_HPP_
-#define TIMERS_HPP_
+#ifndef MEMORYCONTROL1_HPP_
+#define MEMORYCONTROL1_HPP_
 
 #include "PsxDevice.hpp"
 
-class Timers : public PsxDevice
+class MemoryControl1 : public PsxDevice
 {
     public:
-        Timers(Bus *bus);
-        ~Timers();
+        MemoryControl1(Bus *bus);
+        ~MemoryControl1();
 
         void write8(uint8_t value, uint32_t address) override;
         void write16(uint16_t value, uint32_t address) override;
@@ -23,6 +23,9 @@ class Timers : public PsxDevice
         uint8_t read8(uint32_t address) override;
         uint16_t read16(uint32_t address) override;
         uint32_t read32(uint32_t address) override;
+
+    private:
+        uint32_t m_registers[9];
 };
 
-#endif /* !TIMERS_HPP_ */
+#endif /* !MEMORYCONTROL1_HPP_ */

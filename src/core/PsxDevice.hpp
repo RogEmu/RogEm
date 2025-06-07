@@ -12,9 +12,12 @@
 
 #include "MemoryMap.hpp"
 
+class Bus;
+
 class PsxDevice
 {
     public:
+        PsxDevice(Bus *bus) : m_bus(bus) {}
         virtual ~PsxDevice() = default;
 
         // virtual void update(int cycles) = 0;
@@ -37,6 +40,7 @@ class PsxDevice
 
     protected:
         MemoryMap::MemRange m_memoryRange;
+        Bus *m_bus;
 };
 
 #endif /* !PSXDEVICE_HPP_ */

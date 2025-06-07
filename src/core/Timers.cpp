@@ -3,9 +3,10 @@
 #include <spdlog/spdlog.h>
 
 #include "MemoryMap.hpp"
+#include "Bus.h"
 
-Timers::Timers() :
-    PsxDevice()
+Timers::Timers(Bus *bus) :
+    PsxDevice(bus)
 {
     m_memoryRange = MemoryMap::TIMERS_RANGE;
 }

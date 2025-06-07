@@ -15,7 +15,7 @@
 class Memory : public PsxDevice
 {
     public:
-        Memory(uint32_t size, uint8_t initVal = 0);
+        Memory(Bus *bus, uint32_t size, uint8_t initVal = 0);
 
         uint32_t read32(uint32_t addr) override;
         uint16_t read16(uint32_t addr) override;

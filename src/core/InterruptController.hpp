@@ -13,7 +13,7 @@
 class InterruptController : public PsxDevice
 {
     public:
-        InterruptController();
+        InterruptController(Bus *bus);
         ~InterruptController();
 
         void write8(uint8_t value, uint32_t address) override;

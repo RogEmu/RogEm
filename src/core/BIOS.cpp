@@ -12,16 +12,16 @@
 
 #include "MemoryMap.hpp"
 
-BIOS::BIOS() :
-    Memory(MemoryMap::BIOS_RANGE.length)
+BIOS::BIOS(Bus *bus) :
+    Memory(bus, MemoryMap::BIOS_RANGE.length)
 {
     setReadOnly(true);
     m_memoryRange.start = MemoryMap::BIOS_RANGE.start;
     m_memoryRange.length = MemoryMap::BIOS_RANGE.length;
 }
 
-BIOS::BIOS(const std::string &path) :
-    BIOS()
+BIOS::BIOS(Bus* bus, const std::string &path) :
+    BIOS(bus)
 {
     loadFromFile(path);
 }

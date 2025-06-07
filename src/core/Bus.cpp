@@ -19,18 +19,20 @@
 #include "SPU.hpp"
 #include "Timers.hpp"
 #include "InterruptController.hpp"
+#include "MemoryControl1.hpp"
 
 Bus::Bus() :
     m_cacheControl(0)
 {
-    m_devices[PsxDeviceType::BIOS] = std::make_unique<BIOS>();
-    m_devices[PsxDeviceType::RAM] = std::make_unique<RAM>();
-    m_devices[PsxDeviceType::Scratchpad] = std::make_unique<ScratchPad>();
-    m_devices[PsxDeviceType::DMA] = std::make_unique<DMA>();
-    m_devices[PsxDeviceType::GPU] = std::make_unique<GPU>();
-    m_devices[PsxDeviceType::SPU] = std::make_unique<SPU>();
-    m_devices[PsxDeviceType::Timers] = std::make_unique<Timers>();
-    m_devices[PsxDeviceType::IRQController] = std::make_unique<InterruptController>();
+    m_devices[PsxDeviceType::BIOS] = std::make_unique<BIOS>(this);
+    m_devices[PsxDeviceType::RAM] = std::make_unique<RAM>(this);
+    m_devices[PsxDeviceType::Scratchpad] = std::make_unique<ScratchPad>(this);
+    m_devices[PsxDeviceType::DMA] = std::make_unique<DMA>(this);
+    m_devices[PsxDeviceType::GPU] = std::make_unique<GPU>(this);
+    m_devices[PsxDeviceType::SPU] = std::make_unique<SPU>(this);
+    m_devices[PsxDeviceType::Timers] = std::make_unique<Timers>(this);
+    m_devices[PsxDeviceType::IRQController] = std::make_unique<InterruptController>(this);
+    m_devices[PsxDeviceType::MemControl1] = std::make_unique<MemoryControl1>(this);
 }
 
 Bus::~Bus()
