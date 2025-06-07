@@ -25,6 +25,7 @@ add_executable(${TEST_BINARY_NAME}
     GTE_general_tests.cpp
     GTE_instructions_tests.cpp
     GTE_projections_tests.cpp
+    GTE_calculation_tests.cpp
 )
 
 if (${ENABLE_COVERAGE})

@@ -129,6 +129,7 @@ class GTE : public Coprocessor {
          * @brief Execute the NCLIP instruction (normal clipping)
          */
         void executeNCLIP();
+        void executeSQR(bool sf);
 
         /**
          * @brief Third party function to simplify AVSZ3 and AVSZ4. Computes the average 

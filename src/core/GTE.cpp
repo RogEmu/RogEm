@@ -138,9 +138,11 @@ void GTE::decodeAndExecute(uint32_t opcode) {
         case GTEFunction::NCT:
             spdlog::warn("[GTE] NCT - Not implemented yet");
             break;
-        case GTEFunction::SQR:
-            spdlog::warn("[GTE] SQR - Not implemented yet");
+        case GTEFunction::SQR: {
+            bool sf = (opcode >> 19) & 0x1;
+            executeSQR(sf);
             break;
+        }
         case GTEFunction::DCPL:
             spdlog::warn("[GTE] DCPL - Not implemented yet");
             break;
@@ -328,6 +330,45 @@ void GTE::executeNCLIP()
     m_dataReg[24] = static_cast<int32_t>(mac0);  // MAC0
 }
 
+/**
+ * @brief Executes the SQR (Square Vector) GTE instruction.
+ *
+ * This instruction takes IR1, IR2, and IR3, squares them,
+ * and stores the results into MAC1, MAC2, and MAC3.
+ *
+ * Then, depending on the value of the 'sf' bit (Shift Fraction flag),
+ * the function optionally divides each result by 4096 (which is 2^12).
+ *
+ * The sf flag is found at bit 19 of the 32-bit GTE instruction.
+ * - If sf == 0: keep full precision, do not shift
+ * - If sf == 1: divide results by 4096 using a bitwise right shift (>> 12)
+ *   This scaling is used to convert from fixed-point to normal-sized integers.
+ *
+ * After this, each result is clamped to a signed 16-bit integer range (-32768 to 32767)
+ * and stored back into the IR1, IR2, and IR3 registers.
+ */
+void GTE::executeSQR(bool sf) {
+    // Read input vector
+    int32_t ir1 = m_dataReg[9];
+    int32_t ir2 = m_dataReg[10];
+    int32_t ir3 = m_dataReg[11];
+
+    // Calculate MACs
+    int64_t mac1 = (static_cast<int64_t>(ir1) * ir1) >> (sf * 12);
+    int64_t mac2 = (static_cast<int64_t>(ir2) * ir2) >> (sf * 12);
+    int64_t mac3 = (static_cast<int64_t>(ir3) * ir3) >> (sf * 12);
+
+    // Store MACs
+    m_dataReg[25] = static_cast<int32_t>(mac1);
+    m_dataReg[26] = static_cast<int32_t>(mac2);
+    m_dataReg[27] = static_cast<int32_t>(mac3);
+
+    // Clamp and store in IRs
+    m_dataReg[9]  = clampMAC(mac1, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0001); // IR1
+    m_dataReg[10] = clampMAC(mac2, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0002); // IR2
+    m_dataReg[11] = clampMAC(mac3, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0004); // IR3
+}
+
 Mat3x3 GTE::getMat3x3FromMX(uint8_t mx)
 {
     Mat3x3 m;
@@ -471,7 +512,7 @@ void GTE::executeAVSZ4() {
 
 /**
  * @brief Extracts a 16-bit signed integer from a 32-bit packed register.
- * 
+ *
  * @param value The packed 32-bit value.
  * @param upper True to extract the high 16 bits, false for low 16 bits.
  * @return int16_t The extracted signed value.
@@ -482,7 +523,7 @@ int16_t GTE::extractSigned16(uint32_t value, bool upper) {
 
 /**
  * @brief Clamps a MAC result to IR range and sets the GTE FLAG register on overflow/underflow.
- * 
+ *
  * @param value Computed MAC value.
  * @param limitHigh Upper limit (typically 0x7FFF).
  * @param limitLow Lower limit (typically -0x8000).
@@ -503,7 +544,7 @@ int32_t GTE::clampMAC(int64_t value, int limitHigh, int limitLow, uint32_t flagB
 
 /**
  * @brief Sets overflow/underflow bits in the FLAG register based on the value's range.
- * 
+ *
  * @param value The integer to check.
  * @param limitHigh Upper bound.
  * @param limitLow Lower bound.
