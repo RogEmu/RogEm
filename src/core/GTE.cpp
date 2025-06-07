@@ -105,9 +105,11 @@ void GTE::decodeAndExecute(uint32_t opcode) {
         case GTEFunction::NCLIP:
             executeNCLIP();
             break;
-        case GTEFunction::OP:
-            spdlog::warn("[GTE] OP - Not implemented yet");
+        case GTEFunction::OP:{
+            bool sf = (opcode >> 19) & 0x1;
+            executeOP(sf);
             break;
+        }
         case GTEFunction::DPCS:
             spdlog::warn("[GTE] DPCS - Not implemented yet");
             break;
@@ -328,6 +330,58 @@ void GTE::executeNCLIP()
 
     // Store in MAC0
     m_dataReg[24] = static_cast<int32_t>(mac0);  // MAC0
+}
+
+/**
+ * @brief Executes the OP (Cross Product) GTE instruction.
+ *
+ * This instruction calculates the 3D cross product between two vectors:
+ * - The first vector is read from the intermediate registers IR1, IR2, IR3
+ * - The second vector uses the diagonal elements of the rotation matrix:
+ *     D1 = RT11 (ctrlReg[0] upper 16 bits)
+ *     D2 = RT22 (ctrlReg[2] upper 16 bits)
+ *     D3 = RT33 (ctrlReg[4] upper 16 bits)
+ *   Although these are matrix elements, here they're "misused" as a vector.
+ *
+ * The formula used is the standard cross product:
+ *   MAC1 = IR3 * D2 - IR2 * D3
+ *   MAC2 = IR1 * D3 - IR3 * D1
+ *   MAC3 = IR2 * D1 - IR1 * D2
+ *
+ * After calculating the MAC values, the result is scaled depending on the 'sf' flag:
+ * - If sf == 1, the values are shifted right by 12 bits (SAR 12)
+ *   This operation preserves the sign of negative numbers (arithmetic shift)
+ * - If sf == 0, the full values are kept without shifting
+ *
+ * The final values (MAC1–MAC3) are:
+ * - Stored in the MAC registers (m_dataReg[25–27])
+ * - Clamped to 16-bit signed range and stored in IR1–IR3 (m_dataReg[9–11])
+ */
+void GTE::executeOP(bool sf) {
+    // Read IR1, IR2, IR3
+    int32_t ir1 = m_dataReg[9];
+    int32_t ir2 = m_dataReg[10];
+    int32_t ir3 = m_dataReg[11];
+
+    // Read D1, D2, D3 from RT11, RT22, RT33
+    int16_t d1 = static_cast<int16_t>(m_ctrlReg[0] >> 16); // RT11
+    int16_t d2 = static_cast<int16_t>(m_ctrlReg[2] >> 16); // RT22
+    int16_t d3 = static_cast<int16_t>(m_ctrlReg[4] >> 16); // RT33
+
+    // Cross product computation
+    int64_t mac1 = (static_cast<int64_t>(ir3) * d2 - static_cast<int64_t>(ir2) * d3) >> (sf * 12);
+    int64_t mac2 = (static_cast<int64_t>(ir1) * d3 - static_cast<int64_t>(ir3) * d1) >> (sf * 12);
+    int64_t mac3 = (static_cast<int64_t>(ir2) * d1 - static_cast<int64_t>(ir1) * d2) >> (sf * 12);
+
+    // Store to MACs
+    m_dataReg[25] = static_cast<int32_t>(mac1);
+    m_dataReg[26] = static_cast<int32_t>(mac2);
+    m_dataReg[27] = static_cast<int32_t>(mac3);
+
+    // Clamp and store to IRs
+    m_dataReg[9]  = clampMAC(mac1, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0001); // IR1
+    m_dataReg[10] = clampMAC(mac2, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0002); // IR2
+    m_dataReg[11] = clampMAC(mac3, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0004); // IR3
 }
 
 /**

@@ -130,9 +130,10 @@ class GTE : public Coprocessor {
          */
         void executeNCLIP();
         void executeSQR(bool sf);
+        void executeOP(bool sf);
 
         /**
-         * @brief Third party function to simplify AVSZ3 and AVSZ4. Computes the average 
+         * @brief Third party function to simplify AVSZ3 and AVSZ4. Computes the average
          *        of SZ depths and stores it in OTZ (Ordering Table Z).
          *
          * @param szCount Number of SZ values to include (3 for AVSZ3, 4 for AVSZ4).
