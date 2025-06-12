@@ -161,10 +161,10 @@ void GTE::decodeAndExecute(uint32_t opcode) {
             std::cout << "[GTE] RTPT - Need to be redone\n";
             break;
         case GTEFunction::GPF:
-            spdlog::warn("[GTE] GPF - Not implemented yet");
+            executeGPF(opcode);
             break;
         case GTEFunction::GPL:
-            spdlog::warn("[GTE] GPL - Not implemented yet");
+            executeGPL(opcode, true);
             break;
         case GTEFunction::NCCT:
             spdlog::warn("[GTE] NCCT - Not implemented yet");
@@ -379,9 +379,9 @@ void GTE::executeOP(bool sf) {
     m_dataReg[27] = static_cast<int32_t>(mac3);
 
     // Clamp and store to IRs
-    m_dataReg[9]  = clampMAC(mac1, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0001); // IR1
-    m_dataReg[10] = clampMAC(mac2, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0002); // IR2
-    m_dataReg[11] = clampMAC(mac3, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0004); // IR3
+    m_dataReg[9]  = clampMAC(mac1, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0001, 0x0001); // IR1
+    m_dataReg[10] = clampMAC(mac2, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0002, 0x0002); // IR2
+    m_dataReg[11] = clampMAC(mac3, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0004, 0x0004); // IR3
 }
 
 /**
@@ -418,9 +418,9 @@ void GTE::executeSQR(bool sf) {
     m_dataReg[27] = static_cast<int32_t>(mac3);
 
     // Clamp and store in IRs
-    m_dataReg[9]  = clampMAC(mac1, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0001); // IR1
-    m_dataReg[10] = clampMAC(mac2, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0002); // IR2
-    m_dataReg[11] = clampMAC(mac3, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0004); // IR3
+    m_dataReg[9]  = clampMAC(mac1, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0001, 0x0001); // IR1
+    m_dataReg[10] = clampMAC(mac2, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0002, 0x0002); // IR2
+    m_dataReg[11] = clampMAC(mac3, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0004, 0x0002); // IR3
 }
 
 Mat3x3 GTE::getMat3x3FromMX(uint8_t mx)
@@ -487,18 +487,9 @@ void GTE::executeMVMVA(uint32_t opcode)
     m_dataReg[26] = static_cast<int32_t>(mac2);
     m_dataReg[27] = static_cast<int32_t>(mac3);
 
-    if (f.lm)
-    {
-        m_dataReg[9] = clampMAC(mac1, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0001);
-        m_dataReg[10] = clampMAC(mac2, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0002);
-        m_dataReg[11] = clampMAC(mac3, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0004);
-    }
-    else
-    {
-        m_dataReg[9] = static_cast<int16_t>(mac1 & 0xFFFF);
-        m_dataReg[10] = static_cast<int16_t>(mac2 & 0xFFFF);
-        m_dataReg[11] = static_cast<int16_t>(mac3 & 0xFFFF);
-    }
+    m_dataReg[9]  = clampMAC(mac1, IR_LIMIT_HIGH, f.lm ? IR_LIMIT_MODE : IR_LIMIT_LOW, 1 << 24, 1 << 24);
+    m_dataReg[10] = clampMAC(mac2, IR_LIMIT_HIGH, f.lm ? IR_LIMIT_MODE : IR_LIMIT_LOW, 1 << 23, 1 << 23);
+    m_dataReg[11] = clampMAC(mac3, IR_LIMIT_HIGH, f.lm ? IR_LIMIT_MODE : IR_LIMIT_LOW, 1 << 22, 1 << 22);
 }
 
 void GTE::extractMat3x3(int32_t base, Mat3x3 &Mat3x3)
@@ -564,6 +555,56 @@ void GTE::executeAVSZ4() {
     executeAVSZ(4, 21);
 }
 
+void GTE::executeGPF(uint32_t opcode)
+{
+    executeGPL(opcode, false);
+}
+
+void GTE::executeGPL(uint32_t opcode, bool base)
+{
+    int32_t mac1, mac2, mac3;
+    Flag f = getFlags(opcode);
+
+    mac1 = base * (m_dataReg[25] << (f.sf * 12));
+    mac2 = base * (m_dataReg[26] << (f.sf * 12));
+    mac3 = base * (m_dataReg[27] << (f.sf * 12));
+
+    int64_t temp_mac = static_cast<int64_t>(m_dataReg[9]) * m_dataReg[8] + mac1;
+    checkMACOverflow(0, temp_mac);
+    mac1 = static_cast<int32_t>(temp_mac >> (f.sf * 12));
+
+    temp_mac = static_cast<int64_t>(m_dataReg[10]) * m_dataReg[8] + mac2;
+    checkMACOverflow(1, temp_mac);
+    mac2 = static_cast<int32_t>(temp_mac >> (f.sf * 12));
+
+    temp_mac = static_cast<int64_t>(m_dataReg[11]) * m_dataReg[8] + mac3;
+    checkMACOverflow(2, temp_mac);
+    mac3 = static_cast<int32_t>(temp_mac >> (f.sf * 12));
+
+    m_dataReg[9] = mac1;
+    m_dataReg[10] = mac2;
+    m_dataReg[11] = mac3;
+
+    m_dataReg[25] = mac1;
+    m_dataReg[26] = mac2;
+    m_dataReg[27] = mac3;
+
+    uint8_t r = clampMAC(mac1 / 16, FIFO_LIMIT_HIGH, FIFO_LIMIT_LOW, 1 << 21, 1 << 21);
+    uint8_t g = clampMAC(mac2 / 16, FIFO_LIMIT_HIGH, FIFO_LIMIT_LOW, 1 << 20, 1 << 20);
+    uint8_t b = clampMAC(mac3 / 16, FIFO_LIMIT_HIGH, FIFO_LIMIT_LOW, 1 << 19, 1 << 19);
+
+    Rgbc fifo(r & 0xFF, g & 0xFF, b & 0xFF, (m_dataReg[20] >> 24) & 0xFF);
+    m_dataReg[20] = (fifo.c << 24) | (fifo.r << 16) | (fifo.g << 8) | fifo.b;
+}
+
+
+void GTE::checkMACOverflow(int macIndex, int64_t value) {
+    if (value >= MAC_LIMIT)
+        m_ctrlReg[31] |= (1 << (30 - macIndex)); // bits 30, 29, 28
+    else if (value <= -MAC_LIMIT)
+        m_ctrlReg[31] |= (1 << (27 - macIndex)); // bits 27, 26, 25
+}
+
 /**
  * @brief Extracts a 16-bit signed integer from a 32-bit packed register.
  *
@@ -584,17 +625,6 @@ int16_t GTE::extractSigned16(uint32_t value, bool upper) {
  * @param flagBit Bitmask to set in FLAG register if clamped.
  * @return int32_t The clamped value.
  */
-int32_t GTE::clampMAC(int64_t value, int limitHigh, int limitLow, uint32_t flagBit) {
-    if (value > limitHigh) {
-        m_ctrlReg[31] |= flagBit; // Set overflow flag bit
-        return limitHigh;
-    }
-    if (value < limitLow) {
-        m_ctrlReg[31] |= flagBit; // Set underflow flag bit
-        return limitLow;
-    }
-    return static_cast<int32_t>(value);
-}
 
 /**
  * @brief Sets overflow/underflow bits in the FLAG register based on the value's range.

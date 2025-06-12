@@ -7,17 +7,7 @@ protected:
 
     GteGeneralTest()
     {
-        clearRegister();
-    }
-
-    void clearRegister(void)
-    {
-        uint8_t i = 0;
-        while (i < 32) {
-            gte.ctc(i, 0);
-            gte.mtc(i, 0);
-            i++;
-        }
+        gte.reset();
     }
 
     void setMatrix(int8_t baseIndex, Mat3x3 &m)
@@ -40,6 +30,13 @@ protected:
         gte.mtc(9, v.x); // IR1
         gte.mtc(10, v.y); // IR2
         gte.mtc(11, v.z); // IR3
+    }
+
+    void setVectorMAC(Vector3<int32_t> &v)
+    {
+        gte.mtc(25, v.x); // MAC1
+        gte.mtc(26, v.y); // MAC2
+        gte.mtc(27, v.z); // MAC3
     }
 
     void setVector(uint8_t base, Vector3<int16_t> &v)
@@ -76,6 +73,44 @@ protected:
         EXPECT_EQ(ir2, expectedIR.y);
         EXPECT_EQ(ir3, expectedIR.z);
     }
+
+    void runGpTest(bool base, Vector3<int16_t> &expectedIR, Vector3<int32_t> &expectedMAC, Rgbc &expectedFifo, Flag &f)
+    {
+        uint32_t opcode;
+
+        if (base)
+            opcode = 0x4A00003E; //GPL
+        else
+            opcode = 0x4A00003D; //GPF
+
+        opcode |= (f.sf << 19);
+
+        gte.execute(opcode);
+
+        int32_t mac1 = static_cast<int32_t>(gte.mfc(25));
+        int32_t mac2 = static_cast<int32_t>(gte.mfc(26));
+        int32_t mac3 = static_cast<int32_t>(gte.mfc(27));
+
+        EXPECT_EQ(mac1, expectedMAC.x);
+        EXPECT_EQ(mac2, expectedMAC.y);
+        EXPECT_EQ(mac3, expectedMAC.z);
+
+        int16_t ir1 = static_cast<int16_t>(gte.mfc(9));
+        int16_t ir2 = static_cast<int16_t>(gte.mfc(10));
+        int16_t ir3 = static_cast<int16_t>(gte.mfc(11));
+
+        EXPECT_EQ(ir1, expectedIR.x);
+        EXPECT_EQ(ir2, expectedIR.y);
+        EXPECT_EQ(ir3, expectedIR.z);
+
+        int32_t fifo = gte.mfc(20);
+
+        EXPECT_EQ((fifo >> 24) & 0xFF, expectedFifo.c);
+        EXPECT_EQ((fifo >> 16) & 0xFF, expectedFifo.r);
+        EXPECT_EQ((fifo >> 8) & 0xFF, expectedFifo.g);
+        EXPECT_EQ(fifo & 0xFF, expectedFifo.b);
+    }
+
 };
 
 TEST_F(GteGeneralTest, MVMVA_Identity_Basic_Flag)
@@ -153,7 +188,7 @@ TEST_F(GteGeneralTest, MVMVA_Lm_Low_Different_MAC)
     Mat3x3 m(5, 8, 7, 6, 4, 10, 4, 5, 6);
     Vector3 t(0, -20, -0x8000);
     Vector3<int16_t> v(-5, -10, -20);
-    Vector3<int16_t> expectedIR(-245, -290, -0x8000);
+    Vector3<int16_t> expectedIR(0, 0, 0);
     Vector3<int32_t> expectedMAC(-245, -290, -190 - 0x8000);
     Flag f(0, 0, 0, 0, 1);
     setMatrix(0, m);
@@ -216,4 +251,57 @@ TEST_F(GteGeneralTest, MVMVA_FC_Translation) {
     setTranslation(21, t);
     setVector(0, v);
     runMvmvaTest(expectedIR, expectedMAC, f);
+}
+
+TEST_F(GteGeneralTest, GPF_Basic_test)
+{
+    Vector3<int16_t> IR(2, 3, 5);
+    Vector3<int16_t> expectedIR(8, 12, 20);
+    Vector3<int32_t> expectedMAC(8, 12, 20);
+    Rgbc expectedFifo(0, 0, 1, 0);
+    Flag f(0, 0, 0, 0, 0);
+    gte.mtc(8, 4); //IR0
+    setVectorIR(IR);
+    runGpTest(false, expectedIR, expectedMAC, expectedFifo, f);
+}
+
+TEST_F(GteGeneralTest, GPF_Sf)
+{
+    Vector3<int16_t> IR(0x0010, 0x0020, 0x0030);
+    Vector3<int16_t> expectedIR(16, 32, 48);
+    Vector3<int32_t> expectedMAC(16, 32, 48);
+    Rgbc expectedFifo(1, 2, 3, 0);
+    Flag f(1, 0, 0, 0, 0);
+    gte.mtc(8, 0x1000); //IR0
+    setVectorIR(IR);
+    runGpTest(false, expectedIR, expectedMAC, expectedFifo, f);
+}
+
+TEST_F(GteGeneralTest, GPL_Basic_test)
+{
+    Vector3<int16_t> IR(2, 3, 5);
+    Vector3<int32_t> MAC(10, 20, 30);
+    Vector3<int16_t> expectedIR(18, 32, 50);
+    Vector3<int32_t> expectedMAC(18, 32, 50);
+    Rgbc expectedFifo(1, 2, 3, 0);
+    Flag f(0, 0, 0, 0, 0);
+    gte.mtc(8, 4); //IR0
+    setVectorIR(IR);
+    setVectorMAC(MAC);
+    runGpTest(true, expectedIR, expectedMAC, expectedFifo, f);
+}
+
+TEST_F(GteGeneralTest, GPL_Sf_with_code)
+{
+    Vector3<int16_t> IR(0x0001, 0x0002, 0x0003);
+    Vector3<int32_t> MAC(0x0010, 0x0020, 0x0030);
+    Vector3<int16_t> expectedIR(16, 32, 48);
+    Vector3<int32_t> expectedMAC(16, 32, 48);
+    Rgbc expectedFifo(1, 2, 3, 1);
+    Flag f(1, 0, 0, 0, 0);
+    gte.mtc(8, 0x0100); //IR0
+    gte.mtc(20, 0x01000000); // fifo CODE = 1
+    setVectorIR(IR);
+    setVectorMAC(MAC);
+    runGpTest(true, expectedIR, expectedMAC, expectedFifo, f);
 }

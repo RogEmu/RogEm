@@ -29,6 +29,14 @@ struct Flag
 	bool lm;
 };
 
+struct Rgbc
+{
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+    uint8_t c;
+};
+
 struct Mat3x3
 {
 	int16_t r11;
@@ -94,12 +102,36 @@ class GTE : public Coprocessor {
          * @param value The value to clamp.
          * @param limitHigh Upper bound.
          * @param limitLow Lower bound.
-         * @param flagBit Bit to set in the FLAG register if out of range.
+         * @param flagBitHigh Bit to set in the FLAG register if out of range and positive.
+         * @param flagBitLow Bit to set in the FLAG register if out of range and negative.
          * @return Clamped value.
          */
-        int32_t clampMAC(int64_t value, int limitHigh, int limitLow, uint32_t flagBit);
+        template <typename T>
+        T clampMAC(int64_t value, T limitHigh, T limitLow, uint32_t flagBitHigh, uint32_t flagBitLow) {
+            if (value > limitHigh) {
+                m_ctrlReg[31] |= flagBitHigh;
+                return limitHigh;
+            }
+            if (value < limitLow) {
+                m_ctrlReg[31] |= flagBitLow;
+                return limitLow;
+            }
+            return static_cast<T>(value);
+        }
+
         static constexpr int32_t IR_LIMIT_LOW = -0x8000;
         static constexpr int32_t IR_LIMIT_HIGH = 0x7FFF;
+        static constexpr int32_t IR_LIMIT_MODE = 0;
+        static constexpr uint8_t FIFO_LIMIT_LOW = 0x00;
+        static constexpr uint8_t FIFO_LIMIT_HIGH = 0xFF;
+        static constexpr int64_t MAC_LIMIT = (1LL << 43);
+
+        /**
+         * @brief check if mac is overflowing and set flag accordingly
+         * @param macIndex mac's index
+         * @param value mac value to be tested
+         */
+        void checkMACOverflow(int macIndex, int64_t value);
 
         int32_t getDataReg(int index) const { return m_dataReg.at(index); }
         void setDataReg(int index, int32_t value) { m_dataReg.at(index) = value; }
@@ -157,6 +189,19 @@ class GTE : public Coprocessor {
          * @brief Executes AVSZ4 (Average of Z values) instruction.
          */
         void executeAVSZ4();
+
+        /**
+         * @brief Execute GPF (General purpose Interpolation)
+         * @param opcode opcode to extract flag from
+         */
+        void executeGPF(uint32_t opcode);
+
+        /**
+         * @brief Execute GPL (General Interpolation with base)
+         * @param opcode opcode to extract flag from
+         * @param MAC is a base or not
+         */
+        void executeGPL(uint32_t opcode, bool base);
 
         // Internal helper functions
         /**

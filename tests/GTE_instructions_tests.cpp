@@ -88,14 +88,14 @@ TEST_F(GteInstructionTest, RTPS_HandlesZeroOrNegativeZCorrectly) {
 
 TEST_F(GteInstructionTest, ClampMAC_SetsFlagWhenOverflowingIR) {
     int64_t overflowed = static_cast<int64_t>(GTE::IR_LIMIT_HIGH) + 1000;
-    int32_t clamped = gte.clampMAC(overflowed, GTE::IR_LIMIT_HIGH, GTE::IR_LIMIT_LOW, 0x01);
+    int32_t clamped = gte.clampMAC(overflowed, GTE::IR_LIMIT_HIGH, GTE::IR_LIMIT_LOW, 0x01, 0x01);
     EXPECT_EQ(clamped, GTE::IR_LIMIT_HIGH);
     EXPECT_TRUE(gte.cfc(31) & 0x01);
 }
 
 TEST_F(GteInstructionTest, ClampMAC_SetsFlagWhenUnderflowingIR) {
     int64_t underflowed = static_cast<int64_t>(GTE::IR_LIMIT_LOW) - 1000;
-    int32_t clamped = gte.clampMAC(underflowed, GTE::IR_LIMIT_HIGH, GTE::IR_LIMIT_LOW, 0x02);
+    int32_t clamped = gte.clampMAC(underflowed, GTE::IR_LIMIT_HIGH, GTE::IR_LIMIT_LOW, 0x02, 0x02);
     EXPECT_EQ(clamped, GTE::IR_LIMIT_LOW);
     EXPECT_TRUE(gte.cfc(31) & 0x02);
 }
