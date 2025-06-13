@@ -80,7 +80,7 @@ void System::run()
             render();
             currentCycles = 0;
         }
-        currentCycles += 4;
+        currentCycles += 2;
     }
 }
 
