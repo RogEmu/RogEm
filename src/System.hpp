@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
 #include "Debugger.hpp"
@@ -40,6 +41,8 @@ class System
 
         void loadPsxExe(const char *path);
 
+        void initVramTexture();
+
     private:
         std::unique_ptr<CPU> m_cpu;
         std::unique_ptr<Bus> m_bus;
@@ -50,6 +53,8 @@ class System
 
         GLFWwindow* m_window;
         bool m_isRunning;
+
+        GLuint m_vramTexture;
 };
 
 #endif /* !SYSTEM_HPP_ */

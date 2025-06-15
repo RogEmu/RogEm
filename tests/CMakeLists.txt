@@ -25,6 +25,7 @@ add_executable(${TEST_BINARY_NAME}
     GTE_projections_tests.cpp
     GTE_calculation_tests.cpp
     GTE_calculation_tests_two.cpp
+    GPU_register_basic_tests.cpp
 )
 
 if (${ENABLE_COVERAGE})

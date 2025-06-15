@@ -1,8 +1,18 @@
 #include "GPU.hpp"
 
 #include <spdlog/spdlog.h>
+#include <algorithm>
+#include <cmath>
 
 #include "Bus.h"
+
+Vec2i randomVertex(int width, int height)
+{
+    return Vec2i{
+        rand() % width,
+        rand() % height
+    };
+}
 
 GPU::GPU(Bus *bus) :
     PsxDevice(bus)
@@ -18,18 +28,32 @@ GPU::~GPU()
 void GPU::reset()
 {
     // m_statRegister = 0x1C000000;
+    std::memset(&m_drawArea, 0, sizeof(m_drawArea));
+    std::memset(&m_drawOffset, 0, sizeof(m_drawOffset));
     std::memset(&m_displayArea, 0, sizeof(m_displayArea));
     std::memset(&m_gpuStat, 0, sizeof(m_gpuStat));
     m_gpuStat.rdReceiveDmaBlock = true;
     m_gpuStat.rdReceiveCmd = true;
     m_gpuStat.displayEnable = DisplayEnable::Disabled;
     m_gpuStat.interlaceField = true;
-
     m_gpuStat.rdSendVram = true;
 
+    m_vram.fill(0);
     m_gpuRead = 0;
-}
 
+    const int numTriangles = 1000;
+    int width = 1024;
+    int height = 512;
+
+    srand((unsigned int)time(NULL));
+    for (int i = 0; i < numTriangles; ++i) {
+        Vec2i v0 = randomVertex(width, height);
+        Vec2i v1 = randomVertex(width, height);
+        Vec2i v2 = randomVertex(width, height);
+
+        rasterizeTriangle(v0, v1, v2, rand() % 0xFFFFFFFF);
+    }
+}
 
 void GPU::write8(uint8_t /* value */, uint32_t /* address */)
 {
@@ -47,8 +71,7 @@ void GPU::write32(uint32_t value, uint32_t address)
     switch (address)
     {
     case 0x1F801810:
-        //handle GP0 commands
-        spdlog::warn("GPU: GP0 command not suppported");
+        handleGP0Command(value);
         break;
     case 0x1F801814:
         handleGP1Command(value);
@@ -83,6 +106,11 @@ uint32_t GPU::read32(uint32_t address)
     }
     spdlog::debug("GPU: read from 0x{:08X} = 0x{:08X}", address, result);
     return result;
+}
+
+const uint8_t *GPU::getVram() const
+{
+    return m_vram.data();
 }
 
 uint32_t GPU::gpuStat() const
@@ -123,6 +151,7 @@ void GPU::setDisplayMode(uint8_t modeBits)
     m_gpuStat.hRes2 = (modeBits >> 6) & 1;
     // GPUSTAT flip screen horizontally ???
     // I don't know which version between v1 and v2 to use here
+    // I use v2 so no screen flip :)
 }
 
 void GPU::readInternalRegister(uint8_t reg)
@@ -146,20 +175,43 @@ void GPU::readInternalRegister(uint8_t reg)
         break;
     case 0x03:
         // Read Draw Area top left
+        m_gpuRead = m_drawArea.topLeft.x & 0x3FF;
+        m_gpuRead |= (m_drawArea.topLeft.y & 0x3FF) << 10;
         break;
     case 0x04:
         // Read Draw Area bottom right
+        m_gpuRead = m_drawArea.botRight.x & 0x3FF;
+        m_gpuRead |= (m_drawArea.botRight.y & 0x3FF) << 10;
         break;
     case 0x05:
         // Read Draw Offset
+        m_gpuRead = m_drawOffset.x & 0x7FF;
+        m_gpuRead |= (m_drawOffset.y & 0x7FF) << 11;
         break;
     case 0x07:
+        // Read GPU Version
         m_gpuRead = 2;
         break;
     case 0x08:
         m_gpuRead = 0;
         break;
     default:
+        break;
+    }
+}
+
+void GPU::handleGP0Command(uint32_t cmd)
+{
+    uint8_t top = cmd >> 29;
+
+    switch (top)
+    {
+    case 0:
+    case 7:
+        handleEnvCommand(cmd);
+        break;
+    default:
+        spdlog::warn("GPU: GP0 command 0x{:08X} unsupported", cmd);
         break;
     }
 }
@@ -225,5 +277,90 @@ void GPU::handleGP1Command(uint32_t cmd)
         break;
     default:
         break;
+    }
+}
+
+void GPU::handleEnvCommand(uint32_t cmd)
+{
+    uint8_t top = cmd >> 24;
+
+    switch (top)
+    {
+    case 0xE1:
+        // Draw Mode setting
+        setDrawMode(cmd & 0xFFFFFF);
+        break;
+    case 0xE2:
+        // Texture Window setting
+        break;
+    case 0xE3:
+        // Set Draw Area bottom-right
+        m_drawArea.topLeft.x = cmd & 0x3FF;
+        m_drawArea.topLeft.y = (cmd >> 10) & 0x3FF;
+        break;
+    case 0xE4:
+        // Set Draw Area bottom-right
+        m_drawArea.botRight.x = cmd & 0x3FF;
+        m_drawArea.botRight.y = (cmd >> 10) & 0x3FF;
+        break;
+    case 0xE5:
+        // Set Drawing Offset
+        m_drawOffset.x = cmd & 0x7FF;
+        m_drawOffset.y = (cmd >> 11) & 0x7FF;
+        break;
+    case 0xE6:
+        // Mask bit setting
+        m_gpuStat.setMaskBitWhenDrawing = cmd & 1;
+        m_gpuStat.drawPixels = (cmd >> 1) & 1;
+        break;
+    default:
+        spdlog::error("GPU: Unknow GP0 command 0x{:08X}", cmd);
+        break;
+    }
+}
+
+void GPU::setDrawMode(uint32_t mode)
+{
+    m_gpuStat.texPageBase.x = mode & 7;
+    m_gpuStat.texPageBase.y = (mode >> 4) & 1;
+    m_gpuStat.semiTransparency = (mode >> 5) & 3;
+    m_gpuStat.texPageColors = static_cast<TexturePageColors>((mode >> 7) & 3);
+    m_gpuStat.dither = (mode >> 9) & 1;
+    m_gpuStat.drawToDisplayArea = (mode >> 10) & 1;
+    m_textureRectFlip.x = (mode >> 12) & 1;
+    m_textureRectFlip.y = (mode >> 13) & 1;
+}
+
+static int edgeFunction(const Vec2i& a, const Vec2i& b, const Vec2i& c)
+{
+    return (c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x);
+}
+
+void GPU::rasterizeTriangle(const Vec2i &v0, const Vec2i &v1, const Vec2i &v2, const ColorRGBA &color)
+{
+    uint16_t argbColor = color.toABGR1555();
+
+    int minX = std::max(0, std::min({v0.x, v1.x, v2.x}));
+    int maxX = std::min(1023, std::max({v0.x, v1.x, v2.x}));
+    int minY = std::max(0, std::min({v0.y, v1.y, v2.y}));
+    int maxY = std::min(511, std::max({v0.y, v1.y, v2.y}));
+
+    int area = edgeFunction(v0, v1, v2);
+    if (area == 0)
+        return;
+
+    for (int y = minY; y <= maxY; y++) {
+        for (int x = minX; x <= maxX; x++) {
+            Vec2i p = {x, y};
+            int w0 = edgeFunction(v1, v2, p);
+            int w1 = edgeFunction(v2, v0, p);
+            int w2 = edgeFunction(v0, v1, p);
+
+            if (w0 >= 0 && w1 >= 0 && w2 >= 0) {
+                int index = (y * 1023 + x) * 2;
+                m_vram[index] = argbColor & 0xFF;
+                m_vram[index + 1] = argbColor >> 8;
+            }
+        }
     }
 }

@@ -8,6 +8,12 @@
     "argparse",
     "spdlog",
     {
+      "name": "glad",
+      "features": [
+        "gl-api-33"
+      ]
+    },
+    {
       "name": "capstone",
       "features": [
         "mips"

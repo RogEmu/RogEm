@@ -18,6 +18,7 @@
 #include <thread>
 
 #include "core/PsxExecutable.hpp"
+#include "core/GPU.hpp"
 
 System::System()
 {
@@ -63,6 +64,7 @@ int System::init(const EmulatorConfig &config)
             return 1;
         }
     }
+    initVramTexture();
     return 0;
 }
 
@@ -73,6 +75,7 @@ void System::run()
     int currentCycles = 0;
 
     m_isRunning = true;
+    m_debug->pause(false);
     while (m_isRunning)
     {
         update();
@@ -86,7 +89,7 @@ void System::run()
 
 void glfw_error_callback(int error_code, const char* description)
 {
-    fprintf(stderr, "GLFW Error %d: %s\n", error_code, description);
+    spdlog::error("GLFW Error {}: {}", error_code, description);
 }
 
 int System::initGFLW()
@@ -96,20 +99,27 @@ int System::initGFLW()
         return -1;
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // Create a window
     m_window = glfwCreateWindow(1280, 720, "RogEm", nullptr, nullptr);
-    if (!m_window)
+    if (!m_window) {
         return -1;
+    }
     glfwMakeContextCurrent(m_window);
-    glfwSwapInterval(1); // VSync
+    // glfwSwapInterval(1); // VSync
+
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+        spdlog::error("Failed to initialize GLAD");
+        return -1;
+    }
     return 0;
 }
 
 int System::initImGUi()
 {
-    const char *glsl_version = "#version 130";
+    const char *glsl_version = "#version 330";
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -157,6 +167,7 @@ static void renderImGuiFrame()
 void System::render()
 {
     glfwPollEvents();
+
     if (glfwGetWindowAttrib(m_window, GLFW_ICONIFIED) != 0) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
@@ -167,6 +178,15 @@ void System::render()
     newImGuiFrame();
     ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport());
     m_debug->draw();
+    if (ImGui::Begin("Screen")) {
+        GPU *gpu = static_cast<GPU *>(m_bus->getDevice(PsxDeviceType::GPU));
+        const uint8_t *vram = gpu->getVram();
+        glBindTexture(GL_TEXTURE_2D, m_vramTexture);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 1024, 512, GL_RGBA, GL_UNSIGNED_SHORT_1_5_5_5_REV, vram);
+        ImGui::Image((ImTextureID)(intptr_t)m_vramTexture, ImGui::GetContentRegionAvail());
+    }
+    ImGui::End();
+
     renderImGuiFrame();
 }
 
@@ -186,4 +206,13 @@ void System::loadPsxExe(const char *path)
     } else {
         spdlog::error("Error while loading PSX-EXE file");
     }
+}
+
+void System::initVramTexture()
+{
+    glGenTextures(1, &m_vramTexture);
+    glBindTexture(GL_TEXTURE_2D, m_vramTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1024, 512, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, 0);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 }
