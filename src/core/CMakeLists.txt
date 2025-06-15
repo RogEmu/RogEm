@@ -39,3 +39,9 @@ target_link_libraries(${CORE_LIB_NAME} PUBLIC
     capstone::capstone
     spdlog::spdlog
 )
+
+if (${ENABLE_COVERAGE})
+    target_compile_options(${CORE_LIB_NAME} PRIVATE --coverage -g)
+    target_link_options(${CORE_LIB_NAME} PRIVATE --coverage)
+    target_link_libraries(${CORE_LIB_NAME} PRIVATE gcov)
+endif()

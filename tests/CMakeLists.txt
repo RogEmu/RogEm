@@ -1,5 +1,3 @@
-option(ENABLE_COVERAGE OFF)
-
 set(TEST_BINARY_NAME rogem_tests)
 
 find_package(GTest CONFIG REQUIRED)
@@ -31,6 +29,7 @@ add_executable(${TEST_BINARY_NAME}
 
 if (${ENABLE_COVERAGE})
     target_compile_options(${TEST_BINARY_NAME} PRIVATE --coverage -g)
+    target_link_options(${TEST_BINARY_NAME} PRIVATE --coverage)
     target_link_libraries(${TEST_BINARY_NAME} PRIVATE gcov)
 endif()
 
