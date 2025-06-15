@@ -41,7 +41,7 @@ void GPU::reset()
     m_vram.fill(0);
     m_gpuRead = 0;
 
-    const int numTriangles = 1000;
+    const int numTriangles = 10;
     int width = 1024;
     int height = 512;
 
