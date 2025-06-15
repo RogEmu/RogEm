@@ -7,3 +7,4 @@ imgui.ini
 /vcpkg_installed
 /bios
 breakpoints.json
+bios_dump.bin

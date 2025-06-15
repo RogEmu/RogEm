@@ -26,7 +26,6 @@ Debugger::Debugger(System *system) :
     m_windows.emplace_back(std::make_unique<RegisterWindow>(this));
     m_windows.emplace_back(std::make_unique<AssemblyWindow>(this));
     m_windows.emplace_back(std::make_unique<BreakpointWindow>(this));
-    m_windows.emplace_back(std::make_unique<SettingsWindow>(this));
     auto biosMemoryWindow = std::make_unique<MemoryWindow>(this);
     auto logWindow = std::make_unique<LogWindow>(this);
     logWindow->setTitle("Log");
@@ -34,7 +33,9 @@ Debugger::Debugger(System *system) :
     biosMemoryWindow->setBaseAddr(0xBFC00000);
     biosMemoryWindow->setTitle("BIOS");
     biosMemoryWindow->setReadOnly(true);
+    MemoryWindow* biosPtr = biosMemoryWindow.get();
     m_windows.push_back(std::move(biosMemoryWindow));
+    m_windows.emplace_back(std::make_unique<SettingsWindow>(this, biosPtr));
 
     auto ramMemoryWindow = std::make_unique<MemoryWindow>(this);
     ramMemoryWindow->setBaseAddr(0);

@@ -23,6 +23,11 @@ void MemoryWindow::setBaseAddr(uint32_t baseAddr)
     m_baseAddr = baseAddr;
 }
 
+uint32_t MemoryWindow::getBaseAddr() const
+{
+    return m_baseAddr;
+}
+
 void MemoryWindow::setReadOnly(bool readOnly)
 {
     m_memEdit.ReadOnly = readOnly;

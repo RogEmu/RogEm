@@ -20,6 +20,7 @@ class MemoryWindow : public IWindow
 
         void setBaseAddr(uint32_t baseAddr);
         void setReadOnly(bool readOnly);
+        uint32_t getBaseAddr() const;
 
         MemoryEditor* getMemoryEditor();
         void gotoAddress(uint32_t addr);

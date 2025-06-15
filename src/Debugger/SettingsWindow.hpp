@@ -5,19 +5,22 @@
 #include "IWindow.hpp"
 
 class Debugger;
+class MemoryWindow;
 
 class SettingsWindow : public IWindow 
 {
     public:
-        SettingsWindow(Debugger *debugger);
+        SettingsWindow(Debugger *debugger, MemoryWindow* memoryWindow);
         ~SettingsWindow();
 
         void update() override;
 
     private:
         void resetButton();
+        void dumpBIOSButton();
 
         Debugger *m_debugger;
+        MemoryWindow* m_memoryWindow;
 };
 
 
