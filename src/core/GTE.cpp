@@ -615,12 +615,18 @@ void GTE::executeDPCS(uint32_t opcode)
     executeINTPL(opcode, macs);
 }
 
-void GTE::executeDPCT(uint32_t opcode)
-{
-    Vector3<int32_t> macs((((m_dataReg[6] >> 16) & 0xFF) * m_dataReg[9]) << 4,
-                          (((m_dataReg[6] >> 8) & 0xFF) * m_dataReg[10]) << 4,
-                          ((m_dataReg[6] & 0xFF) * m_dataReg[11]) << 4);
-    executeINTPL(opcode, macs);
+void GTE::executeDPCT(uint32_t opcode) {
+    Rgbc base = getRGB0();
+
+    for (int i = 0; i < 3; ++i) {
+        Vector3<int32_t> macs(
+            base.r * m_dataReg[9] << 4,
+            base.g * m_dataReg[10] << 4,
+            base.b * m_dataReg[11] << 4
+        );
+
+        executeINTPL(opcode, macs);
+    }
 }
 
 void GTE::executeINTPL(uint32_t opcode, Vector3<int32_t> macs)
@@ -639,14 +645,26 @@ void GTE::executeINTPL(uint32_t opcode, Vector3<int32_t> macs)
     uint8_t g = clampMAC(macs.y / 16, FIFO_LIMIT_HIGH, FIFO_LIMIT_LOW, 1 << 20, 1 << 20);
     uint8_t b = clampMAC(macs.z / 16, FIFO_LIMIT_HIGH, FIFO_LIMIT_LOW, 1 << 19, 1 << 19);
 
-    Rgbc fifo(r & 0xFF, g & 0xFF, b & 0xFF, (m_dataReg[20] >> 24) & 0xFF);
-    m_dataReg[20] = (fifo.c << 24) | (fifo.r << 16) | (fifo.g << 8) | fifo.b;
+    Rgbc fifo(r, g, b, (m_dataReg[20] >> 24) & 0xFF);
+    pushColorFIFO(fifo);
+}
+
+void GTE::pushColorFIFO(const Rgbc& color) {
+    m_colorFIFO[0] = m_colorFIFO[1];
+    m_colorFIFO[1] = m_colorFIFO[2];
+    m_colorFIFO[2] = color;
+
+    m_dataReg[20] = (color.c << 24) | (color.r << 16) | (color.g << 8) | color.b;
+}
+
+Rgbc GTE::getRGB0() const {
+    return m_colorFIFO[0];
 }
 
 void GTE::checkMACOverflow(int macIndex, int64_t value) {
     if (value >= MAC_LIMIT)
         m_ctrlReg[31] |= (1 << (30 - macIndex)); // bits 30, 29, 28
-    else if (value <= -MAC_LIMIT)
+        else if (value <= -MAC_LIMIT)
         m_ctrlReg[31] |= (1 << (27 - macIndex)); // bits 27, 26, 25
 }
 
