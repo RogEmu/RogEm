@@ -40,19 +40,6 @@ void GPU::reset()
 
     m_vram.fill(0);
     m_gpuRead = 0;
-
-    const int numTriangles = 10;
-    int width = 1024;
-    int height = 512;
-
-    srand((unsigned int)time(NULL));
-    for (int i = 0; i < numTriangles; ++i) {
-        Vec2i v0 = randomVertex(width, height);
-        Vec2i v1 = randomVertex(width, height);
-        Vec2i v2 = randomVertex(width, height);
-
-        rasterizeTriangle(v0, v1, v2, rand() % 0xFFFFFFFF);
-    }
 }
 
 void GPU::write8(uint8_t /* value */, uint32_t /* address */)
@@ -286,6 +273,18 @@ void GPU::handleEnvCommand(uint32_t cmd)
 
     switch (top)
     {
+    case 0x00:
+        // NOP
+        break;
+    case 0x01:
+        // Clear Cache
+        break;
+    case 0x02:
+        // Quick Rectangle Fill
+        break;
+    case 0x1F:
+        // IRQ
+        break;
     case 0xE1:
         // Draw Mode setting
         setDrawMode(cmd & 0xFFFFFF);
