@@ -609,20 +609,18 @@ void GTE::executeDCPL(uint32_t opcode)
 
 void GTE::executeDPCS(uint32_t opcode)
 {
-    Vector3<int32_t> macs((((m_dataReg[6] >> 16) & 0xFF) * m_dataReg[9]) << 4,
-                          (((m_dataReg[6] >> 8) & 0xFF) * m_dataReg[10]) << 4,
-                          ((m_dataReg[6] & 0xFF) * m_dataReg[11]) << 4);
+    Vector3<int32_t> macs(((m_dataReg[6] >> 16) & 0xFF) << 16,
+                          ((m_dataReg[6] >> 8) & 0xFF) << 16,
+                          (m_dataReg[6] & 0xFF) << 16);
     executeINTPL(opcode, macs);
 }
 
 void GTE::executeDPCT(uint32_t opcode) {
-    Rgbc base = getRGB0();
-
     for (int i = 0; i < 3; ++i) {
         Vector3<int32_t> macs(
-            base.r * m_dataReg[9] << 4,
-            base.g * m_dataReg[10] << 4,
-            base.b * m_dataReg[11] << 4
+            ((m_dataReg[20 + i] >> 16) & 0xFF) << 16,
+            ((m_dataReg[20 + i] >> 8) & 0xFF)<< 16,
+            (m_dataReg[20 + i] & 0xFF) << 16
         );
 
         executeINTPL(opcode, macs);
