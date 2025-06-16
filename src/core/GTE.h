@@ -20,6 +20,13 @@ struct  Vector3{
   	size z;
 };
 
+enum class interpolation
+{
+    DCPL,
+    INTPL,
+    DPC
+};
+
 struct Flag
 {
 	bool sf;
@@ -202,6 +209,11 @@ class GTE : public Coprocessor {
          * @param MAC is a base or not
          */
         void executeGPL(uint32_t opcode, bool base);
+
+        void executeDCPL(uint32_t opcode);
+        void executeDPCS(uint32_t opcode);
+        void executeDPCT(uint32_t opcode);
+        void executeINTPL(uint32_t opcode, Vector3<int32_t> macs);
 
         // Internal helper functions
         /**

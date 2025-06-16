@@ -111,11 +111,13 @@ void GTE::decodeAndExecute(uint32_t opcode) {
             break;
         }
         case GTEFunction::DPCS:
-            spdlog::warn("[GTE] DPCS - Not implemented yet");
+            executeDPCS(opcode);
             break;
-        case GTEFunction::INTPL:
-            spdlog::warn("[GTE] INTPL - Not implemented yet");
+        case GTEFunction::INTPL: {
+            Vector3<int32_t> macs(m_dataReg[9] << 12, m_dataReg[10] << 12, m_dataReg[11] << 12);
+            executeINTPL(opcode, macs);
             break;
+        }
         case GTEFunction::MVMVA:
             executeMVMVA(opcode);
             break;
@@ -146,10 +148,10 @@ void GTE::decodeAndExecute(uint32_t opcode) {
             break;
         }
         case GTEFunction::DCPL:
-            spdlog::warn("[GTE] DCPL - Not implemented yet");
+            executeDCPL(opcode);
             break;
         case GTEFunction::DPCT:
-            spdlog::warn("[GTE] DPCT - Not implemented yet");
+            executeDPCT(opcode);
             break;
         case GTEFunction::AVSZ3:
             executeAVSZ3();
@@ -597,6 +599,49 @@ void GTE::executeGPL(uint32_t opcode, bool base)
     m_dataReg[20] = (fifo.c << 24) | (fifo.r << 16) | (fifo.g << 8) | fifo.b;
 }
 
+void GTE::executeDCPL(uint32_t opcode)
+{
+    Vector3<int32_t> macs((((m_dataReg[6] >> 16) & 0xFF) * m_dataReg[9]) << 4,
+                          (((m_dataReg[6] >> 8) & 0xFF) * m_dataReg[10]) << 4,
+                          ((m_dataReg[6] & 0xFF) * m_dataReg[11]) << 4);
+    executeINTPL(opcode, macs);
+}
+
+void GTE::executeDPCS(uint32_t opcode)
+{
+    Vector3<int32_t> macs((((m_dataReg[6] >> 16) & 0xFF) * m_dataReg[9]) << 4,
+                          (((m_dataReg[6] >> 8) & 0xFF) * m_dataReg[10]) << 4,
+                          ((m_dataReg[6] & 0xFF) * m_dataReg[11]) << 4);
+    executeINTPL(opcode, macs);
+}
+
+void GTE::executeDPCT(uint32_t opcode)
+{
+    Vector3<int32_t> macs((((m_dataReg[6] >> 16) & 0xFF) * m_dataReg[9]) << 4,
+                          (((m_dataReg[6] >> 8) & 0xFF) * m_dataReg[10]) << 4,
+                          ((m_dataReg[6] & 0xFF) * m_dataReg[11]) << 4);
+    executeINTPL(opcode, macs);
+}
+
+void GTE::executeINTPL(uint32_t opcode, Vector3<int32_t> macs)
+{
+    Flag f = getFlags(opcode);
+
+    macs.x += ((m_ctrlReg[21] + macs.x) * m_dataReg[8]) >> (f.sf * 12);
+    macs.y += ((m_ctrlReg[22] + macs.y) * m_dataReg[8]) >> (f.sf * 12);
+    macs.z += ((m_ctrlReg[23] + macs.z) * m_dataReg[8]) >> (f.sf * 12);
+
+    m_dataReg[9] = macs.x;
+    m_dataReg[10] = macs.y;
+    m_dataReg[11] = macs.z;
+
+    uint8_t r = clampMAC(macs.x / 16, FIFO_LIMIT_HIGH, FIFO_LIMIT_LOW, 1 << 21, 1 << 21);
+    uint8_t g = clampMAC(macs.y / 16, FIFO_LIMIT_HIGH, FIFO_LIMIT_LOW, 1 << 20, 1 << 20);
+    uint8_t b = clampMAC(macs.z / 16, FIFO_LIMIT_HIGH, FIFO_LIMIT_LOW, 1 << 19, 1 << 19);
+
+    Rgbc fifo(r & 0xFF, g & 0xFF, b & 0xFF, (m_dataReg[20] >> 24) & 0xFF);
+    m_dataReg[20] = (fifo.c << 24) | (fifo.r << 16) | (fifo.g << 8) | fifo.b;
+}
 
 void GTE::checkMACOverflow(int macIndex, int64_t value) {
     if (value >= MAC_LIMIT)
