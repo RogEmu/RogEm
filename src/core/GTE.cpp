@@ -595,8 +595,8 @@ void GTE::executeGPL(uint32_t opcode, bool base)
     uint8_t g = clampMAC(mac2 / 16, FIFO_LIMIT_HIGH, FIFO_LIMIT_LOW, 1 << 20, 1 << 20);
     uint8_t b = clampMAC(mac3 / 16, FIFO_LIMIT_HIGH, FIFO_LIMIT_LOW, 1 << 19, 1 << 19);
 
-    Rgbc fifo(r & 0xFF, g & 0xFF, b & 0xFF, (m_dataReg[20] >> 24) & 0xFF);
-    m_dataReg[20] = (fifo.c << 24) | (fifo.r << 16) | (fifo.g << 8) | fifo.b;
+    Rgbc fifo(r, g, b, (m_dataReg[20] >> 24) & 0xFF);
+    pushColorFIFO(fifo);
 }
 
 void GTE::executeDCPL(uint32_t opcode)
