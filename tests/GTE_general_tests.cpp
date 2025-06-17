@@ -345,14 +345,33 @@ TEST_F(GteGeneralTest, GPL_Sf_with_code)
 TEST_F(GteGeneralTest, INTPL_Basic_test)
 {
     Vector3<int16_t> IR(2, 3, 5);
-    Vector3<int32_t> FC(1, 1, 1);
-    Vector3<int32_t> expectedMAC(8, 12, 20);
-    Vector3<int16_t> expectedIR(8, 12, 20);
-    Rgbc expectedFifo(0, 0, 1, 0);
+    Vector3<int32_t> FC(5000, 7000, 11000);
+    Vector3<int32_t> expectedMAC(1808, 1712, 1520);
+    Vector3<int16_t> expectedIR(1808, 1712, 1520);
+    Rgbc expectedFifo(113, 107, 95, 1);
     Flag f(0, 0, 0, 0, 0);
 
-    gte.mtc(8, 4); // IR
-    gte.mtc(20, 0);
+    gte.mtc(8, 2); // IR
+    gte.mtc(20, 0x01000000); // fifo CODE = 1
+    setFC(FC);
+    setVectorIR(IR);
+
+    uint32_t opcodeINTPL = 0x4A000011;
+
+    runInterpolationTest(opcodeINTPL, expectedIR, expectedMAC, expectedFifo, f);
+}
+
+TEST_F(GteGeneralTest, INTPL_sf_test)
+{
+    Vector3<int16_t> IR(16, 32, 48);
+    Vector3<int32_t> FC(65536, 131072, 196608);
+    Vector3<int32_t> expectedMAC(16, 32, 48);
+    Vector3<int16_t> expectedIR(16, 32, 48);
+    Rgbc expectedFifo(1, 2, 3, 1);
+    Flag f(1, 0, 0, 0, 0);
+
+    gte.mtc(8, 2); // IR
+    gte.mtc(20, 0x01000000); // fifo CODE = 1
     setFC(FC);
     setVectorIR(IR);
 
@@ -363,16 +382,16 @@ TEST_F(GteGeneralTest, INTPL_Basic_test)
 
 TEST_F(GteGeneralTest, DCPL_Basic_test)
 {
-    Vector3<int16_t> IR(2, 3, 5);
-    Vector3<int32_t> FC(2, 3, 5);
-    Vector3<int32_t> expectedMAC(8, 12, 20);
-    Vector3<int16_t> expectedIR(8, 12, 20);
-    Rgbc expectedFifo(0, 0, 1, 0);
+    Vector3<int16_t> IR(128, 192, 320);
+    Vector3<int32_t> FC(5000, 7000, 11000);
+    Vector3<int32_t> expectedMAC(1808, 1712, 1520);
+    Vector3<int16_t> expectedIR(1808, 1712, 1520);
+    Rgbc expectedFifo(113, 107, 95, 1);
     Flag f(0, 0, 0, 0, 0);
 
-    gte.mtc(6, 0x00080404);
-    gte.mtc(8, 4);
-    gte.mtc(9, 2);
+    gte.mtc(8, 2); // IR
+    gte.mtc(6, (1 << 24) | (4 << 16) | (4 << 8) | 4); // color
+    gte.mtc(20, 0x01000000); // fifo CODE = 1
     setFC(FC);
     setVectorIR(IR);
 
@@ -383,17 +402,16 @@ TEST_F(GteGeneralTest, DCPL_Basic_test)
 
 TEST_F(GteGeneralTest, DPCS_Basic_test)
 {
-    Vector3<int16_t> IR(2, 3, 5);
-    Vector3<int32_t> FC(2, 3, 5);
-    Vector3<int32_t> expectedMAC(8, 12, 20);
-    Vector3<int16_t> expectedIR(8, 12, 20);
-    Rgbc expectedFifo(0, 0, 1, 0);
-    Flag f(0, 0, 0, 0, 0);
+    Vector3<int32_t> FC(819200, 1228800, 1638400);
+    Vector3<int32_t> expectedMAC(200, 300, 400);
+    Vector3<int16_t> expectedIR(200, 300, 400);
+    Rgbc expectedFifo(12, 18, 25, 1);
+    Flag f(1, 0, 0, 0, 0);
 
-    gte.mtc(6, 0x00080404);
-    gte.mtc(8, 4);
+    gte.mtc(8, 1); // IR
+    gte.mtc(6, (1 << 24) | (1 << 16) | (2 << 8) | 3); // color
+    gte.mtc(20, 0x01000000); // fifo CODE = 1
     setFC(FC);
-    setVectorIR(IR);
 
     uint32_t opcodeDPCS = 0x4A000010;
 
@@ -402,17 +420,16 @@ TEST_F(GteGeneralTest, DPCS_Basic_test)
 
 TEST_F(GteGeneralTest, DPCT_Basic_test)
 {
-    Vector3<int16_t> IR(2, 3, 5);
-    Vector3<int32_t> FC(2, 3, 5);
-    Vector3<int32_t> expectedMAC(8, 12, 20);
-    Vector3<int16_t> expectedIR(8, 12, 20);
-    Rgbc expectedFifo(0, 0, 1, 0);
-    Flag f(0, 0, 0, 0, 0);
+    Vector3<int32_t> FC(819200, 1228800, 1638400);
+    Vector3<int32_t> expectedMAC(200, 300, 400);
+    Vector3<int16_t> expectedIR(200, 300, 400);
+    Rgbc expectedFifo(12, 18, 25, 1);
+    Flag f(1, 0, 0, 0, 0);
 
-    gte.mtc(6, 0x00080404);
-    gte.mtc(8, 4);
+    gte.mtc(8, 1); // IR
+    gte.mtc(6, (1 << 24) | (1 << 16) | (2 << 8) | 3); // color
+    gte.mtc(20, 0x01000000); // fifo CODE = 1
     setFC(FC);
-    setVectorIR(IR);
 
     uint32_t opcodeDPCT = 0x4A00002A;
 

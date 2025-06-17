@@ -631,13 +631,17 @@ void GTE::executeINTPL(uint32_t opcode, Vector3<int32_t> macs)
 {
     Flag f = getFlags(opcode);
 
-    macs.x += ((m_ctrlReg[21] + macs.x) * m_dataReg[8]) >> (f.sf * 12);
-    macs.y += ((m_ctrlReg[22] + macs.y) * m_dataReg[8]) >> (f.sf * 12);
-    macs.z += ((m_ctrlReg[23] + macs.z) * m_dataReg[8]) >> (f.sf * 12);
+    macs.x = (macs.x + (m_ctrlReg[21] - macs.x) * m_dataReg[8]) >> (f.sf * 12);
+    macs.y = (macs.y + (m_ctrlReg[22] - macs.y) * m_dataReg[8]) >> (f.sf * 12);
+    macs.z = (macs.z + (m_ctrlReg[23] - macs.z) * m_dataReg[8]) >> (f.sf * 12);
 
     m_dataReg[9] = macs.x;
     m_dataReg[10] = macs.y;
     m_dataReg[11] = macs.z;
+
+    m_dataReg[25] = macs.x;
+    m_dataReg[26] = macs.y;
+    m_dataReg[27] = macs.z;
 
     uint8_t r = clampMAC(macs.x / 16, FIFO_LIMIT_HIGH, FIFO_LIMIT_LOW, 1 << 21, 1 << 21);
     uint8_t g = clampMAC(macs.y / 16, FIFO_LIMIT_HIGH, FIFO_LIMIT_LOW, 1 << 20, 1 << 20);
