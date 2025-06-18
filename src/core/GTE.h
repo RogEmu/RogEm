@@ -160,12 +160,14 @@ class GTE : public Coprocessor {
         void decodeAndExecute(uint32_t opcode);
 
         /*
-        * @brief Executes the RTPS instruction (Rotate, Translate, Perspective Single).
-        void executeRTPS();
-
-         * @brief Executes the RTPT instruction (Rotate, Translate, Perspective Triple).
-         void executeRTPT();
+         * @brief Executes the RTPS instruction (Rotate, Translate, Perspective Single).
          */
+        void executeRTPS(uint32_t opcode, int vectorNumber);
+
+        /*
+         * @brief Executes the RTPT instruction (Rotate, Translate, Perspective Triple).
+         */
+        void executeRTPT(uint32_t opcode);
 
         /**
          * @brief Execute the NCLIP instruction (normal clipping)
