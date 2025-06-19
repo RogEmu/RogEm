@@ -38,8 +38,14 @@ void GPU::reset()
     m_gpuStat.interlaceField = true;
     m_gpuStat.rdSendVram = true;
 
-    m_vram.fill(0);
+    m_vram.fill(0xFF);
     m_gpuRead = 0;
+    m_currentState = GpuState::WaitingForCommand;
+    m_currentCmd.reset();
+    m_nbExpectedParams = -1;
+
+    // rasterizePoly3(Vec2i{0, 0}, Vec2i{256, 0}, Vec2i{0, 512}, ColorRGBA(0xFF0000FF));
+    // rasterizePoly3(Vec2i{0, 0}, Vec2i{100, 100}, Vec2i{0, 100}, ColorRGBA(0x00FF00FF));
 }
 
 void GPU::write8(uint8_t /* value */, uint32_t /* address */)
@@ -191,11 +197,43 @@ void GPU::handleGP0Command(uint32_t cmd)
 {
     uint8_t top = cmd >> 29;
 
+    if (m_currentState == GpuState::ReceivingParameters) {
+        m_currentCmd.addParam(cmd);
+
+        if (m_currentCmd.nbParams() == m_nbExpectedParams) {
+            // Trigger function call
+            if (m_currentCmd.command() == CommandType::DrawPolygon) {
+                drawPolygon();
+            }
+            spdlog::warn("GPU: Must call appropriate command function here!!!");
+            m_currentCmd.reset();
+            m_currentState = GpuState::WaitingForCommand;
+        }
+        return;
+    }
+
     switch (top)
     {
-    case 0:
-    case 7:
+    case 0b000:
+    case 0b111:
         handleEnvCommand(cmd);
+        break;
+    case 0b001: {
+        int nbVertices = ((cmd >> 27) & 1) == 0 ? 3 : 4;
+        m_nbExpectedParams = ((cmd >> 28) & 1) * (nbVertices - 1); // Nb Gouraud Shading vertices
+        m_nbExpectedParams += ((cmd >> 26) & 1) * nbVertices; // Nb UV coordinates
+        m_nbExpectedParams += nbVertices;
+        m_currentState = GpuState::ReceivingParameters;
+        m_currentCmd.setCommand(cmd);
+        spdlog::warn("GPU: Draw Polygon with {} vertices", nbVertices);
+        break;
+    }
+    case 0b010:
+    case 0b011:
+    case 0b100:
+    case 0b101:
+    case 0b110:
+        spdlog::warn("GPU: Current Command = 0b{:03b}", top);
         break;
     default:
         spdlog::warn("GPU: GP0 command 0x{:08X} unsupported", cmd);
@@ -330,12 +368,31 @@ void GPU::setDrawMode(uint32_t mode)
     m_textureRectFlip.y = (mode >> 13) & 1;
 }
 
+static Vec2i getVec(uint32_t param)
+{
+    Vec2i vec{.x = (int)(param & 0xFFFF), .y = (int)((param >> 16) & 0xFFFF)};
+    return vec;
+}
+
+void GPU::drawPolygon()
+{
+    int nbVerts = (m_currentCmd.raw() >> 27) & 1 == 0 ? 3 : 4;
+    ColorRGBA color(m_currentCmd.raw() & 0xFFFFFF);
+    const uint32_t *params = m_currentCmd.params();
+    Vec2i verts[4];
+
+    for (int i = 0; i < nbVerts; i++) {
+        verts[i] = getVec(params[i]);
+    }
+    rasterizePoly4(verts, color);
+}
+
 static int edgeFunction(const Vec2i& a, const Vec2i& b, const Vec2i& c)
 {
     return (c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x);
 }
 
-void GPU::rasterizeTriangle(const Vec2i &v0, const Vec2i &v1, const Vec2i &v2, const ColorRGBA &color)
+void GPU::rasterizePoly3(const Vec2i &v0, const Vec2i &v1, const Vec2i &v2, const ColorRGBA &color)
 {
     uint16_t argbColor = color.toABGR1555();
 
@@ -355,11 +412,20 @@ void GPU::rasterizeTriangle(const Vec2i &v0, const Vec2i &v1, const Vec2i &v2, c
             int w1 = edgeFunction(v2, v0, p);
             int w2 = edgeFunction(v0, v1, p);
 
-            if (w0 >= 0 && w1 >= 0 && w2 >= 0) {
-                int index = (y * 1023 + x) * 2;
+            bool test = w0 <= 0 && w1 <= 0 && w2 <= 0;
+            int num = w0 | w1 | w2;
+            if (test) {
+                int index = (y * 1024 + x) * 2;
                 m_vram[index] = argbColor & 0xFF;
                 m_vram[index + 1] = argbColor >> 8;
+                num += 1;
             }
         }
     }
+}
+
+void GPU::rasterizePoly4(const Vec2i *verts, const ColorRGBA &color)
+{
+    rasterizePoly3(verts[0], verts[1], verts[2], color);
+    rasterizePoly3(verts[1], verts[3], verts[2], color);
 }
