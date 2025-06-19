@@ -6,6 +6,11 @@ class GteCoordinateTest : public testing::Test
 protected:
     GTE gte;
 
+    GteCoordinateTest()
+    {
+        gte.reset();
+    }
+
     void setVertex(uint8_t index, int16_t sx, int16_t sy)
     {
         uint32_t packed = (static_cast<uint32_t>(static_cast<uint16_t>(sy)) << 16) |
@@ -57,9 +62,9 @@ protected:
         uint32_t opcode;
 
         if (base)
-            opcode = 0x4A00003E; //GPL
+            opcode = 0x4A000030; //RTPT
         else
-            opcode = 0x4A00003D; //GPF
+            opcode = 0x4A000001; //RTPS
 
         opcode |= (f.sf << 19);
 
@@ -112,4 +117,50 @@ TEST_F(GteCoordinateTest, NCLIP_ReversedWindingSameAreaMagnitude)
 {
     runNclipTest(0, 0, 10, 0, 5, 10, 100);
     runNclipTest(0, 0, 5, 10, 10, 0, -100);
+}
+
+TEST_F(GteCoordinateTest, RtpRtpsBasic)
+{
+    Vector3<int16_t> v0(100, 200, 300);
+    setVector(0, v0);
+
+    Mat3x3 rotation(0x1000, 0, 0, 0, 0x1000, 0, 0, 0, 0x1000);
+    setMatrix(0, rotation);
+
+    Vector3<int32_t> translation(0x100, 0x200, 0x300);
+    setTranslation(5, translation);
+
+    gte.ctc(26, 0x100);     // H = projection plane distance
+    gte.ctc(24, 0x10);    // X screen offset
+    gte.ctc(25, 0x20);    // Y screen offset
+    gte.ctc(27, 0x30);    // DQA
+    gte.ctc(28, 0x40);    // DQB
+
+    Vector3<int32_t> expectedMAC = {0x200000, 0x400000, 0x600000};
+    Vector3<int16_t> expectedIR = {0x0200, 0x0400, 0x0600};
+
+    int32_t sz3 = 0x600000 >> 0;
+    int32_t h_div_sz3 = (0x100 * 0x20000) / sz3;
+    if (h_div_sz3 > 0x1FFFF) h_div_sz3 = 0x1FFFF;
+    int32_t scale = (h_div_sz3 + 1) / 2;
+
+    int32_t mac0_x = scale * expectedIR.x + 0x10;
+    int32_t mac0_y = scale * expectedIR.y + 0x20;
+    int32_t sx2 = mac0_x >> 16;
+    int32_t sy2 = mac0_y >> 16;
+
+    int32_t mac0_ir0 = scale * 0x30 + 0x40;
+    int32_t ir0 = mac0_ir0 >> 12;
+    Flag f(1, 0, 0, 0, 0);
+
+    runRtpTest(
+        0,
+        f,
+        expectedMAC,
+        expectedIR,
+        sz3,
+        (sy2 << 16) | (sx2 & 0xFFFF),
+        ir0,
+        mac0_ir0
+    );
 }
