@@ -13,6 +13,29 @@ protected:
         gte.mtc(index, packed);
     }
 
+    void setMatrix(int8_t baseIndex, Mat3x3 &m)
+    {
+        gte.ctc(baseIndex, (static_cast<uint32_t>(m.r11) << 16) | (m.r12 & 0xFFFF));
+        gte.ctc(baseIndex + 1, (static_cast<uint32_t>(m.r13) << 16) | (m.r21 & 0xFFFF));
+        gte.ctc(baseIndex + 2, (static_cast<uint32_t>(m.r22) << 16) | (m.r23 & 0xFFFF));
+        gte.ctc(baseIndex + 3, (static_cast<uint32_t>(m.r31) << 16) | (m.r32 & 0xFFFF));
+        gte.ctc(baseIndex + 4, (static_cast<uint32_t>(m.r33) << 16));
+    }
+
+    void setTranslation(uint8_t base, Vector3<int32_t> &v) //base 5 for tr, 13 for bk, 21 for fc
+    {
+        gte.ctc(base, v.x);
+        gte.ctc(base + 1, v.y);
+        gte.ctc(base + 2, v.z);
+    }
+
+    void setVector(uint8_t base, Vector3<int16_t> &v)
+    {
+        uint32_t packedXY = (static_cast<uint16_t>(v.x) & 0xFFFF) | (static_cast<uint32_t>(static_cast<uint16_t>(v.y)) << 16);
+        gte.mtc(0 + base, packedXY);
+        gte.mtc(1 + base, v.z);
+    }
+
     void runNclipTest(int16_t sx0, int16_t sy0,
                       int16_t sx1, int16_t sy1,
                       int16_t sx2, int16_t sy2,
@@ -26,6 +49,47 @@ protected:
 
         int32_t mac0 = gte.mfc(24); // MAC0
         EXPECT_EQ(mac0, expected);
+    }
+
+    void runRtpTest(int base, Flag f, Vector3<int32_t> expectedMAC, Vector3<int16_t> expectedIR,
+                    int32_t expectedSZ3, int32_t expectedSXY2, int32_t expectedIR0, int32_t expectedMAC0) //ir0-3 mac0-3 sz3 sx2 sy2
+    {
+        uint32_t opcode;
+
+        if (base)
+            opcode = 0x4A00003E; //GPL
+        else
+            opcode = 0x4A00003D; //GPF
+
+        opcode |= (f.sf << 19);
+
+        gte.execute(opcode);
+
+        int32_t mac1 = static_cast<int32_t>(gte.mfc(25));
+        int32_t mac2 = static_cast<int32_t>(gte.mfc(26));
+        int32_t mac3 = static_cast<int32_t>(gte.mfc(27));
+
+        EXPECT_EQ(mac1, expectedMAC.x);
+        EXPECT_EQ(mac2, expectedMAC.y);
+        EXPECT_EQ(mac3, expectedMAC.z);
+
+        int16_t ir1 = static_cast<int16_t>(gte.mfc(9));
+        int16_t ir2 = static_cast<int16_t>(gte.mfc(10));
+        int16_t ir3 = static_cast<int16_t>(gte.mfc(11));
+
+        EXPECT_EQ(ir1, expectedIR.x);
+        EXPECT_EQ(ir2, expectedIR.y);
+        EXPECT_EQ(ir3, expectedIR.z);
+
+        int32_t sz3 = static_cast<int32_t>(gte.mfc(19));
+        int32_t sxy2 = static_cast<int32_t>(gte.mfc(14));
+        int32_t ir0 = static_cast<int32_t>(gte.mfc(8));
+        int32_t mac0 = static_cast<int32_t>(gte.mfc(24));
+
+        EXPECT_EQ(sz3, expectedSZ3);
+        EXPECT_EQ(sxy2, expectedSXY2);
+        EXPECT_EQ(ir0, expectedIR0);
+        EXPECT_EQ(mac0, expectedMAC0);
     }
 };
 

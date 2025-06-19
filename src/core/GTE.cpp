@@ -211,12 +211,12 @@ void GTE::executeRTPS(uint32_t opcode, int vectorNumber)
     int32_t sx2 = projectScale * m_dataReg[9] + ofx;
     m_dataReg[24] = sx2;
     int32_t sy2 = projectScale * m_dataReg[10] + ofy;
-    m_dataReg[19] = clampMAC(static_cast<int16_t>(sx2 / 0x10000), 0x03FF, -0x0400, 1 << 14, 1 << 14) |
+    m_dataReg[14] = clampMAC(static_cast<int16_t>(sx2 / 0x10000), 0x03FF, -0x0400, 1 << 14, 1 << 14) |
                     clampMAC(static_cast<int16_t>(sy2 / 0x10000), 0x03FF, -0x0400, 1 << 13, 1 << 13);
     int32_t dqa = clampMAC(m_ctrlReg[27], 0x1000, 0, 1 << 14, 1 << 14);
     int32_t dqb = clampMAC(m_ctrlReg[28], 0x1000, 0, 1 << 14, 1 << 14);
-    int32_t mac0 = projectScale * dqa + dqb;
-    m_dataReg[8] = mac0 / 0x1000;
+    m_dataReg[24] = projectScale * dqa + dqb;
+    m_dataReg[8] = m_dataReg[24] / 0x1000;
 }
 
 void GTE::executeRTPT(uint32_t opcode)
