@@ -199,6 +199,8 @@ class GPU : public PsxDevice
         void rasterizePoly3(const Vec2i &v0, const Vec2i &v1, const Vec2i &v2, const ColorRGBA& color);
         void rasterizePoly4(const Vec2i *verts, const ColorRGBA& color);
 
+        void setPixel(const Vec2i &pos, uint16_t color);
+
     private:
         GPUStat m_gpuStat;
         uint32_t m_gpuRead;
