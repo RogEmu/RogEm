@@ -375,8 +375,9 @@ static Vec2i getVec(uint32_t param)
 
 void GPU::drawPolygon()
 {
-    int nbVerts = (m_currentCmd.raw() >> 27) & 1 == 0 ? 3 : 4;
-    ColorRGBA color(m_currentCmd.raw() & 0xFFFFFF);
+    int nbVerts = ((m_currentCmd.raw() >> 27) & 1) == 0 ? 3 : 4;
+    ColorRGBA color;
+    color.fromRGB(m_currentCmd.raw() & 0xFFFFFF);
     const uint32_t *params = m_currentCmd.params();
     Vec2i verts[4];
 
