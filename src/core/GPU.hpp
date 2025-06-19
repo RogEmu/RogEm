@@ -13,7 +13,9 @@
 #include "PsxDevice.hpp"
 #include "GPUCommand.hpp"
 
-#define GPU_VRAM_1MB_SIZE 2048*512 // 512 lines of 2048 bytes (1024 pixels)
+#define GPU_VRAM_WIDTH 2048 // 2048 bytes (1024 pixels)
+#define GPU_VRAM_HEIGHT 512 // 512 lines
+#define GPU_VRAM_1MB_SIZE (GPU_VRAM_WIDTH * GPU_VRAM_HEIGHT) // 512 lines of 1024 pixels
 
 struct TexturePageBase
 {
@@ -171,6 +173,13 @@ enum class GpuState
     ReceivingDataWords,
 };
 
+struct VramCopyData
+{
+    Vec2i size;
+    Vec2i startPos;
+    Vec2i currentPos;
+};
+
 class GPU : public PsxDevice
 {
     public:
@@ -191,18 +200,23 @@ class GPU : public PsxDevice
 
     private:
         uint32_t gpuStat() const;
-        void setDisplayMode(uint8_t modeBits);
         void readInternalRegister(uint8_t reg);
 
         void processGP0(uint32_t data);
         void processGP1(uint32_t cmd);
 
+        void setDisplayMode(uint8_t modeBits);
         void handleEnvCommand(uint32_t cmd);
-
         void setDrawMode(uint32_t mode);
 
+        // GP0 commands
         void drawPolygon();
+        void startCpuToVramCopy();
 
+        void receiveParameter(uint32_t param);
+        void receiveDataWord(uint32_t data);
+
+        // Rasterization methods
         void rasterizePoly3(const Vec2i &v0, const Vec2i &v1, const Vec2i &v2, const ColorRGBA& color);
         void rasterizePoly4(const Vec2i *verts, const ColorRGBA& color);
 
@@ -221,6 +235,8 @@ class GPU : public PsxDevice
         GpuState m_currentState;
         int m_nbExpectedParams;
         GPUCommand m_currentCmd;
+
+        VramCopyData m_vramCopyData;
 
         std::array<uint8_t, GPU_VRAM_1MB_SIZE> m_vram;
 };
