@@ -64,10 +64,10 @@ void GPU::write32(uint32_t value, uint32_t address)
     switch (address)
     {
     case 0x1F801810:
-        handleGP0Command(value);
+        processGP0(value);
         break;
     case 0x1F801814:
-        handleGP1Command(value);
+        processGP1(value);
         break;
     default:
         spdlog::error("GPU: Cannot access port at 0x{:08X}", address);
@@ -193,9 +193,9 @@ void GPU::readInternalRegister(uint8_t reg)
     }
 }
 
-void GPU::handleGP0Command(uint32_t cmd)
+void GPU::processGP0(uint32_t data)
 {
-    uint8_t top = cmd >> 29;
+    uint8_t top = data >> 29;
 
     if (m_currentState == GpuState::ReceivingParameters) {
         m_currentCmd.addParam(cmd);
@@ -216,16 +216,15 @@ void GPU::handleGP0Command(uint32_t cmd)
     {
     case 0b000:
     case 0b111:
-        handleEnvCommand(cmd);
+                handleEnvCommand(data);
         break;
     case 0b001: {
-        int nbVertices = ((cmd >> 27) & 1) == 0 ? 3 : 4;
-        m_nbExpectedParams = ((cmd >> 28) & 1) * (nbVertices - 1); // Nb Gouraud Shading vertices
-        m_nbExpectedParams += ((cmd >> 26) & 1) * nbVertices; // Nb UV coordinates
+                int nbVertices = ((data >> 27) & 1) == 0 ? 3 : 4;
+                m_nbExpectedParams = ((data >> 28) & 1) * (nbVertices - 1); // Nb Gouraud Shading vertices
+                m_nbExpectedParams += ((data >> 26) & 1) * nbVertices; // Nb UV coordinates
         m_nbExpectedParams += nbVertices;
         m_currentState = GpuState::ReceivingParameters;
-        m_currentCmd.setCommand(cmd);
-        spdlog::warn("GPU: Draw Polygon with {} vertices", nbVertices);
+                m_currentCmd.setCommand(data);
         break;
     }
     case 0b010:
@@ -236,12 +235,12 @@ void GPU::handleGP0Command(uint32_t cmd)
         spdlog::warn("GPU: Current Command = 0b{:03b}", top);
         break;
     default:
-        spdlog::warn("GPU: GP0 command 0x{:08X} unsupported", cmd);
+                spdlog::warn("GPU: GP0 command 0x{:08X} unsupported", data);
         break;
     }
 }
 
-void GPU::handleGP1Command(uint32_t cmd)
+void GPU::processGP1(uint32_t cmd)
 {
     uint8_t opcode = (cmd >> 24) & 0xFF;
 
