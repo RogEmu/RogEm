@@ -200,21 +200,20 @@ void GTE::executeRTPS(uint32_t opcode, int vectorNumber)
     m_dataReg[10] = clampMAC(mac2, IR_LIMIT_HIGH, IR_LIMIT_LOW, 1 << 23, 1 << 23);
     m_dataReg[11] = clampMAC(mac3, IR_LIMIT_HIGH, IR_LIMIT_LOW, 1 << 22, 1 << 22);
 
-    m_dataReg[19] = clampMAC(mac3 >> ((1 - f.sf) * 12), 0, 0xFFFF, 1 << 18, 1 << 18); // sz3
+    m_dataReg[19] = clampMAC(mac3 >> ((1 - f.sf) * 12), 0xFFFF, 0, 1 << 18, 1 << 18); // sz3
     int32_t projectScale;
     if (m_dataReg[19] <= h / 2 || m_dataReg[19] <= 0) {
         m_dataReg[19] = 0;
         projectScale = 0x1FFFF;
+        m_ctrlReg[31] |= 1 << 31;
     } else
         projectScale = clampMAC((((h * 0x20000 / m_dataReg[19]) + 1) / 2), 0x1FFFF, -0x1FFFF , 1 << 17, 1 << 17);
 
-    int32_t sx2 = projectScale * m_dataReg[9] + ofx;
-    m_dataReg[24] = sx2;
-    int32_t sy2 = projectScale * m_dataReg[10] + ofy;
-    m_dataReg[14] = clampMAC(static_cast<int16_t>(sx2 / 0x10000), 0x03FF, -0x0400, 1 << 14, 1 << 14) |
-                    clampMAC(static_cast<int16_t>(sy2 / 0x10000), 0x03FF, -0x0400, 1 << 13, 1 << 13);
-    int32_t dqa = clampMAC(m_ctrlReg[27], 0x1000, 0, 1 << 14, 1 << 14);
-    int32_t dqb = clampMAC(m_ctrlReg[28], 0x1000, 0, 1 << 14, 1 << 14);
+    int32_t sx2 = clampMAC(static_cast<int16_t>(projectScale * m_dataReg[9] + ofx)/ 0x10000, 0x03FF, -0x0400, 1 << 14, 1 << 14);
+    int32_t sy2 = clampMAC(static_cast<int16_t>(projectScale * m_dataReg[10] + ofy)/ 0x10000, 0x03FF, -0x0400, 1 << 14, 1 << 14);
+    m_dataReg[14] = (sy2 << 16) | (sx2 & 0xFFFF);
+    int32_t dqa = static_cast<int32_t>(m_ctrlReg[27]);
+    int32_t dqb = static_cast<int32_t>(m_ctrlReg[28]);
     m_dataReg[24] = projectScale * dqa + dqb;
     m_dataReg[8] = m_dataReg[24] / 0x1000;
 }

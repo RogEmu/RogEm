@@ -119,37 +119,83 @@ TEST_F(GteCoordinateTest, NCLIP_ReversedWindingSameAreaMagnitude)
     runNclipTest(0, 0, 5, 10, 10, 0, -100);
 }
 
-TEST_F(GteCoordinateTest, RtpRtpsBasic)
+TEST_F(GteCoordinateTest, Rtps_Basic_test)
 {
-    Vector3<int16_t> v0(100, 200, 300);
+    Vector3<int16_t> v0(1, 2, 3);
     setVector(0, v0);
 
-    Mat3x3 rotation(0x1000, 0, 0, 0, 0x1000, 0, 0, 0, 0x1000);
+    Mat3x3 rotation(4099, 0, 0, 0, 4099, 0, 0, 0, 4099);
     setMatrix(0, rotation);
 
-    Vector3<int32_t> translation(0x100, 0x200, 0x300);
+    Vector3<int32_t> translation(1, 1, 1);
     setTranslation(5, translation);
 
-    gte.ctc(26, 0x100);     // H = projection plane distance
-    gte.ctc(24, 0x10);    // X screen offset
-    gte.ctc(25, 0x20);    // Y screen offset
-    gte.ctc(27, 0x30);    // DQA
-    gte.ctc(28, 0x40);    // DQB
+    gte.ctc(26, 1);   // H = projection plane distance
+    gte.ctc(24, 2);    // ofx
+    gte.ctc(25, 4);    // ofy
+    gte.ctc(27, 4);    // DQA
+    gte.ctc(28, 5);    // DQB
 
-    Vector3<int32_t> expectedMAC = {0x200000, 0x400000, 0x600000};
-    Vector3<int16_t> expectedIR = {0x0200, 0x0400, 0x0600};
+    Vector3<int32_t> expectedMAC = {2, 3, 4};
+    Vector3<int16_t> expectedIR = {2, 3, 4};
 
-    int32_t sz3 = 0x600000 >> 0;
-    int32_t h_div_sz3 = (0x100 * 0x20000) / sz3;
-    if (h_div_sz3 > 0x1FFFF) h_div_sz3 = 0x1FFFF;
-    int32_t scale = (h_div_sz3 + 1) / 2;
+    int32_t sz3 = 4;
+    int32_t scale = 0x4000;
 
-    int32_t mac0_x = scale * expectedIR.x + 0x10;
-    int32_t mac0_y = scale * expectedIR.y + 0x20;
+    int32_t mac0_x = scale * expectedIR.x + 2; //ofx
+    int32_t mac0_y = scale * expectedIR.y + 4; //ofy
     int32_t sx2 = mac0_x >> 16;
     int32_t sy2 = mac0_y >> 16;
 
-    int32_t mac0_ir0 = scale * 0x30 + 0x40;
+    int32_t mac0_ir0 = scale * 4 + 5; //dqa + dqb
+    int32_t ir0 = mac0_ir0 >> 12;
+    Flag f(1, 0, 0, 0, 0);
+
+    runRtpTest(
+        0,
+        f,
+        expectedMAC,
+        expectedIR,
+        sz3,
+        (sy2 << 16) | (sx2 & 0xFFFF),
+        ir0,
+        mac0_ir0
+    );
+}
+
+TEST_F(GteCoordinateTest, Rtpt_Basic_test)
+{
+    Vector3<int16_t> v0(1, 2, 3);
+    setVector(0, v0);
+    Vector3<int16_t> v1(1, 2, 3);
+    setVector(2, v0);
+    Vector3<int16_t> v2(1, 2, 3);
+    setVector(4, v0);
+
+    Mat3x3 rotation(4099, 0, 0, 0, 4099, 0, 0, 0, 4099);
+    setMatrix(0, rotation);
+
+    Vector3<int32_t> translation(1, 1, 1);
+    setTranslation(5, translation);
+
+    gte.ctc(26, 1);   // H = projection plane distance
+    gte.ctc(24, 2);    // ofx
+    gte.ctc(25, 4);    // ofy
+    gte.ctc(27, 4);    // DQA
+    gte.ctc(28, 5);    // DQB
+
+    Vector3<int32_t> expectedMAC = {2, 3, 4};
+    Vector3<int16_t> expectedIR = {2, 3, 4};
+
+    int32_t sz3 = 4;
+    int32_t scale = 0x4000;
+
+    int32_t mac0_x = scale * expectedIR.x + 2; //ofx
+    int32_t mac0_y = scale * expectedIR.y + 4; //ofy
+    int32_t sx2 = mac0_x >> 16;
+    int32_t sy2 = mac0_y >> 16;
+
+    int32_t mac0_ir0 = scale * 4 + 5; //dqa + dqb
     int32_t ir0 = mac0_ir0 >> 12;
     Flag f(1, 0, 0, 0, 0);
 
