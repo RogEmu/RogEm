@@ -144,12 +144,56 @@ TEST_F(GteCoordinateTest, Rtps_Basic_test)
 
     int32_t mac0_x = scale * expectedIR.x + 2; //ofx
     int32_t mac0_y = scale * expectedIR.y + 4; //ofy
-    int32_t sx2 = mac0_x >> 16;
-    int32_t sy2 = mac0_y >> 16;
+    int32_t sx2 = mac0_x / 0x10000 >> 16;
+    int32_t sy2 = mac0_y / 0x10000 >> 16;
 
     int32_t mac0_ir0 = scale * 4 + 5; //dqa + dqb
     int32_t ir0 = mac0_ir0 >> 12;
     Flag f(1, 0, 0, 0, 0);
+
+    runRtpTest(
+        0,
+        f,
+        expectedMAC,
+        expectedIR,
+        sz3,
+        (sy2 << 16) | (sx2 & 0xFFFF),
+        ir0,
+        mac0_ir0
+    );
+}
+
+TEST_F(GteCoordinateTest, Rtps_sf_not_set)
+{
+    Vector3<int16_t> v0(1, 2, 3);
+    setVector(0, v0);
+
+    Mat3x3 rotation(4096, 0, 0, 0, 4096, 0, 0, 0, 4096);
+    setMatrix(0, rotation);
+
+    Vector3<int32_t> translation(1, 1, 1);
+    setTranslation(5, translation);
+
+    gte.ctc(26, 1);   // H = projection plane distance
+    gte.ctc(24, 2);    // ofx
+    gte.ctc(25, 4);    // ofy
+    gte.ctc(27, 4);    // DQA
+    gte.ctc(28, 5);    // DQB
+
+    Vector3<int32_t> expectedMAC = {2 * 4096, 3 * 4096, 4 * 4096};
+    Vector3<int16_t> expectedIR = {2 * 4096, 3 * 4096, 4 * 4096};
+
+    int32_t sz3 = 4;
+    int32_t scale = 0x4000;
+
+    int32_t mac0_x = scale * expectedIR.x + 2; //ofx
+    int32_t mac0_y = scale * expectedIR.y + 4; //ofy
+    int32_t sx2 = mac0_x / 0x10000 >> 16;
+    int32_t sy2 = mac0_y / 0x10000 >> 16;
+
+    int32_t mac0_ir0 = scale * 4 + 5; //dqa + dqb
+    int32_t ir0 = mac0_ir0 >> 12;
+    Flag f(0, 0, 0, 0, 0);
 
     runRtpTest(
         0,
@@ -192,15 +236,15 @@ TEST_F(GteCoordinateTest, Rtpt_Basic_test)
 
     int32_t mac0_x = scale * expectedIR.x + 2; //ofx
     int32_t mac0_y = scale * expectedIR.y + 4; //ofy
-    int32_t sx2 = mac0_x >> 16;
-    int32_t sy2 = mac0_y >> 16;
+    int32_t sx2 = mac0_x / 0x10000 >> 16;
+    int32_t sy2 = mac0_y / 0x10000 >> 16;
 
     int32_t mac0_ir0 = scale * 4 + 5; //dqa + dqb
     int32_t ir0 = mac0_ir0 >> 12;
     Flag f(1, 0, 0, 0, 0);
 
     runRtpTest(
-        0,
+        1,
         f,
         expectedMAC,
         expectedIR,
