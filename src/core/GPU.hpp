@@ -212,6 +212,7 @@ class GPU : public PsxDevice
         // GP0 commands
         void drawPolygon();
         void startCpuToVramCopy();
+        void quickRectFill();
 
         void receiveParameter(uint32_t param);
         void receiveDataWord(uint32_t data);

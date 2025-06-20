@@ -314,6 +314,9 @@ void GPU::handleEnvCommand(uint32_t cmd)
         break;
     case 0x02:
         // Quick Rectangle Fill
+        m_nbExpectedParams = 2;
+        m_currentState = GpuState::ReceivingParameters;
+        m_currentCmd.setCommand(cmd);
         break;
     case 0x1F:
         // IRQ
@@ -398,6 +401,35 @@ void GPU::startCpuToVramCopy()
     m_vramCopyData.currentPos = Vec2i{0, 0};
 }
 
+void GPU::quickRectFill()
+{
+    auto params = m_currentCmd.params();
+    uint32_t raw = m_currentCmd.raw();
+    Vec2i topLeft{(int)(params[0] & 0xFFFF), (int)(params[0] >> 16)};
+    Vec2i size{(int)(params[1] & 0xFFFF), (int)(params[1] >> 16)};
+    ColorRGBA color;
+
+    color.r = raw & 0xFF;
+    color.g = (raw >> 8) & 0xFF;
+    color.b = (raw >> 16) & 0xFF;
+    color.a = 0xFF;
+
+    uint16_t abgr = color.toABGR1555();
+    Vec2i pos;
+
+    for (int y = 0; y < size.y; y++) {
+        for (int x = 0; x < size.x; x++) {
+            for (int pix = 0; pix < 16; pix++) {
+                pos.x = topLeft.x + x;
+                pos.y = topLeft.y + y;
+                setPixel(pos, abgr);
+            }
+        }
+    }
+    m_currentState = GpuState::WaitingForCommand;
+    m_currentCmd.reset();
+}
+
 void GPU::receiveParameter(uint32_t param)
 {
     m_currentCmd.addParam(param);
@@ -407,6 +439,8 @@ void GPU::receiveParameter(uint32_t param)
             drawPolygon();
         } else if (m_currentCmd.command() == CommandType::CpuVramCopy) {
             startCpuToVramCopy();
+        } else if (m_currentCmd.command() == CommandType::QuickRectFill) {
+            quickRectFill();
         }
     }
 }

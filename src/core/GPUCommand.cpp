@@ -1,5 +1,7 @@
 #include "GPUCommand.hpp"
 
+#include <spdlog/spdlog.h>
+
 GPUCommand::GPUCommand()
 {
 }
@@ -10,8 +12,18 @@ GPUCommand::~GPUCommand()
 
 void GPUCommand::setCommand(uint32_t cmd)
 {
-    m_type = static_cast<CommandType>(cmd >> 29);
+    uint8_t top = cmd >> 29;
     m_rawCmd = cmd;
+
+    if (top == 0) {
+        if ((cmd >> 24) == 0x02) {
+            m_type = CommandType::QuickRectFill;
+        } else {
+            spdlog::error("GPU Command: Unknown command 0x{:08X}", cmd);
+        }
+        return;
+    }
+    m_type = static_cast<CommandType>(top);
 }
 
 CommandType GPUCommand::command() const

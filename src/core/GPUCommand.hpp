@@ -11,7 +11,8 @@ enum class CommandType : uint8_t
     DrawRectangle,
     VramVramCopy,
     CpuVramCopy,
-    VramCpuCopy
+    VramCpuCopy,
+    QuickRectFill = 0x10
 };
 
 class ParameterArray
