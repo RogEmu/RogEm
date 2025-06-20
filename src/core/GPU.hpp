@@ -157,7 +157,7 @@ struct ColorRGBA
 
 struct Vertex
 {
-    Vec2i position;
+    Vec2i pos;
     ColorRGBA color;
 };
 
@@ -226,8 +226,8 @@ class GPU : public PsxDevice
         void receiveDataWord(uint32_t data);
 
         // Rasterization methods
-        void rasterizePoly3(const Vec2i &v0, const Vec2i &v1, const Vec2i &v2, const ColorRGBA& color);
-        void rasterizePoly4(const Vec2i *verts, const ColorRGBA& color);
+        void rasterizePoly3(const Vertex *verts, const ColorRGBA& color);
+        void rasterizePoly4(const Vertex *verts, const ColorRGBA& color);
 
         void setPixel(const Vec2i &pos, uint16_t color);
         uint16_t getPixel(const Vec2i &pos);

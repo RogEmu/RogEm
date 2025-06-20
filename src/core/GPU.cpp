@@ -385,18 +385,21 @@ void GPU::drawPolygon()
     const uint32_t *params = m_currentCmd.params();
     ColorRGBA firstColor;
     firstColor.fromBGR(params[0]);
-    Vec2i verts[4];
+    Vertex verts[4];
 
     spdlog::warn("GPU: Draw Polygon with {} vertices", nbVerts);
 
     int step = 1 + shaded + textured;
     for (int i = 0; i < nbVerts; i++) {
-        verts[i] = getVec(params[i * step + 1]);
+        if (shaded) {
+            verts[i].color.fromBGR(params[i * step]);
+        }
+        verts[i].pos = getVec(params[i * step + 1]);
     }
-    if (nbVerts == 4)
+    if (nbVerts == 4) {
         rasterizePoly4(verts, firstColor);
-    else {
-        rasterizePoly3(verts[0], verts[1], verts[2], firstColor);
+    } else {
+        rasterizePoly3(verts, firstColor);
     }
     m_currentCmd.reset();
     m_currentState = GpuState::WaitingForCommand;
@@ -505,25 +508,46 @@ static int edgeFunction(const Vec2i& a, const Vec2i& b, const Vec2i& c)
     return (c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x);
 }
 
-void GPU::rasterizePoly3(const Vec2i &v0, const Vec2i &v1, const Vec2i &v2, const ColorRGBA &color)
+static ColorRGBA interpolateColor(const ColorRGBA& c0, const ColorRGBA& c1, const ColorRGBA& c2, float alpha, float beta, float gamma)
+{
+    ColorRGBA color;
+    color.r = static_cast<uint8_t>(c0.r * alpha + c1.r * beta + c2.r * gamma);
+    color.g = static_cast<uint8_t>(c0.g * alpha + c1.g * beta + c2.g * gamma);
+    color.b = static_cast<uint8_t>(c0.b * alpha + c1.b * beta + c2.b * gamma);
+    color.a = static_cast<uint8_t>(c0.a * alpha + c1.a * beta + c2.a * gamma);
+    return color;
+}
+
+void GPU::rasterizePoly3(const Vertex *verts, const ColorRGBA &color)
 {
     uint16_t argbColor = color.toABGR1555();
+    bool shaded = (m_currentCmd.raw() >> 28) & 1;
 
-    int minX = std::max(0, std::min({v0.x, v1.x, v2.x}));
-    int maxX = std::min(1023, std::max({v0.x, v1.x, v2.x}));
-    int minY = std::max(0, std::min({v0.y, v1.y, v2.y}));
-    int maxY = std::min(511, std::max({v0.y, v1.y, v2.y}));
+    int minX = std::max(0, std::min({verts[0].pos.x, verts[1].pos.x, verts[2].pos.x}));
+    int maxX = std::min(GPU_VRAM_WIDTH - 1, std::max({verts[0].pos.x, verts[1].pos.x, verts[2].pos.x}));
+    int minY = std::max(0, std::min({verts[0].pos.y, verts[1].pos.y, verts[2].pos.y}));
+    int maxY = std::min(GPU_VRAM_HEIGHT - 1, std::max({verts[0].pos.y, verts[1].pos.y, verts[2].pos.y}));
 
-    int area = edgeFunction(v0, v1, v2);
+    int area = edgeFunction(verts[0].pos, verts[1].pos, verts[2].pos);
+    float invArea = 1.0f / area;
+
     if (area == 0)
         return;
 
     for (int y = minY; y <= maxY; y++) {
         for (int x = minX; x <= maxX; x++) {
             Vec2i p = {x, y};
-            int w0 = edgeFunction(v1, v2, p);
-            int w1 = edgeFunction(v2, v0, p);
-            int w2 = edgeFunction(v0, v1, p);
+            int w0 = edgeFunction(verts[1].pos, verts[2].pos, p);
+            int w1 = edgeFunction(verts[2].pos, verts[0].pos, p);
+            int w2 = edgeFunction(verts[0].pos, verts[1].pos, p);
+
+            if (shaded) {
+                float alpha = w0 * invArea;
+                float beta = w1 * invArea;
+                float gamma = w2 * invArea;
+
+                argbColor = interpolateColor(verts[0].color, verts[1].color, verts[2].color, alpha, beta, gamma).toABGR1555();
+            }
 
             int pos = (w0 | w1 | w2) >= 0;
             int neg = (w0 & w1 & w2) < 0;
@@ -534,10 +558,10 @@ void GPU::rasterizePoly3(const Vec2i &v0, const Vec2i &v1, const Vec2i &v2, cons
     }
 }
 
-void GPU::rasterizePoly4(const Vec2i *verts, const ColorRGBA &color)
+void GPU::rasterizePoly4(const Vertex *verts, const ColorRGBA &color)
 {
-    rasterizePoly3(verts[0], verts[1], verts[2], color);
-    rasterizePoly3(verts[1], verts[2], verts[3], color);
+    rasterizePoly3(verts, color);
+    rasterizePoly3(verts + 1, color);
 }
 
 void GPU::setPixel(const Vec2i &pos, uint16_t color)
