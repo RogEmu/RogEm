@@ -221,6 +221,7 @@ void GPU::processGP0(uint32_t data)
                 break;
             case 0b011: { // Draw Rectangle
                 m_nbExpectedParams = 2;
+                m_nbExpectedParams += ((data >> 27) & 3) == 0;
                 m_currentCmd.addParam(data & 0xFFFFFF);
                 m_currentCmd.setCommand(data);
                 m_currentState = GpuState::ReceivingParameters;
@@ -422,6 +423,8 @@ void GPU::drawRectangle()
         int scale = (rectSizeFlag - 1) * 8;
         scale = scale ? scale : 1;
         size = {scale, scale};
+    } else {
+        size = getVec(params[2]);
     }
     rasterizeRectangle({topLeft, color}, size);
     m_currentCmd.reset();
