@@ -219,9 +219,13 @@ void GPU::processGP0(uint32_t data)
             case 0b010:
                 spdlog::warn("GPU: Draw Line");
                 break;
-            case 0b011:
-                spdlog::warn("GPU: Draw Rectangle");
+            case 0b011: { // Draw Rectangle
+                m_nbExpectedParams = 2;
+                m_currentCmd.addParam(data & 0xFFFFFF);
+                m_currentCmd.setCommand(data);
+                m_currentState = GpuState::ReceivingParameters;
                 break;
+            }
             case 0b100: // VRAM to VRAM copy
                 m_nbExpectedParams = 3;
                 m_currentState = GpuState::ReceivingParameters;
@@ -405,6 +409,25 @@ void GPU::drawPolygon()
     m_currentState = GpuState::WaitingForCommand;
 }
 
+void GPU::drawRectangle()
+{
+    auto params = m_currentCmd.params();
+    Vec2i topLeft{(int)(params[1] & 0xFFFF), (int)(params[1] >> 16)};
+    ColorRGBA color;
+    color.fromBGR(params[0]);
+    Vec2i size{};
+    int rectSizeFlag = (m_currentCmd.raw() >> 27) & 3;
+
+    if (rectSizeFlag != 0) {
+        int scale = (rectSizeFlag - 1) * 8;
+        scale = scale ? scale : 1;
+        size = {scale, scale};
+    }
+    rasterizeRectangle({topLeft, color}, size);
+    m_currentCmd.reset();
+    m_currentState = GpuState::WaitingForCommand;
+}
+
 void GPU::startCpuToVramCopy()
 {
     spdlog::warn("GPU: Copy data from CPU to VRAM");
@@ -477,6 +500,8 @@ void GPU::receiveParameter(uint32_t param)
             quickRectFill();
         } else if (m_currentCmd.command() == CommandType::VramVramCopy) {
             startVramToVramCopy();
+        } else if (m_currentCmd.command() == CommandType::DrawRectangle) {
+            drawRectangle();
         }
     }
 }
@@ -545,7 +570,6 @@ void GPU::rasterizePoly3(const Vertex *verts, const ColorRGBA &color)
                 float alpha = w0 * invArea;
                 float beta = w1 * invArea;
                 float gamma = w2 * invArea;
-
                 argbColor = interpolateColor(verts[0].color, verts[1].color, verts[2].color, alpha, beta, gamma).toABGR1555();
             }
 
@@ -562,6 +586,17 @@ void GPU::rasterizePoly4(const Vertex *verts, const ColorRGBA &color)
 {
     rasterizePoly3(verts, color);
     rasterizePoly3(verts + 1, color);
+}
+
+void GPU::rasterizeRectangle(const Vertex &vert, const Vec2i &size)
+{
+    uint16_t color = vert.color.toABGR1555();
+    for (int y = 0; y < size.y; y++) {
+        for (int x = 0; x < size.x; x++) {
+            Vec2i pos{vert.pos.x + x, vert.pos.y + y};
+            setPixel(pos, color);
+        }
+    }
 }
 
 void GPU::setPixel(const Vec2i &pos, uint16_t color)
