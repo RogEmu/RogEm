@@ -146,6 +146,13 @@ struct ColorRGBA
         g = (rgb >> 8) & 0xFF;
         b = rgb & 0xFF;
     }
+
+    void fromBGR(uint32_t rgb)
+    {
+        b = (rgb >> 16) & 0xFF;
+        g = (rgb >> 8) & 0xFF;
+        r = rgb & 0xFF;
+    }
 };
 
 struct Vertex
