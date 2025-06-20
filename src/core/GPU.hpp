@@ -213,6 +213,7 @@ class GPU : public PsxDevice
         void drawPolygon();
         void startCpuToVramCopy();
         void quickRectFill();
+        void startVramToVramCopy();
 
         void receiveParameter(uint32_t param);
         void receiveDataWord(uint32_t data);
@@ -222,6 +223,7 @@ class GPU : public PsxDevice
         void rasterizePoly4(const Vec2i *verts, const ColorRGBA& color);
 
         void setPixel(const Vec2i &pos, uint16_t color);
+        uint16_t getPixel(const Vec2i &pos);
 
     private:
         GPUStat m_gpuStat;
