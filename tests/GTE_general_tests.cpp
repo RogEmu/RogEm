@@ -166,10 +166,10 @@ TEST_F(GteGeneralTest, MVMVA_Identity_Basic_Flag)
 TEST_F(GteGeneralTest, MVMVA_Basic_Flag)
 {
     Mat3x3 m(5, 8, 7, 6, 4, 10, 4, 5, 6);
-    Vector3 t(0, 20, 30);
+    Vector3 t(0, 2, 3);
     Vector3<int16_t> v(5, 10, 20);
-    Vector3<int16_t> expectedIR(245, 290, 220);
-    Vector3<int32_t> expectedMAC(245, 290, 220);
+    Vector3<int16_t> expectedIR(245, 270 + 2 * 0x1000, 190 + 3 * 0x1000);
+    Vector3<int32_t> expectedMAC(245, 270 + 2 * 0x1000, 190 + 3 * 0x1000);
     Flag f(0, 0, 0, 0, 0);
     setMatrix(0, m);
     setTranslation(5, t);
@@ -180,10 +180,10 @@ TEST_F(GteGeneralTest, MVMVA_Basic_Flag)
 TEST_F(GteGeneralTest, MVMVA_Negative_V1)
 {
     Mat3x3 m(5, 8, 7, 6, 4, 10, 4, 5, 6);
-    Vector3 t(0, -20, -30);
+    Vector3 t(0, -2, -3);
     Vector3<int16_t> v(-5, -10, -20);
-    Vector3<int16_t> expectedIR(-245, -290, -220);
-    Vector3<int32_t> expectedMAC(-245, -290, -220);
+    Vector3<int16_t> expectedIR(-245, -270 - 2 * 0x1000, -190 - 3 * 0x1000);
+    Vector3<int32_t> expectedMAC(-245, -270 - 2 * 0x1000, -190 - 3 * 0x1000);
     Flag f(0, 0, 1, 0, 0);
     setMatrix(0, m);
     setTranslation(5, t);
@@ -194,10 +194,10 @@ TEST_F(GteGeneralTest, MVMVA_Negative_V1)
 TEST_F(GteGeneralTest, MVMVA_SF_Flag)
 {
     Mat3x3 m(5, 8, 7, 6, 4, 10, 4, 5, 6);
-    Vector3 t(0, 20, -4000);
+    Vector3 t(0, 1, -1);
     Vector3<int16_t> v(100, 200, 400);
-    Vector3<int16_t> expectedIR(1, 1, -1);
-    Vector3<int32_t> expectedMAC(1, 1, -1);
+    Vector3<int16_t> expectedIR(1, 2, -1);
+    Vector3<int32_t> expectedMAC(1, 2, -1);
     Flag f(1, 0, 0, 0, 0);
     setMatrix(0, m);
     setTranslation(5, t);
@@ -208,10 +208,10 @@ TEST_F(GteGeneralTest, MVMVA_SF_Flag)
 TEST_F(GteGeneralTest, MVMVA_Lm_High_Different_MAC)
 {
     Mat3x3 m(5, 8, 7, 6, 4, 10, 4, 5, 6);
-    Vector3 t(0x7FFF, 20, 30);
+    Vector3 t(0x7FFF, 0, 0);
     Vector3<int16_t> v(5, 10, 20);
-    Vector3<int16_t> expectedIR(0x7FFF, 290, 220);
-    Vector3<int32_t> expectedMAC(0x7FFF + 245, 290, 220);
+    Vector3<int16_t> expectedIR(0x7FFF, 270, 190);
+    Vector3<int32_t> expectedMAC(0x7FFF * 0x1000 + 245, 270, 190);
     Flag f(0, 0, 0, 0, 1);
     setMatrix(0, m);
     setTranslation(5, t);
@@ -222,10 +222,10 @@ TEST_F(GteGeneralTest, MVMVA_Lm_High_Different_MAC)
 TEST_F(GteGeneralTest, MVMVA_Lm_Low_Different_MAC)
 {
     Mat3x3 m(5, 8, 7, 6, 4, 10, 4, 5, 6);
-    Vector3 t(0, -20, -0x8000);
+    Vector3 t(0, -2, -1);
     Vector3<int16_t> v(-5, -10, -20);
     Vector3<int16_t> expectedIR(0, 0, 0);
-    Vector3<int32_t> expectedMAC(-245, -290, -190 - 0x8000);
+    Vector3<int32_t> expectedMAC(-245, -270 - 2 * 0x1000, -190 - 0x1000);
     Flag f(0, 0, 0, 0, 1);
     setMatrix(0, m);
     setTranslation(5, t);
@@ -236,10 +236,10 @@ TEST_F(GteGeneralTest, MVMVA_Lm_Low_Different_MAC)
 TEST_F(GteGeneralTest, MVMVA_LightMatrix_V2)
 {
     Mat3x3 m(5, 8, 7, 6, 4, 10, 4, 5, 6);
-    Vector3 t(0, 20, 30);
+    Vector3 t(0, 2, 3);
     Vector3<int16_t> v(5, 10, 20);
-    Vector3<int16_t> expectedIR(245, 290, 220);
-    Vector3<int32_t> expectedMAC(245, 290, 220);
+    Vector3<int16_t> expectedIR (245, 270 + 2 * 0x1000, 190 + 3 * 0x1000);
+    Vector3<int32_t> expectedMAC(245, 270 + 2 * 0x1000, 190 + 3 * 0x1000);
     Flag f(0, 1, 2, 0, 0);
     setMatrix(8, m);
     setTranslation(5, t);
@@ -250,10 +250,10 @@ TEST_F(GteGeneralTest, MVMVA_LightMatrix_V2)
 TEST_F(GteGeneralTest, MVMVA_Negative_ColorMatrix_IR)
 {
     Mat3x3 m(5, 8, 7, 6, 4, 10, 4, 5, 6);
-    Vector3 t(0, -20, -30);
+    Vector3 t(0, -2, -3);
     Vector3<int16_t> v(-5, -10, -20);
-    Vector3<int16_t> expectedIR(-245, -290, -220);
-    Vector3<int32_t> expectedMAC(-245, -290, -220);
+    Vector3<int16_t> expectedIR (-245, -270 - 2 * 0x1000, -190 - 3 * 0x1000);
+    Vector3<int32_t> expectedMAC(-245, -270 - 2 * 0x1000, -190 - 3 * 0x1000);
     Flag f(0, 2, 3, 0, 0);
     setMatrix(16, m);
     setTranslation(5, t);
@@ -264,10 +264,10 @@ TEST_F(GteGeneralTest, MVMVA_Negative_ColorMatrix_IR)
 TEST_F(GteGeneralTest, MVMVA_GarbageMatrix_BK_Translation)
 {
     Mat3x3 m(5, 8, 10, 6, 20, 10, 4, 5, 6);
-    Vector3 t(0, 20, 30);
+    Vector3 t(0, 2, 3);
     Vector3<int16_t> v(5, 10, 20);
-    Vector3<int16_t> expectedIR(580, 370, 730);
-    Vector3<int32_t> expectedMAC(580, 370, 730);
+    Vector3<int16_t> expectedIR (580, 350 + 2 * 0x1000, 700 + 3 * 0x1000);
+    Vector3<int32_t> expectedMAC(580, 350 + 2 * 0x1000, 700 + 3 * 0x1000);
     Flag f(0, 3, 0, 1, 0);
     setMatrix(0, m);
     setTranslation(13, t);
