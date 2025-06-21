@@ -20,6 +20,13 @@ struct  Vector3{
   	size z;
 };
 
+enum class interpolation
+{
+    DCPL,
+    INTPL,
+    DPC
+};
+
 struct Flag
 {
 	bool sf;
@@ -29,13 +36,12 @@ struct Flag
 	bool lm;
 };
 
-struct Rgbc
-{
-    uint8_t r;
-    uint8_t g;
-    uint8_t b;
-    uint8_t c;
+struct Rgbc {
+    uint8_t r, g, b, c;
+    Rgbc(uint8_t _r = 0, uint8_t _g = 0, uint8_t _b = 0, uint8_t _c = 0)
+        : r(_r), g(_g), b(_b), c(_c) {}
 };
+
 
 struct Mat3x3
 {
@@ -143,6 +149,10 @@ class GTE : public Coprocessor {
         // Coprocessor 2 Data Registers (Cop2D)
         std::array<int32_t, 32> m_dataReg{};
 
+        Rgbc m_colorFIFO[3]; // RGB0 = [0], RGB1 = [1], RGB2 = [2]
+
+        void pushColorFIFO(const Rgbc& color);
+        Rgbc getRGB0() const;
         /**
          * @brief Decodes and dispatches the GTE instruction to the appropriate execution method.
          * @param opcode Encoded instruction.
@@ -150,12 +160,12 @@ class GTE : public Coprocessor {
         void decodeAndExecute(uint32_t opcode);
 
         /*
-         * @brief Executes the RTPS instruction (Rotate, Translate, Perspective Single).
+        * @brief Executes the RTPS instruction (Rotate, Translate, Perspective Single).
         void executeRTPS();
 
          * @brief Executes the RTPT instruction (Rotate, Translate, Perspective Triple).
-        void executeRTPT();
-        */
+         void executeRTPT();
+         */
 
         /**
          * @brief Execute the NCLIP instruction (normal clipping)
@@ -202,6 +212,11 @@ class GTE : public Coprocessor {
          * @param MAC is a base or not
          */
         void executeGPL(uint32_t opcode, bool base);
+
+        void executeDCPL(uint32_t opcode);
+        void executeDPCS(uint32_t opcode);
+        void executeDPCT(uint32_t opcode);
+        void executeINTPL(uint32_t opcode, Vector3<int32_t> macs);
 
         // Internal helper functions
         /**
