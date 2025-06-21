@@ -220,7 +220,7 @@ void GTE::executeRTPS(uint32_t opcode, uint8_t vectorNumber)
 
 void GTE::executeRTPT(uint32_t opcode)
 {
-    for (int i = 0; i < 3; i++)
+    for (uint8_t i = 0; i < 3; i++)
         executeRTPS(opcode, i);
 }
 
