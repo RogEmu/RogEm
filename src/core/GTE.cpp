@@ -177,7 +177,7 @@ void GTE::decodeAndExecute(uint32_t opcode) {
     }
 }
 
-void GTE::executeRTPS(uint32_t opcode, int vectorNumber)
+void GTE::executeRTPS(uint32_t opcode, uint8_t vectorNumber)
 {
     Flag f = getFlags(opcode);
     Vector3<int16_t> V0 = getVector3FromV(vectorNumber);

@@ -159,13 +159,16 @@ class GTE : public Coprocessor {
          */
         void decodeAndExecute(uint32_t opcode);
 
-        /*
+        /**
          * @brief Executes the RTPS instruction (Rotate, Translate, Perspective Single).
+         * @param opcode to get flags from
+         * @param vectorNumber to choose value from
          */
-        void executeRTPS(uint32_t opcode, int vectorNumber);
+        void executeRTPS(uint32_t opcode, uint8_t vectorNumber);
 
-        /*
+        /**
          * @brief Executes the RTPT instruction (Rotate, Translate, Perspective Triple).
+         * @param opcode to get flags from
          */
         void executeRTPT(uint32_t opcode);
 
