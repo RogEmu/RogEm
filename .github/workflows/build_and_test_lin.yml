@@ -3,14 +3,12 @@
 name: Linux Build and Test
 
 on:
-  push:
-    branches: [ "dev" ]
   pull_request:
     branches: [ "dev" ]
 
 jobs:
   build:
-    runs-on: [self-hosted]
+    runs-on: [ubuntu-latest]
 
     strategy:
       # Set fail-fast to false to ensure that feedback is delivered for all matrix combinations. Consider changing this to true when your workflow is stable.
