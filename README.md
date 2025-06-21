@@ -44,7 +44,7 @@ If you have any suggestions, improvements or anything else, please refer to the 
 
 ### GPU
 - 🕒 Command processing — 30%
-- 🕒 Rendering pipeline — 20%
+- 🟡 Rendering pipeline — 60%
 - 🟡 VRAM emulation — 70%
 - 🟡 Display output — 70%
 
@@ -77,4 +77,3 @@ If you have any suggestions, improvements or anything else, please refer to the 
 
 ---
 _Last updated: 29/06/25_
-
