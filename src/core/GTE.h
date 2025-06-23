@@ -241,7 +241,7 @@ class GTE : public Coprocessor {
          * @param color  Whether to apply FarColor multiplication (NCCx, CC).
          * @param depth  Whether to apply depth cue interpolation (NCDx, CDP).
          */
-        void GTE::exectuteNColor(const Vector3<int16_t>& normal, bool sf, bool isNormal, bool color, bool depth);
+        void executeNColor(const Vector3<int16_t>& normal, bool sf, bool isNormal, bool color, bool depth);
 
         /**
          * @brief Computes the dot product between a matrix row and a vector.
@@ -250,53 +250,53 @@ class GTE : public Coprocessor {
          * @param vec The 3D input vector.
          * @return The 64-bit result of the dot product.
          */
-        int64_t GTE::dotProductMatrixRow(const int32_t* reg, int row, const Vector3<int16_t>& vec);
+        int64_t dotProductMatrixRow(const int32_t* reg, int row, const Vector3<int16_t>& vec);
 
         /**
          * @brief Retrieves the current IR (intermediate result) vector from GTE data registers.
          * @return A 3D vector constructed from IR1, IR2, and IR3.
          */
-        Vector3<int16_t> GTE::getIRVector();
+        Vector3<int16_t> getIRVector();
 
         /**
          * @brief Executes NCS (Normal color single) instruction.
          */
-        void GTE::executeNCS(bool sf);
+        void executeNCS(bool sf);
 
         /**
          * @brief Executes NCT (Normal color triple) instruction.
          */
-        void GTE::executeNCT(bool sf);
+        void executeNCT(bool sf);
 
         /**
          * @brief Executes NCCS (Normal Color Color Single) instruction.
          */
-        void GTE::executeNCCS(bool sf);
+        void executeNCCS(bool sf);
 
         /**
          * @brief Executes NCCT (Normal Color Color Triple) instruction.
          */
-        void GTE::executeNCCT(bool sf);
+        void executeNCCT(bool sf);
 
         /**
          * @brief Executes NCDS (Normal color depth cue single) instruction.
          */
-        void GTE::executeNCDS(bool sf);
+        void executeNCDS(bool sf);
 
         /**
          * @brief Executes NCDT (Normal color depth cue triple) instruction.
          */
-        void GTE::executeNCDT(bool sf);
+        void executeNCDT(bool sf);
 
         /**
          * @brief Executes CC (Color Color) instruction.
          */
-        void GTE::executeCC(bool sf);
+        void executeCC(bool sf);
 
         /**
          * @brief Executes CDP (Color Depth Que) instruction.
          */
-        void GTE::executeCDP(bool sf);
+        void executeCDP(bool sf);
 
         // Internal helper functions
         /**

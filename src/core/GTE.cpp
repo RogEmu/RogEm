@@ -629,20 +629,20 @@ Rgbc GTE::getRGB0() const {
  * 4. The final RGB color is pushed to the color FIFO, packed from IR1–IR3 (upper 8 bits),
  *    and the original code field (m_dataReg[2]) is preserved in the 4th byte.
  */
-void GTE::exectuteNColor(const Vector3<int16_t>& normal, bool sf, bool isNormal, bool color, bool depth) {
+void GTE::executeNColor(const Vector3<int16_t>& normal, bool sf, bool isNormal, bool color, bool depth) {
     if (isNormal) {
         // Step 1: Multiply Light Matrix (LLM) with Normal vector V0
-        int64_t mac1 = dotProductMatrixRow(m_ctrlReg, 0, normal) >> (sf * 12);
-        int64_t mac2 = dotProductMatrixRow(m_ctrlReg, 1, normal) >> (sf * 12);
-        int64_t mac3 = dotProductMatrixRow(m_ctrlReg, 2, normal) >> (sf * 12);
+        int64_t mac1 = dotProductMatrixRow(m_ctrlReg.data(), 0, normal) >> (sf * 12);
+        int64_t mac2 = dotProductMatrixRow(m_ctrlReg.data(), 1, normal) >> (sf * 12);
+        int64_t mac3 = dotProductMatrixRow(m_ctrlReg.data(), 2, normal) >> (sf * 12);
 
         m_dataReg[25] = static_cast<int32_t>(mac1); // MAC 1
         m_dataReg[26] = static_cast<int32_t>(mac2); // MAC 2
         m_dataReg[27] = static_cast<int32_t>(mac3); // MAC 3
 
-        m_dataReg[9]  = clampMAC(mac1, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0001); // IR 1
-        m_dataReg[10] = clampMAC(mac2, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0002); // IR 2
-        m_dataReg[11] = clampMAC(mac3, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0004); // IR 3
+        m_dataReg[9]  = clampMAC(mac1, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0001, 0x0001); // IR 1
+        m_dataReg[10] = clampMAC(mac2, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0002, 0x0002); // IR 2
+        m_dataReg[11] = clampMAC(mac3, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0004, 0x0004); // IR 3
     }
 
     // Step 2: Background + (ColorMatrix * IR)
@@ -651,9 +651,9 @@ void GTE::exectuteNColor(const Vector3<int16_t>& normal, bool sf, bool isNormal,
     intermediate.y = static_cast<int64_t>(extractSigned16(m_ctrlReg[7], false)) << 12;
     intermediate.z = static_cast<int64_t>(extractSigned16(m_ctrlReg[8], false)) << 12;
 
-    intermediate.x += dotProductMatrixRow(m_ctrlReg, 3, getIRVector());
-    intermediate.y += dotProductMatrixRow(m_ctrlReg, 4, getIRVector());
-    intermediate.z += dotProductMatrixRow(m_ctrlReg, 5, getIRVector());
+    intermediate.x += dotProductMatrixRow(m_ctrlReg.data(), 3, getIRVector());
+    intermediate.y += dotProductMatrixRow(m_ctrlReg.data(), 4, getIRVector());
+    intermediate.z += dotProductMatrixRow(m_ctrlReg.data(), 5, getIRVector());
 
     intermediate.x >>= (sf * 12);
     intermediate.y >>= (sf * 12);
@@ -663,9 +663,9 @@ void GTE::exectuteNColor(const Vector3<int16_t>& normal, bool sf, bool isNormal,
     m_dataReg[26] = static_cast<int32_t>(intermediate.y); // MAC 2
     m_dataReg[27] = static_cast<int32_t>(intermediate.z); // MAC 3
 
-    m_dataReg[9]  = clampMAC(intermediate.x, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0001); // IR 1
-    m_dataReg[10] = clampMAC(intermediate.y, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0002); // IR 2
-    m_dataReg[11] = clampMAC(intermediate.z, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0004); // IR 3
+    m_dataReg[9]  = clampMAC(intermediate.x, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0001, 0x0001); // IR 1
+    m_dataReg[10] = clampMAC(intermediate.y, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0002, 0x0002); // IR 2
+    m_dataReg[11] = clampMAC(intermediate.z, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0004, 0x0004); // IR 3
 
     // Step 3 & 4: Multiply by FC and optionally interpolate with IR0
     if (color || depth)
@@ -694,18 +694,24 @@ void GTE::exectuteNColor(const Vector3<int16_t>& normal, bool sf, bool isNormal,
         m_dataReg[26] = static_cast<int32_t>(g); // MAC 2
         m_dataReg[27] = static_cast<int32_t>(b); // MAC 3
 
-        m_dataReg[9]  = clampMAC(r, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0001); // IR 1
-        m_dataReg[10] = clampMAC(g, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0002); // IR 2
-        m_dataReg[11] = clampMAC(b, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0004); // IR 3
+        m_dataReg[9]  = clampMAC(r, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0001, 0x0001); // IR 1
+        m_dataReg[10] = clampMAC(g, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0002, 0x0002); // IR 2
+        m_dataReg[11] = clampMAC(b, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0004, 0x0004); // IR 3
     }
 
     // Final Step: Write to Color FIFO and IR
-    pushColorFIFO({
-        static_cast<uint8_t>((m_dataReg[9] >> 4) & 0xFF),
-        static_cast<uint8_t>((m_dataReg[10] >> 4) & 0xFF),
-        static_cast<uint8_t>((m_dataReg[11] >> 4) & 0xFF),
-        static_cast<uint8_t>(m_dataReg[2] & 0xFF)
-    });
+    uint8_t r = clampMAC(m_dataReg[25] >> 4, FIFO_LIMIT_HIGH, FIFO_LIMIT_LOW, 1 << 21, 1 << 21);
+    uint8_t g = clampMAC(m_dataReg[26] >> 4, FIFO_LIMIT_HIGH, FIFO_LIMIT_LOW, 1 << 20, 1 << 20);
+    uint8_t b = clampMAC(m_dataReg[27] >> 4, FIFO_LIMIT_HIGH, FIFO_LIMIT_LOW, 1 << 19, 1 << 19);
+    uint8_t c = static_cast<uint8_t>(m_dataReg[2] & 0xFF); // CODE is the upper 8 bits of RGBC?
+    
+    Rgbc fifo = { r, g, b, c };
+    m_dataReg[20] = (fifo.c << 24) | (fifo.r << 16) | (fifo.g << 8) | fifo.b;
+    
+    // And store IR1–IR3 = MAC1–MAC3 (used later)
+    m_dataReg[9]  = m_dataReg[25];
+    m_dataReg[10] = m_dataReg[26];
+    m_dataReg[11] = m_dataReg[27];
 }
 
 /**
