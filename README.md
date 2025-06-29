@@ -1,10 +1,12 @@
 # RogEm
-[![Linux Build and Test](https://github.com/EpitechPromo2026/G-EIP-700-PAR-7-1-eip-hugo.raygade/actions/workflows/build_and_test_lin.yml/badge.svg?branch=dev)](https://github.com/EpitechPromo2026/G-EIP-700-PAR-7-1-eip-hugo.raygade/actions/workflows/build_and_test_lin.yml)
-[![Windows Build and Test](https://github.com/EpitechPromo2026/G-EIP-700-PAR-7-1-eip-hugo.raygade/actions/workflows/build_and_test_win.yml/badge.svg)](https://github.com/EpitechPromo2026/G-EIP-700-PAR-7-1-eip-hugo.raygade/actions/workflows/build_and_test_win.yml)
+[![Linux Build and Test](https://github.com/RogEmu/RogEm/actions/workflows/build_and_test_lin.yml/badge.svg?branch=dev)](https://github.com/RogEmu/RogEm/actions/workflows/build_and_test_lin.yml)
+[![Windows Build and Test](https://github.com/RogEmu/RogEm/actions/workflows/build_and_test_win.yml/badge.svg?branch=dev)](https://github.com/RogEmu/RogEm/actions/workflows/build_and_test_win.yml)
 
 Roger Jr's PS1 emulator
-![Screenshot From 2025-06-15 23-43-52](https://github.com/user-attachments/assets/df260716-989d-4056-9dc8-182671359179)
-![Screenshot From 2025-06-13 22-50-17](https://github.com/user-attachments/assets/16b81ca1-0356-4d25-975b-34e72d8bcaa7)
+![Color Table](img/rogem_color_table.png)
+![Triangles](img/rogem_triangles.png)
+![Shaded Bios Logo](img/rogem_shaded_bios_diamond.png)
+![Shaded Polygons](img/rogem_shaded_polygons.png)
 
 ## What is RogEm ?
 RogEm is a new generation PS1 emulator that aims to be performant, easy to use and portable between devices.
@@ -24,7 +26,7 @@ If you have any suggestions, improvements or anything else, please refer to the 
 - 🟡 Delay slot handling — 80%
 - ✅ Coprocessor (COP0) support — 100%
 - 🟡 Exception handling — 80%
-- 🕒 GTE (COP2) — 40%
+- 🟡 GTE (COP2) — 80%
 
 ### Memory
 - ✅ RAM implementation — 100%
@@ -74,5 +76,5 @@ If you have any suggestions, improvements or anything else, please refer to the 
 - ❌ Save state system — 0%
 
 ---
-_Last updated: 16/06/25_
+_Last updated: 29/06/25_
 
