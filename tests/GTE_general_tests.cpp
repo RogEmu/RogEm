@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include "GTE.h"
 
+
 class GteGeneralTest : public testing::Test {
 protected:
     GTE gte;
@@ -30,6 +31,12 @@ protected:
         gte.mtc(9, v.x); // IR1
         gte.mtc(10, v.y); // IR2
         gte.mtc(11, v.z); // IR3
+    }
+
+    void setFC(Vector3<int32_t> &v) {
+        gte.ctc(21, v.x); // IR1
+        gte.ctc(22, v.y); // IR2
+        gte.ctc(23, v.z); // IR3
     }
 
     void setVectorMAC(Vector3<int32_t> &v)
@@ -111,6 +118,35 @@ protected:
         EXPECT_EQ(fifo & 0xFF, expectedFifo.b);
     }
 
+    void runInterpolationTest(uint32_t opcode, Vector3<int16_t> &expectedIR, Vector3<int32_t> &expectedMAC, Rgbc &expectedFifo, Flag &f)
+    {
+        opcode |= (f.sf << 19);
+
+        gte.execute(opcode);
+
+        int32_t mac1 = static_cast<int32_t>(gte.mfc(25));
+        int32_t mac2 = static_cast<int32_t>(gte.mfc(26));
+        int32_t mac3 = static_cast<int32_t>(gte.mfc(27));
+
+        EXPECT_EQ(mac1, expectedMAC.x);
+        EXPECT_EQ(mac2, expectedMAC.y);
+        EXPECT_EQ(mac3, expectedMAC.z);
+
+        int16_t ir1 = static_cast<int16_t>(gte.mfc(9));
+        int16_t ir2 = static_cast<int16_t>(gte.mfc(10));
+        int16_t ir3 = static_cast<int16_t>(gte.mfc(11));
+
+        EXPECT_EQ(ir1, expectedIR.x);
+        EXPECT_EQ(ir2, expectedIR.y);
+        EXPECT_EQ(ir3, expectedIR.z);
+
+        int32_t fifo = gte.mfc(20);
+
+        EXPECT_EQ((fifo >> 24) & 0xFF, expectedFifo.c);
+        EXPECT_EQ((fifo >> 16) & 0xFF, expectedFifo.r);
+        EXPECT_EQ((fifo >> 8) & 0xFF, expectedFifo.g);
+        EXPECT_EQ(fifo & 0xFF, expectedFifo.b);
+    }
 };
 
 TEST_F(GteGeneralTest, MVMVA_Identity_Basic_Flag)
@@ -304,4 +340,98 @@ TEST_F(GteGeneralTest, GPL_Sf_with_code)
     setVectorIR(IR);
     setVectorMAC(MAC);
     runGpTest(true, expectedIR, expectedMAC, expectedFifo, f);
+}
+
+TEST_F(GteGeneralTest, INTPL_Basic_test)
+{
+    Vector3<int16_t> IR(2, 3, 5);
+    Vector3<int32_t> FC(5000, 7000, 11000);
+    Vector3<int32_t> expectedMAC(1808, 1712, 1520);
+    Vector3<int16_t> expectedIR(1808, 1712, 1520);
+    Rgbc expectedFifo(113, 107, 95, 1);
+    Flag f(0, 0, 0, 0, 0);
+
+    gte.mtc(8, 2); // IR
+    gte.mtc(20, 0x01000000); // fifo CODE = 1
+    setFC(FC);
+    setVectorIR(IR);
+
+    uint32_t opcodeINTPL = 0x4A000011;
+
+    runInterpolationTest(opcodeINTPL, expectedIR, expectedMAC, expectedFifo, f);
+}
+
+TEST_F(GteGeneralTest, INTPL_sf_test)
+{
+    Vector3<int16_t> IR(16, 32, 48);
+    Vector3<int32_t> FC(65536, 131072, 196608);
+    Vector3<int32_t> expectedMAC(16, 32, 48);
+    Vector3<int16_t> expectedIR(16, 32, 48);
+    Rgbc expectedFifo(1, 2, 3, 1);
+    Flag f(1, 0, 0, 0, 0);
+
+    gte.mtc(8, 2); // IR
+    gte.mtc(20, 0x01000000); // fifo CODE = 1
+    setFC(FC);
+    setVectorIR(IR);
+
+    uint32_t opcodeINTPL = 0x4A000011;
+
+    runInterpolationTest(opcodeINTPL, expectedIR, expectedMAC, expectedFifo, f);
+}
+
+TEST_F(GteGeneralTest, DCPL_Basic_test)
+{
+    Vector3<int16_t> IR(128, 192, 320);
+    Vector3<int32_t> FC(5000, 7000, 11000);
+    Vector3<int32_t> expectedMAC(1808, 1712, 1520);
+    Vector3<int16_t> expectedIR(1808, 1712, 1520);
+    Rgbc expectedFifo(113, 107, 95, 1);
+    Flag f(0, 0, 0, 0, 0);
+
+    gte.mtc(8, 2); // IR
+    gte.mtc(6, (1 << 24) | (4 << 16) | (4 << 8) | 4); // color
+    gte.mtc(20, 0x01000000); // fifo CODE = 1
+    setFC(FC);
+    setVectorIR(IR);
+
+    uint32_t opcodeDCPL = 0x4A000029;
+
+    runInterpolationTest(opcodeDCPL, expectedIR, expectedMAC, expectedFifo, f);
+}
+
+TEST_F(GteGeneralTest, DPCS_Basic_test)
+{
+    Vector3<int32_t> FC(819200, 1228800, 1638400);
+    Vector3<int32_t> expectedMAC(200, 300, 400);
+    Vector3<int16_t> expectedIR(200, 300, 400);
+    Rgbc expectedFifo(12, 18, 25, 1);
+    Flag f(1, 0, 0, 0, 0);
+
+    gte.mtc(8, 1); // IR
+    gte.mtc(6, (1 << 24) | (1 << 16) | (2 << 8) | 3); // color
+    gte.mtc(20, 0x01000000); // fifo CODE = 1
+    setFC(FC);
+
+    uint32_t opcodeDPCS = 0x4A000010;
+
+    runInterpolationTest(opcodeDPCS, expectedIR, expectedMAC, expectedFifo, f);
+}
+
+TEST_F(GteGeneralTest, DPCT_Basic_test)
+{
+    Vector3<int32_t> FC(819200, 1228800, 1638400);
+    Vector3<int32_t> expectedMAC(200, 300, 400);
+    Vector3<int16_t> expectedIR(200, 300, 400);
+    Rgbc expectedFifo(12, 18, 25, 1);
+    Flag f(1, 0, 0, 0, 0);
+
+    gte.mtc(8, 1); // IR
+    gte.mtc(6, (1 << 24) | (1 << 16) | (2 << 8) | 3); // color
+    gte.mtc(20, 0x01000000); // fifo CODE = 1
+    setFC(FC);
+
+    uint32_t opcodeDPCT = 0x4A00002A;
+
+    runInterpolationTest(opcodeDPCT, expectedIR, expectedMAC, expectedFifo, f);
 }
