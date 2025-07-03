@@ -187,8 +187,8 @@ class GPU : public PsxDevice
         void setDisplayMode(uint8_t modeBits);
         void readInternalRegister(uint8_t reg);
 
-        void handleGP0Command(uint32_t cmd);
-        void handleGP1Command(uint32_t cmd);
+        void processGP0(uint32_t data);
+        void processGP1(uint32_t cmd);
 
         void handleEnvCommand(uint32_t cmd);
 
