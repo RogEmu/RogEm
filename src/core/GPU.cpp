@@ -414,9 +414,7 @@ void GPU::rasterizePoly3(const Vec2i &v0, const Vec2i &v1, const Vec2i &v2, cons
             bool test = w0 <= 0 && w1 <= 0 && w2 <= 0;
             int num = w0 | w1 | w2;
             if (test) {
-                int index = (y * 1024 + x) * 2;
-                m_vram[index] = argbColor & 0xFF;
-                m_vram[index + 1] = argbColor >> 8;
+                setPixel(p, argbColor);
                 num += 1;
             }
         }
@@ -427,4 +425,11 @@ void GPU::rasterizePoly4(const Vec2i *verts, const ColorRGBA &color)
 {
     rasterizePoly3(verts[0], verts[1], verts[2], color);
     rasterizePoly3(verts[1], verts[3], verts[2], color);
+}
+
+void GPU::setPixel(const Vec2i &pos, uint16_t color)
+{
+    int index = (pos.y * 1024 + pos.x) * 2;
+    m_vram[index] = color & 0xFF;
+    m_vram[index + 1] = color >> 8;
 }
