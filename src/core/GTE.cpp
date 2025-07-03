@@ -100,7 +100,7 @@ void GTE::decodeAndExecute(uint32_t opcode) {
 
     switch (funct) {
         case GTEFunction::RTPS:
-            std::cout << "[GTE] RTPS - Need to be redone\n";
+            executeRTPS(opcode, 0);
             break;
         case GTEFunction::NCLIP:
             executeNCLIP();
@@ -160,7 +160,7 @@ void GTE::decodeAndExecute(uint32_t opcode) {
             executeAVSZ4();
             break;
         case GTEFunction::RTPT:
-            std::cout << "[GTE] RTPT - Need to be redone\n";
+            executeRTPT(opcode);
             break;
         case GTEFunction::GPF:
             executeGPF(opcode);
@@ -177,136 +177,52 @@ void GTE::decodeAndExecute(uint32_t opcode) {
     }
 }
 
-/* OBSOLETE TO REDO
-void GTE::executeRTPS() {
-    // Read V0 (input vector)
-    int16_t vx = extractSigned16(m_dataReg[0], false); // VXY0 low
-    int16_t vy = extractSigned16(m_dataReg[0], true);  // VXY0 high
-    int16_t vz = extractSigned16(m_dataReg[1], false); // VZ0 low only
-
-    // Read rotation Mat3x3 R (fixed-point 12.20 format)
-    int32_t r11 = static_cast<int16_t>(m_ctrlReg[0] >> 16) << 4;
-    int32_t r12 = static_cast<int16_t>(m_ctrlReg[0] & 0xFFFF) << 4;
-    int32_t r13 = static_cast<int16_t>(m_ctrlReg[1] >> 16) << 4;
-
-    int32_t r21 = static_cast<int16_t>(m_ctrlReg[1] & 0xFFFF) << 4;
-    int32_t r22 = static_cast<int16_t>(m_ctrlReg[2] >> 16) << 4;
-    int32_t r23 = static_cast<int16_t>(m_ctrlReg[2] & 0xFFFF) << 4;
-
-    int32_t r31 = static_cast<int16_t>(m_ctrlReg[3] >> 16) << 4;
-    int32_t r32 = static_cast<int16_t>(m_ctrlReg[3] & 0xFFFF) << 4;
-    int32_t r33 = static_cast<int16_t>(m_ctrlReg[4] >> 16) << 4;
-
-    // Translation vector T
-    int32_t trx = m_ctrlReg[5];
-    int32_t try_ = m_ctrlReg[6];
-    int32_t trz = m_ctrlReg[7];
-
-    // Perspective projection parameters
-    int32_t ofx = m_ctrlReg[24];
-    int32_t ofy = m_ctrlReg[25];
-    int32_t h = m_ctrlReg[26];
-
-    // Perform Mat3x3 * vector (with >>12 shift for fixed point)
-    int64_t mac1 = ((int64_t)r11 * vx + (int64_t)r12 * vy + (int64_t)r13 * vz) >> 12;
-    int64_t mac2 = ((int64_t)r21 * vx + (int64_t)r22 * vy + (int64_t)r23 * vz) >> 12;
-    int64_t mac3 = ((int64_t)r31 * vx + (int64_t)r32 * vy + (int64_t)r33 * vz) >> 12;
-
-    // Add translation vector
-    mac1 += trx;
-    mac2 += try_;
-    mac3 += trz;
-
-    // Clamp MACs to 32-bit signed int (we emulate overflows in IR later)
-    m_dataReg[25] = static_cast<int32_t>(mac1); // MAC1
-    m_dataReg[26] = static_cast<int32_t>(mac2); // MAC2
-    m_dataReg[27] = static_cast<int32_t>(mac3); // MAC3
-
-    // Clamp MACs into IR1-IR3 with overflow/underflow detection
-    m_dataReg[9] = clampMAC(mac1, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0001); // IR1
-    m_dataReg[10] = clampMAC(mac2, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0002); // IR2
-    m_dataReg[11] = clampMAC(mac3, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0004); // IR3
-
-    // Perspective divide using IR3 as Z
-    int32_t z = m_dataReg[11];
-    int32_t zc = (z > 0) ? z : 1; // Avoid divide by 0 or negative
-    int32_t sx = ((m_dataReg[9] * h) / zc + ofx);
-    int32_t sy = ((m_dataReg[10] * h) / zc + ofy);
-
-    sx = std::clamp(sx, 0, 0xFFFF);
-    sy = std::clamp(sy, 0, 0xFFFF);
-
-    // Output to screen XY register SXY2
-    m_dataReg[14] = (sy << 16) | (sx & 0xFFFF);
-
-    // Depth register SZ3 and OTZ
-    m_dataReg[19] = z;             // SZ3
-    m_dataReg[7] = z & 0xFFFF;     // OTZ (used for ordering table)
-}
-
-void GTE::executeRTPT()
+void GTE::executeRTPS(uint32_t opcode, uint8_t vectorNumber)
 {
-    // Process V0, V1, V2 in sequence
-    const int vectorRegs[3][2] = { {0, 1}, {2, 3}, {4, 5} }; // VXY0/VZ0, VXY1/VZ1, VXY2/VZ2
-    const int sxyRegs[3] = { 12, 13, 14 }; // SXY0, SXY1, SXY2
-    const int szRegs[3] = { 16, 17, 18 };  // SZ1, SZ2, SZ3
+    Flag f = getFlags(opcode);
+    Vector3<int16_t> V0 = getVector3FromV(vectorNumber);
+    Mat3x3 rotation = getMat3x3FromMX(0);
+    Vector3<int32_t> translation = extractTranslation(5);
 
     int32_t ofx = m_ctrlReg[24];
     int32_t ofy = m_ctrlReg[25];
     int32_t h = m_ctrlReg[26];
 
-    int32_t r11 = static_cast<int16_t>(m_ctrlReg[0] >> 16) << 4;
-    int32_t r12 = static_cast<int16_t>(m_ctrlReg[0] & 0xFFFF) << 4;
-    int32_t r13 = static_cast<int16_t>(m_ctrlReg[1] >> 16) << 4;
-    int32_t r21 = static_cast<int16_t>(m_ctrlReg[1] & 0xFFFF) << 4;
-    int32_t r22 = static_cast<int16_t>(m_ctrlReg[2] >> 16) << 4;
-    int32_t r23 = static_cast<int16_t>(m_ctrlReg[2] & 0xFFFF) << 4;
-    int32_t r31 = static_cast<int16_t>(m_ctrlReg[3] >> 16) << 4;
-    int32_t r32 = static_cast<int16_t>(m_ctrlReg[3] & 0xFFFF) << 4;
-    int32_t r33 = static_cast<int16_t>(m_ctrlReg[4] >> 16) << 4;
+    int64_t mac1 = (translation.x * 0x1000 + (int64_t)rotation.r11 * V0.x + (int64_t)rotation.r12 * V0.y + (int64_t)rotation.r13 * V0.z) >> (f.sf * 12);
+    int64_t mac2 = (translation.y * 0x1000 + (int64_t)rotation.r21 * V0.x + (int64_t)rotation.r22 * V0.y + (int64_t)rotation.r23 * V0.z) >> (f.sf * 12);
+    int64_t mac3 = (translation.z * 0x1000 + (int64_t)rotation.r31 * V0.x + (int64_t)rotation.r32 * V0.y + (int64_t)rotation.r33 * V0.z) >> (f.sf * 12);
 
-    int32_t trx = m_ctrlReg[5];
-    int32_t try_ = m_ctrlReg[6];
-    int32_t trz = m_ctrlReg[7];
+    m_dataReg[25] = static_cast<int32_t>(mac1); // macs
+    m_dataReg[26] = static_cast<int32_t>(mac2);
+    m_dataReg[27] = static_cast<int32_t>(mac3);
 
-    for (int i = 0; i < 3; ++i) {
-        int16_t vx = extractSigned16(m_dataReg[vectorRegs[i][0]], false);
-        int16_t vy = extractSigned16(m_dataReg[vectorRegs[i][0]], true);
-        int16_t vz = extractSigned16(m_dataReg[vectorRegs[i][1]], false);
+    m_dataReg[9]  = clampMAC(mac1, IR_LIMIT_HIGH, IR_LIMIT_LOW, 1 << 24, 1 << 24); //irs
+    m_dataReg[10] = clampMAC(mac2, IR_LIMIT_HIGH, IR_LIMIT_LOW, 1 << 23, 1 << 23);
+    m_dataReg[11] = clampMAC(mac3, IR_LIMIT_HIGH, IR_LIMIT_LOW, 1 << 22, 1 << 22);
 
-        int64_t mac1 = ((int64_t)r11 * vx + (int64_t)r12 * vy + (int64_t)r13 * vz) >> 12;
-        int64_t mac2 = ((int64_t)r21 * vx + (int64_t)r22 * vy + (int64_t)r23 * vz) >> 12;
-        int64_t mac3 = ((int64_t)r31 * vx + (int64_t)r32 * vy + (int64_t)r33 * vz) >> 12;
+    m_dataReg[19] = clampMAC(mac3 >> ((1 - f.sf) * 12), 0xFFFF, 0, 1 << 18, 1 << 18); // sz3
+    int32_t projectScale;
+    if (m_dataReg[19] <= h / 2 || m_dataReg[19] <= 0) {
+        m_dataReg[19] = 0;
+        projectScale = 0x1FFFF;
+        m_ctrlReg[31] |= 1 << 31;
+    } else
+        projectScale = clampMAC((((h * 0x20000 / m_dataReg[19]) + 1) / 2), 0x1FFFF, -0x1FFFF , 1 << 17, 1 << 17);
 
-        mac1 += trx;
-        mac2 += try_;
-        mac3 += trz;
-
-        m_dataReg[25] = static_cast<int32_t>(mac1); // MAC1
-        m_dataReg[26] = static_cast<int32_t>(mac2); // MAC2
-        m_dataReg[27] = static_cast<int32_t>(mac3); // MAC3
-
-        m_dataReg[9] = clampMAC(mac1, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0001); // IR1
-        m_dataReg[10] = clampMAC(mac2, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0002); // IR2
-        m_dataReg[11] = clampMAC(mac3, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0004); // IR3
-
-        int32_t z = m_dataReg[11];
-        int32_t zc = (z > 0) ? z : 1;
-        int32_t sx = ((m_dataReg[9] * h) / zc + ofx);
-        int32_t sy = ((m_dataReg[10] * h) / zc + ofy);
-
-        sx = std::clamp(sx, 0, 0xFFFF);
-        sy = std::clamp(sy, 0, 0xFFFF);
-
-        m_dataReg[sxyRegs[i]] = (sy << 16) | (sx & 0xFFFF);
-        m_dataReg[szRegs[i]] = z;
-    }
-
-    // Set SZ3 and OTZ to final Z
-    m_dataReg[19] = m_dataReg[18]; // SZ3 = last depth
-    m_dataReg[7] = m_dataReg[18] & 0xFFFF; // OTZ
+    int32_t sx2 = clampMAC(static_cast<int16_t>(projectScale * m_dataReg[9] + ofx)/ 0x10000, 0x03FF, -0x0400, 1 << 14, 1 << 14);
+    int32_t sy2 = clampMAC(static_cast<int16_t>(projectScale * m_dataReg[10] + ofy)/ 0x10000, 0x03FF, -0x0400, 1 << 14, 1 << 14);
+    m_dataReg[14] = (sy2 << 16) | (sx2 & 0xFFFF);
+    int32_t dqa = static_cast<int32_t>(m_ctrlReg[27]);
+    int32_t dqb = static_cast<int32_t>(m_ctrlReg[28]);
+    m_dataReg[24] = projectScale * dqa + dqb;
+    m_dataReg[8] = m_dataReg[24] / 0x1000;
 }
-    */
+
+void GTE::executeRTPT(uint32_t opcode)
+{
+    for (uint8_t i = 0; i < 3; i++)
+        executeRTPS(opcode, i);
+}
 
 void GTE::executeNCLIP()
 {
@@ -481,9 +397,9 @@ void GTE::executeMVMVA(uint32_t opcode)
     int64_t mac1, mac2, mac3;
     int fc = f.cv != 2;
 
-    mac1 = (static_cast<int64_t>(m.r11) * vec.x * fc + static_cast<int64_t>(m.r12) * vec.y * fc + static_cast<int64_t>(m.r13) * vec.z + translation.x * fc) >> (12 * f.sf);
-    mac2 = (static_cast<int64_t>(m.r21) * vec.x * fc + static_cast<int64_t>(m.r22) * vec.y * fc + static_cast<int64_t>(m.r23) * vec.z + translation.y * fc) >> (12 * f.sf);
-    mac3 = (static_cast<int64_t>(m.r31) * vec.x * fc + static_cast<int64_t>(m.r32) * vec.y * fc + static_cast<int64_t>(m.r33) * vec.z + translation.z * fc) >> (12 * f.sf);
+    mac1 = (static_cast<int64_t>(m.r11) * vec.x * fc + static_cast<int64_t>(m.r12) * vec.y * fc + static_cast<int64_t>(m.r13) * vec.z + translation.x * 0x1000 * fc) >> (12 * f.sf);
+    mac2 = (static_cast<int64_t>(m.r21) * vec.x * fc + static_cast<int64_t>(m.r22) * vec.y * fc + static_cast<int64_t>(m.r23) * vec.z + translation.y * 0x1000 * fc) >> (12 * f.sf);
+    mac3 = (static_cast<int64_t>(m.r31) * vec.x * fc + static_cast<int64_t>(m.r32) * vec.y * fc + static_cast<int64_t>(m.r33) * vec.z + translation.z * 0x1000 * fc) >> (12 * f.sf);
 
     m_dataReg[25] = static_cast<int32_t>(mac1);
     m_dataReg[26] = static_cast<int32_t>(mac2);
