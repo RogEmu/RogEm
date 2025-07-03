@@ -218,6 +218,7 @@ class GPU : public PsxDevice
 
         // GP0 commands
         void drawPolygon();
+        void drawRectangle();
         void startCpuToVramCopy();
         void quickRectFill();
         void startVramToVramCopy();
@@ -228,6 +229,7 @@ class GPU : public PsxDevice
         // Rasterization methods
         void rasterizePoly3(const Vertex *verts, const ColorRGBA& color);
         void rasterizePoly4(const Vertex *verts, const ColorRGBA& color);
+        void rasterizeRectangle(const Vertex &vert, const Vec2i &size);
 
         void setPixel(const Vec2i &pos, uint16_t color);
         uint16_t getPixel(const Vec2i &pos);
