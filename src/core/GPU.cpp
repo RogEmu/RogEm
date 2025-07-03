@@ -220,7 +220,10 @@ void GPU::processGP0(uint32_t data)
             case 0b011:
                 spdlog::warn("GPU: Draw Rectangle");
                 break;
-            case 0b100:
+            case 0b100: // VRAM to VRAM copy
+                m_nbExpectedParams = 3;
+                m_currentState = GpuState::ReceivingParameters;
+                m_currentCmd.setCommand(data);
                 break;
             case 0b101: // CPU to VRAM blitting
                 m_nbExpectedParams = 2;
@@ -430,6 +433,25 @@ void GPU::quickRectFill()
     m_currentCmd.reset();
 }
 
+void GPU::startVramToVramCopy()
+{
+    auto params = m_currentCmd.params();
+    Vec2i sourceCoord{(int)(params[0] & 0xFFFF), (int)(params[0] >> 16)};
+    Vec2i destCoord{(int)(params[1] & 0xFFFF), (int)(params[1] >> 16)};
+    Vec2i size{(int)(params[2] & 0xFFFF), (int)(params[2] >> 16)};
+
+    for (int y = 0; y < size.y; y++) {
+        for (int x = 0; x < size.x; x++) {
+            Vec2i currSourceCoord{sourceCoord.x + x, sourceCoord.y + y};
+            Vec2i currDestCoord{destCoord.x + x, destCoord.y + y};
+            uint16_t color = getPixel(currSourceCoord);
+            setPixel(currDestCoord, color);
+        }
+    }
+    m_currentState = GpuState::WaitingForCommand;
+    m_currentCmd.reset();
+}
+
 void GPU::receiveParameter(uint32_t param)
 {
     m_currentCmd.addParam(param);
@@ -441,6 +463,8 @@ void GPU::receiveParameter(uint32_t param)
             startCpuToVramCopy();
         } else if (m_currentCmd.command() == CommandType::QuickRectFill) {
             quickRectFill();
+        } else if (m_currentCmd.command() == CommandType::VramVramCopy) {
+            startVramToVramCopy();
         }
     }
 }
@@ -513,4 +537,13 @@ void GPU::setPixel(const Vec2i &pos, uint16_t color)
     int index = (pos.y * 1024 + pos.x) * 2;
     m_vram[index] = color & 0xFF;
     m_vram[index + 1] = color >> 8;
+}
+
+uint16_t GPU::getPixel(const Vec2i &pos)
+{
+    int index = (pos.y * 1024 + pos.x) * 2;
+    uint16_t color = 0;
+    color = m_vram[index];
+    color |= m_vram[index + 1] << 8;
+    return color;
 }
