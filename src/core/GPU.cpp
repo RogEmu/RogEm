@@ -94,7 +94,7 @@ uint32_t GPU::read32(uint32_t address)
     } else if (address == 0x1F801810) {
         result = m_gpuRead;
     }
-    spdlog::debug("GPU: read from 0x{:08X} = 0x{:08X}", address, result);
+    spdlog::debug("GPU: Read from 0x{:08X} = 0x{:08X}", address, result);
     return result;
 }
 
@@ -366,7 +366,7 @@ void GPU::handleEnvCommand(uint32_t cmd)
 
 void GPU::setDrawMode(uint32_t mode)
 {
-    m_gpuStat.texPageBase.x = mode & 7;
+    m_gpuStat.texPageBase.x = mode & 0xF;
     m_gpuStat.texPageBase.y = (mode >> 4) & 1;
     m_gpuStat.semiTransparency = (mode >> 5) & 3;
     m_gpuStat.texPageColors = static_cast<TexturePageColors>((mode >> 7) & 3);
