@@ -339,7 +339,7 @@ void GPU::handleEnvCommand(uint32_t cmd)
         // Texture Window setting
         break;
     case 0xE3:
-        // Set Draw Area bottom-right
+        // Set Draw Area top-left
         m_drawArea.topLeft.x = cmd & 0x3FF;
         m_drawArea.topLeft.y = (cmd >> 10) & 0x3FF;
         break;
