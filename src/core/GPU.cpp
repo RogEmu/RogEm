@@ -207,11 +207,13 @@ void GPU::processGP0(uint32_t data)
                 break;
             case 0b001: {
                 int nbVertices = ((data >> 27) & 1) == 0 ? 3 : 4;
-                m_nbExpectedParams = ((data >> 28) & 1) * (nbVertices - 1); // Nb Gouraud Shading vertices
+                m_nbExpectedParams = ((data >> 28) & 1) * (nbVertices - 1); // Nb Vertex Colors
                 m_nbExpectedParams += ((data >> 26) & 1) * nbVertices; // Nb UV coordinates
                 m_nbExpectedParams += nbVertices;
                 m_currentState = GpuState::ReceivingParameters;
                 m_currentCmd.setCommand(data);
+                m_currentCmd.addParam(data & 0xFFFFFF);
+                m_nbExpectedParams += 1;
                 break;
             }
             case 0b010:
@@ -378,18 +380,24 @@ static Vec2i getVec(uint32_t param)
 void GPU::drawPolygon()
 {
     int nbVerts = ((m_currentCmd.raw() >> 27) & 1) == 0 ? 3 : 4;
-    ColorRGBA color;
-    color.fromRGB(m_currentCmd.raw() & 0xFFFFFF);
+    bool shaded = (m_currentCmd.raw() >> 28) & 1;
+    bool textured = (m_currentCmd.raw() >> 26) & 1;
     const uint32_t *params = m_currentCmd.params();
+    ColorRGBA firstColor;
+    firstColor.fromBGR(params[0]);
     Vec2i verts[4];
 
     spdlog::warn("GPU: Draw Polygon with {} vertices", nbVerts);
 
+    int step = 1 + shaded + textured;
     for (int i = 0; i < nbVerts; i++) {
-        verts[i] = getVec(params[i]);
+        verts[i] = getVec(params[i * step + 1]);
     }
     if (nbVerts == 4)
-        rasterizePoly4(verts, color);
+        rasterizePoly4(verts, firstColor);
+    else {
+        rasterizePoly3(verts[0], verts[1], verts[2], firstColor);
+    }
     m_currentCmd.reset();
     m_currentState = GpuState::WaitingForCommand;
 }
@@ -435,6 +443,7 @@ void GPU::quickRectFill()
 
 void GPU::startVramToVramCopy()
 {
+    // The transfer should be affected by the Mask Bit setting
     auto params = m_currentCmd.params();
     Vec2i sourceCoord{(int)(params[0] & 0xFFFF), (int)(params[0] >> 16)};
     Vec2i destCoord{(int)(params[1] & 0xFFFF), (int)(params[1] >> 16)};
@@ -516,11 +525,10 @@ void GPU::rasterizePoly3(const Vec2i &v0, const Vec2i &v1, const Vec2i &v2, cons
             int w1 = edgeFunction(v2, v0, p);
             int w2 = edgeFunction(v0, v1, p);
 
-            bool test = w0 <= 0 && w1 <= 0 && w2 <= 0;
-            int num = w0 | w1 | w2;
-            if (test) {
+            int pos = (w0 | w1 | w2) >= 0;
+            int neg = (w0 & w1 & w2) < 0;
+            if (pos | neg) {
                 setPixel(p, argbColor);
-                num += 1;
             }
         }
     }
@@ -529,7 +537,7 @@ void GPU::rasterizePoly3(const Vec2i &v0, const Vec2i &v1, const Vec2i &v2, cons
 void GPU::rasterizePoly4(const Vec2i *verts, const ColorRGBA &color)
 {
     rasterizePoly3(verts[0], verts[1], verts[2], color);
-    rasterizePoly3(verts[1], verts[3], verts[2], color);
+    rasterizePoly3(verts[1], verts[2], verts[3], color);
 }
 
 void GPU::setPixel(const Vec2i &pos, uint16_t color)
