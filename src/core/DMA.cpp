@@ -235,7 +235,7 @@ void DMA::executeDmaGpuRequest()
     // uint32_t srcAddr = channelControl.transferDir == DMATransferDirection::RamToDevice ? GPU_GP0_ADDR : startAddr;
 
     if (channelControl.transferDir == DMATransferDirection::RamToDevice) {
-        for (uint32_t i = transferSize - 1; i > 0; i--) {
+        for (uint32_t i = 0; i < transferSize; i++) {
             uint32_t word = m_bus->loadWord(startAddr);
             m_bus->storeWord(GPU_GP0_ADDR, word);
             startAddr += step;
