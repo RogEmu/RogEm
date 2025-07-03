@@ -121,27 +121,41 @@ void GTE::decodeAndExecute(uint32_t opcode) {
         case GTEFunction::MVMVA:
             executeMVMVA(opcode);
             break;
-        case GTEFunction::NCDS:
-            spdlog::warn("[GTE] NCDS - Not implemented yet");
+        case GTEFunction::NCDS:{
+            bool sf = (opcode >> 19) & 0x1;
+            executeNCDS(sf);
             break;
-        case GTEFunction::CDP:
-            spdlog::warn("[GTE] CDP - Not implemented yet");
+        }
+        case GTEFunction::CDP:{
+            bool sf = (opcode >> 19) & 0x1;
+            executeCDP(sf);
             break;
-        case GTEFunction::NCDT:
-            spdlog::warn("[GTE] NCDT - Not implemented yet");
+        }
+        case GTEFunction::NCDT:{
+            bool sf = (opcode >> 19) & 0x1;
+            executeNCDT(sf);
             break;
-        case GTEFunction::NCCS:
-            spdlog::warn("[GTE] NCCS - Not implemented yet");
+        }
+        case GTEFunction::NCCS:{
+            bool sf = (opcode >> 19) & 0x1;
+            executeNCCS(sf);
             break;
-        case GTEFunction::CC:
-            spdlog::warn("[GTE] CC - Not implemented yet");
+        }
+        case GTEFunction::CC:{
+            bool sf = (opcode >> 19) & 0x1;
+            executeCC(sf);
             break;
-        case GTEFunction::NCS:
-            spdlog::warn("[GTE] NCS - Not implemented yet");
+        }
+        case GTEFunction::NCS: {
+            bool sf = (opcode >> 19) & 0x1;
+            executeNCCS(sf);
             break;
-        case GTEFunction::NCT:
-            spdlog::warn("[GTE] NCT - Not implemented yet");
+        }
+        case GTEFunction::NCT:{
+            bool sf = (opcode >> 19) & 0x1;
+            executeNCT(sf);
             break;
+        }
         case GTEFunction::SQR: {
             bool sf = (opcode >> 19) & 0x1;
             executeSQR(sf);
@@ -168,9 +182,11 @@ void GTE::decodeAndExecute(uint32_t opcode) {
         case GTEFunction::GPL:
             executeGPL(opcode, true);
             break;
-        case GTEFunction::NCCT:
-            spdlog::warn("[GTE] NCCT - Not implemented yet");
+        case GTEFunction::NCCT:{
+            bool sf = (opcode >> 19) & 0x1;
+            executeNCCT(sf);
             break;
+        }
         default:
             spdlog::error("[GTE] Unimplemented or unknown instruction function: 0x{:02X}", opcode & 0x3F);
             break;
@@ -577,6 +593,192 @@ void GTE::pushColorFIFO(const Rgbc& color) {
 
 Rgbc GTE::getRGB0() const {
     return m_colorFIFO[0];
+}
+
+/**
+ * @brief Executes the GTE normal color pipeline instructions.
+ *
+ * This function handles the internal operations for the following GTE instructions:
+ * - NCS / NCT   (Normal Color Single/Triple)
+ * - NCCS / NCCT (Normal Color Color Single/Triple)
+ * - NCDS / NCDT (Normal Color Depth Cue Single/Triple)
+ * - CC          (Color Color)
+ * - CDP         (Color Depth Cue)
+ *
+ * The computation flow varies based on the `isNormal`, `color`, and `depth` flags:
+ *
+ * 1. If `isNormal` is true, the function begins by transforming the normal vector using
+ *    the light matrix (LLM), as follows:
+ *      MAC1 = dot(LLM_row1, Vn) >> (sf * 12)
+ *      MAC2 = dot(LLM_row2, Vn) >> (sf * 12)
+ *      MAC3 = dot(LLM_row3, Vn) >> (sf * 12)
+ *    The results are stored in MAC1–MAC3 (m_dataReg[25–27]) and clamped into IR1–IR3.
+ *
+ * 2. Regardless of `isNormal`, the next step applies background color and the color matrix (LCM):
+ *      MAC = BK * 0x1000 + LCM * IR
+ *      IR = MAC >> (sf * 12)
+ *    Where BK is extracted from ctrlReg[6–8], and LCM is from ctrlReg[3–5].
+ *    The results are written to MAC1–MAC3 and IR1–IR3.
+ *
+ * 3. If `color` or `depth` is true (NCCx/NCDx/CC/CDP), the function performs:
+ *      MAC = FC_component * IR_component << 4
+ *    If `depth` is true (NCDx/CDP), then linear interpolation is applied using IR0:
+ *      MAC = MAC + (FarColor - MAC) * IR0
+ *    Then the MAC values are right-shifted by (sf * 12) and clamped into IR1–IR3.
+ *
+ * 4. The final RGB color is pushed to the color FIFO, packed from IR1–IR3 (upper 8 bits),
+ *    and the original code field (m_dataReg[2]) is preserved in the 4th byte.
+ */
+void GTE::executeNColor(const Vector3<int16_t>& normal, bool sf, bool isNormal, bool color, bool depth) {
+    if (isNormal) {
+        // Step 1: Multiply Light Matrix (LLM) with Normal vector V0
+        int64_t mac1 = dotProductMatrixRow(m_ctrlReg.data(), 0, normal) >> (sf * 12);
+        int64_t mac2 = dotProductMatrixRow(m_ctrlReg.data(), 1, normal) >> (sf * 12);
+        int64_t mac3 = dotProductMatrixRow(m_ctrlReg.data(), 2, normal) >> (sf * 12);
+
+        m_dataReg[25] = static_cast<int32_t>(mac1); // MAC 1
+        m_dataReg[26] = static_cast<int32_t>(mac2); // MAC 2
+        m_dataReg[27] = static_cast<int32_t>(mac3); // MAC 3
+
+        m_dataReg[9]  = clampMAC(mac1, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0001, 0x0001); // IR 1
+        m_dataReg[10] = clampMAC(mac2, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0002, 0x0002); // IR 2
+        m_dataReg[11] = clampMAC(mac3, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0004, 0x0004); // IR 3
+    }
+
+    // Step 2: Background + (ColorMatrix * IR)
+    Vector3<int64_t> intermediate;
+    intermediate.x = static_cast<int64_t>(extractSigned16(m_ctrlReg[6], false)) << 12;
+    intermediate.y = static_cast<int64_t>(extractSigned16(m_ctrlReg[7], false)) << 12;
+    intermediate.z = static_cast<int64_t>(extractSigned16(m_ctrlReg[8], false)) << 12;
+
+    intermediate.x += dotProductMatrixRow(m_ctrlReg.data(), 3, getIRVector());
+    intermediate.y += dotProductMatrixRow(m_ctrlReg.data(), 4, getIRVector());
+    intermediate.z += dotProductMatrixRow(m_ctrlReg.data(), 5, getIRVector());
+
+    intermediate.x >>= (sf * 12);
+    intermediate.y >>= (sf * 12);
+    intermediate.z >>= (sf * 12);
+
+    m_dataReg[25] = static_cast<int32_t>(intermediate.x); // MAC 1
+    m_dataReg[26] = static_cast<int32_t>(intermediate.y); // MAC 2
+    m_dataReg[27] = static_cast<int32_t>(intermediate.z); // MAC 3
+
+    m_dataReg[9]  = clampMAC(intermediate.x, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0001, 0x0001); // IR 1
+    m_dataReg[10] = clampMAC(intermediate.y, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0002, 0x0002); // IR 2
+    m_dataReg[11] = clampMAC(intermediate.z, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0004, 0x0004); // IR 3
+
+    // Step 3 & 4: Multiply by FC and optionally interpolate with IR0
+    if (color || depth)
+    {
+        int64_t r = static_cast<int64_t>(extractSigned16(m_dataReg[0], false)) * m_dataReg[9];
+        int64_t g = static_cast<int64_t>(extractSigned16(m_dataReg[0], true))  * m_dataReg[10];
+        int64_t b = static_cast<int64_t>(extractSigned16(m_dataReg[1], false)) * m_dataReg[11];
+
+        r <<= 4;
+        g <<= 4;
+        b <<= 4;
+
+        if (depth)
+        {
+            int32_t ir0 = extractSigned16(m_dataReg[1], true);
+            r = r + ((m_dataReg[9] - r) * ir0);
+            g = g + ((m_dataReg[10] - g) * ir0);
+            b = b + ((m_dataReg[11] - b) * ir0);
+        }
+
+        r >>= (sf * 12);
+        g >>= (sf * 12);
+        b >>= (sf * 12);
+
+        m_dataReg[25] = static_cast<int32_t>(r); // MAC 1
+        m_dataReg[26] = static_cast<int32_t>(g); // MAC 2
+        m_dataReg[27] = static_cast<int32_t>(b); // MAC 3
+
+        m_dataReg[9]  = clampMAC(r, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0001, 0x0001); // IR 1
+        m_dataReg[10] = clampMAC(g, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0002, 0x0002); // IR 2
+        m_dataReg[11] = clampMAC(b, IR_LIMIT_HIGH, IR_LIMIT_LOW, 0x0004, 0x0004); // IR 3
+    }
+
+    // Final Step: Write to Color FIFO and IR
+    uint8_t r = clampMAC(m_dataReg[25] >> 4, FIFO_LIMIT_HIGH, FIFO_LIMIT_LOW, 1 << 21, 1 << 21);
+    uint8_t g = clampMAC(m_dataReg[26] >> 4, FIFO_LIMIT_HIGH, FIFO_LIMIT_LOW, 1 << 20, 1 << 20);
+    uint8_t b = clampMAC(m_dataReg[27] >> 4, FIFO_LIMIT_HIGH, FIFO_LIMIT_LOW, 1 << 19, 1 << 19);
+    uint8_t c = static_cast<uint8_t>(m_dataReg[2] & 0xFF); // CODE is the upper 8 bits of RGBC?
+    
+    Rgbc fifo = { r, g, b, c };
+    m_dataReg[20] = (fifo.c << 24) | (fifo.r << 16) | (fifo.g << 8) | fifo.b;
+    
+    // And store IR1–IR3 = MAC1–MAC3 (used later)
+    m_dataReg[9]  = m_dataReg[25];
+    m_dataReg[10] = m_dataReg[26];
+    m_dataReg[11] = m_dataReg[27];
+}
+
+/**
+ * @brief Computes a dot product between a matrix row from GTE control registers and a 3D vector.
+ *
+ * The GTE stores 3x3 matrices (like the Light matrix or Color matrix) across consecutive control
+ * registers. Each row spans three 32-bit registers, with the relevant signed 16-bit values stored
+ * in the lower half of each register.
+ *
+ * This function extracts one matrix row by selecting three registers (row * 3 + offset) and 
+ * retrieving their lower 16-bit signed values. It then computes the dot product between this
+ * row and the given vector:
+ *
+ *     result = Mx * Vx + My * Vy + Mz * Vz
+ * 
+ */
+int64_t GTE::dotProductMatrixRow(const int32_t* reg, int row, const Vector3<int16_t>& vec) {
+    int32_t x = static_cast<int32_t>(extractSigned16(reg[row * 3 + 0], false));
+    int32_t y = static_cast<int32_t>(extractSigned16(reg[row * 3 + 1], false));
+    int32_t z = static_cast<int32_t>(extractSigned16(reg[row * 3 + 2], false));
+    return static_cast<int64_t>(x) * vec.x + static_cast<int64_t>(y) * vec.y + static_cast<int64_t>(z) * vec.z;
+}
+
+Vector3<int16_t> GTE::getIRVector() {
+    Vector3<int16_t> vec;
+    vec.x = extractSigned16(m_dataReg[9], false);
+    vec.y = extractSigned16(m_dataReg[10], false);
+    vec.z = extractSigned16(m_dataReg[11], false);
+    return vec;
+}
+
+void GTE::executeNCS(bool sf) {
+    executeNColor(getVector3FromV(0), sf, true, false, false);
+}
+
+void GTE::executeNCT(bool sf) {
+    executeNColor(getVector3FromV(0), sf, true, false, false);
+    executeNColor(getVector3FromV(1), sf, true, false, false);
+    executeNColor(getVector3FromV(2), sf, true, false, false);
+}
+
+void GTE::executeNCCS(bool sf) {
+    executeNColor(getVector3FromV(0), sf, true, true, false);
+}
+
+void GTE::executeNCCT(bool sf) {
+    executeNColor(getVector3FromV(0), sf, true, true, false);
+    executeNColor(getVector3FromV(1), sf, true, true, false);
+    executeNColor(getVector3FromV(2), sf, true, true, false);
+}
+
+void GTE::executeNCDS(bool sf) {
+    executeNColor(getVector3FromV(0), sf, true, false, true);
+}
+
+void GTE::executeNCDT(bool sf) {
+    executeNColor(getVector3FromV(0), sf, true, false, true);
+    executeNColor(getVector3FromV(1), sf, true, false, true);
+    executeNColor(getVector3FromV(2), sf, true, false, true);
+}
+
+void GTE::executeCC(bool sf) {
+    executeNColor(getVector3FromV(0), sf, false, true, false);
+}
+
+void GTE::executeCDP(bool sf) {
+    executeNColor(getVector3FromV(0), sf, false, false, true);
 }
 
 void GTE::checkMACOverflow(int macIndex, int64_t value) {

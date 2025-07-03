@@ -176,7 +176,15 @@ class GTE : public Coprocessor {
          * @brief Execute the NCLIP instruction (normal clipping)
          */
         void executeNCLIP();
+
+        /**
+         * @brief Executes SQR (Square Vector) instruction.
+         */
         void executeSQR(bool sf);
+        
+        /**
+         * @brief Executes OP (Cross product of 2 vectors) instruction.
+         */
         void executeOP(bool sf);
 
         /**
@@ -222,6 +230,73 @@ class GTE : public Coprocessor {
         void executeDPCS(uint32_t opcode);
         void executeDPCT(uint32_t opcode);
         void executeINTPL(uint32_t opcode, Vector3<int32_t> macs);
+
+        /**
+         * @brief Third party function to process the pipeline of all Color functions
+         *        of the GTE. More details on how it operates in cpp file
+         *
+         * @param normal The input normal vector (ignored if isNormal is false).
+         * @param sf     Shift flag: if true, right shift results by 12 (SAR 12).
+         * @param isNormal Whether to perform the lighting (LLM * normal) step.
+         * @param color  Whether to apply FarColor multiplication (NCCx, CC).
+         * @param depth  Whether to apply depth cue interpolation (NCDx, CDP).
+         */
+        void executeNColor(const Vector3<int16_t>& normal, bool sf, bool isNormal, bool color, bool depth);
+
+        /**
+         * @brief Computes the dot product between a matrix row and a vector.
+         * @param reg Pointer to the register array (typically m_ctrlReg).
+         * @param row Index of the matrix row (0–5).
+         * @param vec The 3D input vector.
+         * @return The 64-bit result of the dot product.
+         */
+        int64_t dotProductMatrixRow(const int32_t* reg, int row, const Vector3<int16_t>& vec);
+
+        /**
+         * @brief Retrieves the current IR (intermediate result) vector from GTE data registers.
+         * @return A 3D vector constructed from IR1, IR2, and IR3.
+         */
+        Vector3<int16_t> getIRVector();
+
+        /**
+         * @brief Executes NCS (Normal color single) instruction.
+         */
+        void executeNCS(bool sf);
+
+        /**
+         * @brief Executes NCT (Normal color triple) instruction.
+         */
+        void executeNCT(bool sf);
+
+        /**
+         * @brief Executes NCCS (Normal Color Color Single) instruction.
+         */
+        void executeNCCS(bool sf);
+
+        /**
+         * @brief Executes NCCT (Normal Color Color Triple) instruction.
+         */
+        void executeNCCT(bool sf);
+
+        /**
+         * @brief Executes NCDS (Normal color depth cue single) instruction.
+         */
+        void executeNCDS(bool sf);
+
+        /**
+         * @brief Executes NCDT (Normal color depth cue triple) instruction.
+         */
+        void executeNCDT(bool sf);
+
+        /**
+         * @brief Executes CC (Color Color) instruction.
+         */
+        void executeCC(bool sf);
+
+        /**
+         * @brief Executes CDP (Color Depth Que) instruction.
+         */
+        void executeCDP(bool sf);
 
         // Internal helper functions
         /**
