@@ -38,14 +38,11 @@ void GPU::reset()
     m_gpuStat.interlaceField = true;
     m_gpuStat.rdSendVram = true;
 
-    m_vram.fill(0xFF);
+    m_vram.fill(0);
     m_gpuRead = 0;
     m_currentState = GpuState::WaitingForCommand;
     m_currentCmd.reset();
     m_nbExpectedParams = -1;
-
-    // rasterizePoly3(Vec2i{0, 0}, Vec2i{256, 0}, Vec2i{0, 512}, ColorRGBA(0xFF0000FF));
-    // rasterizePoly3(Vec2i{0, 0}, Vec2i{100, 100}, Vec2i{0, 100}, ColorRGBA(0x00FF00FF));
 }
 
 void GPU::write8(uint8_t /* value */, uint32_t /* address */)
@@ -197,46 +194,45 @@ void GPU::processGP0(uint32_t data)
 {
     uint8_t top = data >> 29;
 
-    if (m_currentState == GpuState::ReceivingParameters) {
-        m_currentCmd.addParam(cmd);
-
-        if (m_currentCmd.nbParams() == m_nbExpectedParams) {
-            // Trigger function call
-            if (m_currentCmd.command() == CommandType::DrawPolygon) {
-                drawPolygon();
-            }
-            spdlog::warn("GPU: Must call appropriate command function here!!!");
-            m_currentCmd.reset();
-            m_currentState = GpuState::WaitingForCommand;
-        }
-        return;
-    }
-
-    switch (top)
-    {
-    case 0b000:
-    case 0b111:
+    if (m_currentState == GpuState::ReceivingDataWords) {
+        receiveDataWord(data);
+    } else if (m_currentState == GpuState::ReceivingParameters) {
+        receiveParameter(data);
+    } else {
+        switch (top)
+        {
+            case 0b000:
+            case 0b111:
                 handleEnvCommand(data);
-        break;
-    case 0b001: {
+                break;
+            case 0b001: {
                 int nbVertices = ((data >> 27) & 1) == 0 ? 3 : 4;
                 m_nbExpectedParams = ((data >> 28) & 1) * (nbVertices - 1); // Nb Gouraud Shading vertices
                 m_nbExpectedParams += ((data >> 26) & 1) * nbVertices; // Nb UV coordinates
-        m_nbExpectedParams += nbVertices;
-        m_currentState = GpuState::ReceivingParameters;
+                m_nbExpectedParams += nbVertices;
+                m_currentState = GpuState::ReceivingParameters;
                 m_currentCmd.setCommand(data);
-        break;
-    }
-    case 0b010:
-    case 0b011:
-    case 0b100:
-    case 0b101:
-    case 0b110:
-        spdlog::warn("GPU: Current Command = 0b{:03b}", top);
-        break;
-    default:
+                break;
+            }
+            case 0b010:
+                spdlog::warn("GPU: Draw Line");
+                break;
+            case 0b011:
+                spdlog::warn("GPU: Draw Rectangle");
+                break;
+            case 0b100:
+                break;
+            case 0b101: // CPU to VRAM blitting
+                m_nbExpectedParams = 2;
+                m_currentState = GpuState::ReceivingParameters;
+                m_currentCmd.setCommand(data);
+                break;
+            case 0b110:
+                break;
+            default:
                 spdlog::warn("GPU: GP0 command 0x{:08X} unsupported", data);
-        break;
+                break;
+        }
     }
 }
 
@@ -381,10 +377,60 @@ void GPU::drawPolygon()
     const uint32_t *params = m_currentCmd.params();
     Vec2i verts[4];
 
+    spdlog::warn("GPU: Draw Polygon with {} vertices", nbVerts);
+
     for (int i = 0; i < nbVerts; i++) {
         verts[i] = getVec(params[i]);
     }
-    rasterizePoly4(verts, color);
+    if (nbVerts == 4)
+        rasterizePoly4(verts, color);
+    m_currentCmd.reset();
+    m_currentState = GpuState::WaitingForCommand;
+}
+
+void GPU::startCpuToVramCopy()
+{
+    spdlog::warn("GPU: Copy data from CPU to VRAM");
+    auto params = m_currentCmd.params();
+    m_currentState = GpuState::ReceivingDataWords;
+    m_vramCopyData.startPos = Vec2i{(int)(params[0] & 0x3FF), (int)((params[0] >> 16) & 0x1FF)};
+    m_vramCopyData.size = Vec2i{(int)((params[1] - 1) & 0x3FF) + 1, (int)(((params[1] >> 16) - 1) & 0x1FF)};
+    m_vramCopyData.currentPos = Vec2i{0, 0};
+}
+
+void GPU::receiveParameter(uint32_t param)
+{
+    m_currentCmd.addParam(param);
+
+    if (m_currentCmd.nbParams() == m_nbExpectedParams) {
+        if (m_currentCmd.command() == CommandType::DrawPolygon) {
+            drawPolygon();
+        } else if (m_currentCmd.command() == CommandType::CpuVramCopy) {
+            startCpuToVramCopy();
+        }
+    }
+}
+
+void GPU::receiveDataWord(uint32_t data)
+{
+    for (int i = 0; i < 2; i++) {
+        uint16_t pix = ((data >> (16 * i)) & 0xFFFF) | 0x8000;
+        Vec2i pos{
+            m_vramCopyData.currentPos.x + m_vramCopyData.startPos.x,
+            m_vramCopyData.currentPos.y + m_vramCopyData.startPos.y
+        };
+        setPixel(pos, pix);
+        m_vramCopyData.currentPos.x++;
+        if (m_vramCopyData.currentPos.x >= m_vramCopyData.size.x) {
+            m_vramCopyData.currentPos.x = 0;
+            m_vramCopyData.currentPos.y++;
+        }
+        if (m_vramCopyData.currentPos.y >  m_vramCopyData.size.y) {
+            m_currentState = GpuState::WaitingForCommand;
+            m_currentCmd.reset();
+            return;
+        }
+    }
 }
 
 static int edgeFunction(const Vec2i& a, const Vec2i& b, const Vec2i& c)
