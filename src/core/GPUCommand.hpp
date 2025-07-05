@@ -30,7 +30,7 @@ class ParameterArray
 
         void addParam(uint32_t param)
         {
-            if (m_headPtr >= 32) {
+            if (m_headPtr >= 1024) {
                 return;
             }
             m_data[m_headPtr] = param;
@@ -48,8 +48,8 @@ class ParameterArray
         }
 
     private:
-        uint32_t m_data[32];
-        uint8_t m_headPtr;
+        uint32_t m_data[1024];
+        uint16_t m_headPtr;
 };
 
 class GPUCommand

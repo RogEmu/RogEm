@@ -216,9 +216,16 @@ void GPU::processGP0(uint32_t data)
                 m_nbExpectedParams += 1;
                 break;
             }
-            case 0b010:
-                spdlog::warn("GPU: Draw Line");
+            case 0b010: { // draw Line
+                if (((data >> 28) & 1) == 0)
+                    m_nbExpectedParams = -1;
+                else
+                    m_nbExpectedParams = ((data >> 28) & 1) == 0 ? 3 : 4;
+                m_currentState = GpuState::ReceivingParameters;
+                m_currentCmd.setCommand(data);
+                m_currentCmd.addParam(data & 0xFFFFFF);
                 break;
+            }
             case 0b011: { // Draw Rectangle
                 m_nbExpectedParams = 2;
                 m_nbExpectedParams += ((data >> 27) & 3) == 0;
@@ -398,7 +405,8 @@ void GPU::drawPolygon()
     for (int i = 0; i < nbVerts; i++) {
         if (shaded) {
             verts[i].color.fromBGR(params[i * step]);
-        }
+        }    auto params = m_currentCmd.params();
+
         verts[i].pos = getVec(params[i * step + 1]);
     }
     if (nbVerts == 4) {
@@ -427,6 +435,39 @@ void GPU::drawRectangle()
         size = getVec(params[2]);
     }
     rasterizeRectangle({topLeft, color}, size);
+    m_currentCmd.reset();
+    m_currentState = GpuState::WaitingForCommand;
+}
+
+void GPU::drawLine() {
+    const uint32_t *params = m_currentCmd.params();
+    bool goraud = (m_currentCmd.raw() >> 28) & 1;
+    bool polyline = (m_currentCmd.raw() >> 27) & 1;
+    Vertex v0, v1;
+    int step = 1 + goraud;
+    int iteration;
+
+    v0.color.fromBGR(params[0]);
+    v0.pos = getVec(params[1]);
+    if (goraud)
+        v1.color.fromBGR(params[2]);
+    else
+        v1.color.fromBGR(params[0]);
+    v1.pos = getVec(params[2 + goraud ? 1 : 0]);
+    rasterizeLine(v0, v1);
+    if (polyline) {
+        iteration = m_currentCmd.nbParams();
+        for (int i = 1; i < iteration; i++){
+            v0 = v1;
+            if (goraud)
+                v1.color.fromBGR(params[step * iteration + 2]);
+            else
+                v1.color.fromBGR(params[0]);
+            v1.pos = getVec(params[step * iteration + 3]);
+            rasterizeLine(v0, v1);
+        }
+    }
+
     m_currentCmd.reset();
     m_currentState = GpuState::WaitingForCommand;
 }
@@ -492,6 +533,9 @@ void GPU::startVramToVramCopy()
 
 void GPU::receiveParameter(uint32_t param)
 {
+    if (m_nbExpectedParams == -1 && (param & 0xF000F000) == 0x50005000) {
+        drawLine();
+    }
     m_currentCmd.addParam(param);
 
     if (m_currentCmd.nbParams() == m_nbExpectedParams) {
@@ -544,6 +588,36 @@ static ColorRGBA interpolateColor(const ColorRGBA& c0, const ColorRGBA& c1, cons
     color.b = static_cast<uint8_t>(c0.b * alpha + c1.b * beta + c2.b * gamma);
     color.a = static_cast<uint8_t>(c0.a * alpha + c1.a * beta + c2.a * gamma);
     return color;
+}
+
+void GPU::rasterizeLine(const Vertex& v0, const Vertex& v1)
+{
+    Vec2i xy0 = v0.pos;
+    int dx = abs(v1.pos.x - v0.pos.x);
+    int dy = abs(v1.pos.y - v0.pos.y);
+    int sx = v0.pos.x < v1.pos.x ? 1 : -1;
+    int sy = v0.pos.y < v1.pos.y ? 1 : -1;
+    int e = dx + dy;
+
+    while (true) {
+        setPixel(xy0, v0.color.toABGR1555());
+        if (xy0.x == v1.pos.x && v1.pos.y == xy0.y)
+            break;
+
+        int e2 = 2 * e;
+        if (e2 >= dy) {
+            if (xy0.x == v1.pos.x)
+                break;
+            e = e + dy;
+            xy0.x += sx;
+        }
+        if (e2 <= dx) {
+            if (xy0.y == v1.pos.y)
+                break;
+            e = e + dx;
+            xy0.y += sy;
+        }
+    }
 }
 
 void GPU::rasterizePoly3(const Vertex *verts, const ColorRGBA &color)
