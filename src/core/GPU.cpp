@@ -460,7 +460,7 @@ void GPU::drawLine() {
         for (int i = 0; i < numSegments; i++) {
             v0 = v1;
             if (goraud)
-                v1.color.fromBGR(params[2]);
+                v1.color.fromBGR(params[(3 + goraud) + step * i]);
             else
                 v1.color.fromBGR(params[0]);
             v1.pos = getVec(params[(3 + goraud) + step * i + goraud]);
@@ -591,56 +591,6 @@ static ColorRGBA interpolateColor(const ColorRGBA& c0, const ColorRGBA& c1, cons
     return color;
 }
 
-void GPU::plotLineLow(int x0, int y0, int x1, int y1, const ColorRGBA& color)
-{
-    int dx = x1 - x0;
-    int dy = y1 - y0;
-    int yi = 1;
-
-    if (dy < 0) {
-        yi = -1;
-        dy = -dy;
-    }
-
-    int D = (2 * dy) - dx;
-    int y = y0;
-
-    for (int x = x0; x < x1; x++) {
-        setPixel(Vec2i(x, y), color.toABGR1555());
-        if (D > 0) {
-            y += yi;
-            D += 2 * (dy - dx);
-        } else {
-            D += 2 * dy;
-        }
-    }
-}
-
-void GPU::plotLineHigh(int x0, int y0, int x1, int y1, const ColorRGBA& color)
-{
-    int dx = x1 - x0;
-    int dy = y1 - y0;
-    int xi = 1;
-
-    if (dx < 0) {
-        xi = -1;
-        dx = -dx;
-    }
-
-    int D = (2 * dx) - dy;
-    int x = x0;
-
-    for (int y = y0; y < y1; y++) {
-        setPixel(Vec2i(x, y), color.toABGR1555());
-        if (D > 0) {
-            x += xi;
-            D += 2 * (dx - dy);
-        } else {
-            D += 2 * dx;
-        }
-    }
-}
-
 void GPU::rasterizeLine(const Vertex& v0, const Vertex& v1)
 {
     int x0 = v0.pos.x;
@@ -648,19 +598,42 @@ void GPU::rasterizeLine(const Vertex& v0, const Vertex& v1)
     int x1 = v1.pos.x;
     int y1 = v1.pos.y;
 
-    if (abs(y1 - y0) < abs(x1 - x0)) {
-        if (x0 > x1)
-            plotLineLow(x1, y1, x0, y0, v0.color);
-        else
-            plotLineLow(x0, y0, x1, y1, v0.color);
-    } else {
-        if (y0 > y1)
-            plotLineHigh(x1, y1, x0, y0, v0.color);
-        else
-            plotLineHigh(x0, y0, x1, y1, v0.color);
+    int dx = abs(x1 - x0);
+    int dy = abs(y1 - y0);
+    int sx = (x0 < x1) ? 1 : -1;
+    int sy = (y0 < y1) ? 1 : -1;
+    int err = dx - dy;
+    float steps = static_cast<float>(std::max(dx, dy));
+    if (steps == 0.0f)
+        steps = 1.0f;
+
+    float dr = (v1.color.r - v0.color.r) / steps;
+    float dg = (v1.color.g - v0.color.g) / steps;
+    float db = (v1.color.b - v0.color.b) / steps;
+    float da = (v1.color.a - v0.color.a) / steps;
+    ColorRGBA c = v0.color;
+
+    while (true) {
+        setPixel(Vec2i(x0, y0), c.toABGR1555());
+        if (x0 == x1 && y0 == y1)
+            break;
+
+        int e2 = 2 * err;
+        if (e2 > -dy) {
+            err -= dy;
+            x0 += sx;
+        }
+        if (e2 < dx) {
+            err += dx;
+            y0 += sy;
+        }
+
+        c.r = std::clamp(c.r + dr, 0.0f, 255.0f);
+        c.g = std::clamp(c.g + dg, 0.0f, 255.0f);
+        c.b = std::clamp(c.b + db, 0.0f, 255.0f);
+        c.a = std::clamp(c.a + da, 0.0f, 255.0f);
     }
 }
-
 
 void GPU::rasterizePoly3(const Vertex *verts, const ColorRGBA &color)
 {

@@ -233,8 +233,8 @@ class GPU : public PsxDevice
         void rasterizePoly4(const Vertex *verts, const ColorRGBA& color);
         void rasterizeRectangle(const Vertex &vert, const Vec2i &size);
 
-        void plotLineLow(int x0, int y0, int x1, int y1, const ColorRGBA& color);
-        void plotLineHigh(int x0, int y0, int x1, int y1, const ColorRGBA& color);
+        void plotLineLow(int x0, int y0, int x1, int y1, const ColorRGBA& c0, const ColorRGBA& c1);
+        void plotLineHigh(int x0, int y0, int x1, int y1, const ColorRGBA& c0, const ColorRGBA& c1);
         void setPixel(const Vec2i &pos, uint16_t color);
         uint16_t getPixel(const Vec2i &pos);
 
