@@ -405,7 +405,7 @@ void GPU::drawPolygon()
     for (int i = 0; i < nbVerts; i++) {
         if (shaded) {
             verts[i].color.fromBGR(params[i * step]);
-        }    auto params = m_currentCmd.params();
+        }
 
         verts[i].pos = getVec(params[i * step + 1]);
     }
