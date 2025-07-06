@@ -628,10 +628,10 @@ void GPU::rasterizeLine(const Vertex& v0, const Vertex& v1)
             y0 += sy;
         }
 
-        c.r = std::clamp(c.r + dr, 0.0f, 255.0f);
-        c.g = std::clamp(c.g + dg, 0.0f, 255.0f);
-        c.b = std::clamp(c.b + db, 0.0f, 255.0f);
-        c.a = std::clamp(c.a + da, 0.0f, 255.0f);
+        c.r = static_cast<uint8_t>(std::clamp(c.r + dr, 0.0f, 255.0f));
+        c.g = static_cast<uint8_t>(std::clamp(c.g + dg, 0.0f, 255.0f));
+        c.b = static_cast<uint8_t>(std::clamp(c.b + db, 0.0f, 255.0f));
+        c.a = static_cast<uint8_t>(std::clamp(c.a + da, 0.0f, 255.0f));
     }
 }
 
