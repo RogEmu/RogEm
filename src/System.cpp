@@ -19,6 +19,7 @@
 
 #include "core/PsxExecutable.hpp"
 #include "core/GPU.hpp"
+#include "core/InterruptController.hpp"
 
 System::System()
 {
@@ -64,6 +65,7 @@ int System::init(const EmulatorConfig &config)
             return 1;
         }
     }
+    m_bus->connectCpu(m_cpu.get());
     initVramTexture();
     return 0;
 }
@@ -72,7 +74,7 @@ void System::run()
 {
     int cpuFreq = 33868800;
     float cyclesPerFrame = cpuFreq / 60.0f;
-    int currentCycles = 0;
+    float currentCycles = 0;
 
     m_isRunning = true;
     m_debug->pause(false);
@@ -82,6 +84,8 @@ void System::run()
         if (currentCycles >= cyclesPerFrame) {
             render();
             currentCycles = 0;
+            auto irqc = static_cast<InterruptController*>(m_bus->getDevice(PsxDeviceType::IRQController));
+            irqc->triggerIRQ(DeviceIRQ::VBLANK);
         }
         currentCycles += 2;
     }
@@ -178,6 +182,7 @@ void System::render()
     newImGuiFrame();
     ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport());
     m_debug->draw();
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, {0, 0});
     if (ImGui::Begin("Screen")) {
         GPU *gpu = static_cast<GPU *>(m_bus->getDevice(PsxDeviceType::GPU));
         const uint8_t *vram = gpu->getVram();
@@ -185,6 +190,7 @@ void System::render()
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 1024, 512, GL_RGBA, GL_UNSIGNED_SHORT_1_5_5_5_REV, vram);
         ImGui::Image((ImTextureID)(intptr_t)m_vramTexture, ImGui::GetContentRegionAvail());
     }
+    ImGui::PopStyleVar();
     ImGui::End();
 
     renderImGuiFrame();
