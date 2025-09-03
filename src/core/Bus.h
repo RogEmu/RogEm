@@ -15,6 +15,8 @@
 
 #include "PsxDevice.hpp"
 
+class CPU;
+
 enum class PsxDeviceType {
     RAM,
     BIOS,
@@ -46,10 +48,14 @@ class Bus
 
         PsxDevice *getDevice(PsxDeviceType deviceType);
 
+        void connectCpu(CPU *cpu);
+        CPU *getCpu();
+
     private:
         std::unordered_map<PsxDeviceType, std::unique_ptr<PsxDevice>> m_devices;
 
         uint32_t m_cacheControl;
+        CPU *m_cpu;
 };
 
 #endif /* !BUS_H_ */
