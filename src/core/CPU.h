@@ -102,11 +102,14 @@ class CPU {
 
         uint32_t getCop0Reg(uint8_t reg);
         void setCop0Reg(uint8_t reg, uint32_t val);
+        void setInterruptPending(bool pending);
+        bool interruptPending();
 
     private:
         Instruction fetchInstruction();
         void executeInstruction(const Instruction &instruction);
         void handleLoadDelay();
+        bool shouldExecuteInterrupt();
 
         // Load instructions
         void loadWithDelay(CpuReg reg, uint32_t value);
