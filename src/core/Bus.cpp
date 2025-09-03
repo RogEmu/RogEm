@@ -9,6 +9,7 @@
 
 #include <spdlog/spdlog.h>
 
+#include "CPU.h"
 #include "MemoryMap.hpp"
 #include "Memory.hpp"
 #include "RAM.h"
@@ -22,7 +23,8 @@
 #include "MemoryControl1.hpp"
 
 Bus::Bus() :
-    m_cacheControl(0)
+    m_cacheControl(0),
+    m_cpu(nullptr)
 {
     m_devices[PsxDeviceType::BIOS] = std::make_unique<BIOS>(this);
     m_devices[PsxDeviceType::RAM] = std::make_unique<RAM>(this);
@@ -243,4 +245,14 @@ PsxDevice *Bus::getDevice(PsxDeviceType deviceType)
         return it->second.get();
     }
     return nullptr;
+}
+
+void Bus::connectCpu(CPU *cpu)
+{
+    m_cpu = cpu;
+}
+
+CPU *Bus::getCpu()
+{
+    return m_cpu;
 }
