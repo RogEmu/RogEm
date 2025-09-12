@@ -396,10 +396,27 @@ void GPU::drawPolygon()
 
     int step = 1 + shaded + textured;
     for (int i = 0; i < nbVerts; i++) {
+        int base = i * step;
         if (shaded) {
             verts[i].color.fromBGR(params[i * step]);
         }
         verts[i].pos = getVec(params[i * step + 1]);
+        if (textured) {
+            uint32_t uv = params[base + 2];
+            uint32_t texAttr = params[base + 3];
+
+            verts[i].uv.x = uv & 0xFF;
+            verts[i].uv.y = (uv >> 8) & 0xFF;
+
+            verts[i].clutX = (texAttr & 0x3F) << 4;   // bits 0-5, multiplied by 16
+            verts[i].clutY = (texAttr >> 6) & 0x1FF;  // bits 6-14
+
+            verts[i].texPageX = (texAttr & 0x0F0000) >> 16; // bits 16-19
+            verts[i].texPageX *= 64;                         // each page is 64 wide
+            verts[i].texPageY = (texAttr & 0x100000) >> 20;  // bit 20
+            verts[i].texPageY *= 256;                        // each page is 256 tall
+            verts[i].texDepth = (texAttr >> 21) & 0x3;  // bits 21-22 (0=4bpp, 1=8bpp, 2=15bpp)
+        }
     }
     if (nbVerts == 4) {
         rasterizePoly4(verts, firstColor);
@@ -426,7 +443,10 @@ void GPU::drawRectangle()
     } else {
         size = getVec(params[2]);
     }
-    rasterizeRectangle({topLeft, color}, size);
+    Vertex v;
+    v.pos = topLeft;
+    v.color = color;
+    rasterizeRectangle(v, size);
     m_currentCmd.reset();
     m_currentState = GpuState::WaitingForCommand;
 }
@@ -546,10 +566,12 @@ static ColorRGBA interpolateColor(const ColorRGBA& c0, const ColorRGBA& c1, cons
     return color;
 }
 
+
 void GPU::rasterizePoly3(const Vertex *verts, const ColorRGBA &color)
 {
     uint16_t argbColor = color.toABGR1555();
     bool shaded = (m_currentCmd.raw() >> 28) & 1;
+    bool textured = (m_currentCmd.raw() >> 26) & 1;
 
     int minX = std::max(0, std::min({verts[0].pos.x, verts[1].pos.x, verts[2].pos.x}));
     int maxX = std::min(GPU_VRAM_WIDTH - 1, std::max({verts[0].pos.x, verts[1].pos.x, verts[2].pos.x}));
@@ -557,10 +579,8 @@ void GPU::rasterizePoly3(const Vertex *verts, const ColorRGBA &color)
     int maxY = std::min(GPU_VRAM_HEIGHT - 1, std::max({verts[0].pos.y, verts[1].pos.y, verts[2].pos.y}));
 
     int area = edgeFunction(verts[0].pos, verts[1].pos, verts[2].pos);
+    if (area == 0) return;
     float invArea = 1.0f / area;
-
-    if (area == 0)
-        return;
 
     for (int y = minY; y <= maxY; y++) {
         for (int x = minX; x <= maxX; x++) {
@@ -569,16 +589,30 @@ void GPU::rasterizePoly3(const Vertex *verts, const ColorRGBA &color)
             int w1 = edgeFunction(verts[2].pos, verts[0].pos, p);
             int w2 = edgeFunction(verts[0].pos, verts[1].pos, p);
 
-            if (shaded) {
-                float alpha = w0 * invArea;
-                float beta = w1 * invArea;
-                float gamma = w2 * invArea;
-                argbColor = interpolateColor(verts[0].color, verts[1].color, verts[2].color, alpha, beta, gamma).toABGR1555();
-            }
-
             int pos = (w0 | w1 | w2) >= 0;
             int neg = (w0 & w1 & w2) < 0;
-            if (pos | neg) {
+            if (!(pos | neg)) continue;
+
+            float alpha = w0 * invArea;
+            float beta  = w1 * invArea;
+            float gamma = w2 * invArea;
+
+            if (textured) {
+                float u = verts[0].uv.x * alpha + verts[1].uv.x * beta + verts[2].uv.x * gamma;
+                float v = verts[0].uv.y * alpha + verts[1].uv.y * beta + verts[2].uv.y * gamma;
+
+                uint16_t texel = sampleTexture((int)u, (int)v, verts[0]);
+
+                if (shaded) {
+                    ColorRGBA interpColor = interpolateColor(verts[0].color, verts[1].color, verts[2].color, alpha, beta, gamma);
+                    texel = interpColor.toABGR1555();
+                }
+                setPixel(p, texel);
+            }
+            else {
+                if (shaded) {
+                    argbColor = interpolateColor(verts[0].color, verts[1].color, verts[2].color, alpha, beta, gamma).toABGR1555();
+                }
                 setPixel(p, argbColor);
             }
         }
@@ -589,6 +623,43 @@ void GPU::rasterizePoly4(const Vertex *verts, const ColorRGBA &color)
 {
     rasterizePoly3(verts, color);
     rasterizePoly3(verts + 1, color);
+}
+
+uint16_t GPU::sampleTexture(int u, int v, const Vertex &vert)
+{
+    int texX = vert.texPageX + u;
+    int texY = vert.texPageY + v;
+
+    switch (vert.texDepth) {
+        case 0: { // 4-bit indexed
+            uint8_t byte = m_vram[texY * GPU_VRAM_WIDTH + (texX / 2)] & 0xFF;
+            int index = (texX & 1) ? (byte >> 4) : (byte & 0x0F);
+            return sampleCLUT(index, vert.clutX, vert.clutY); // <-- REAL COLOR
+        }
+        case 1: { // 8-bit indexed
+            uint8_t index = m_vram[texY * GPU_VRAM_WIDTH + texX] & 0xFF;
+            return sampleCLUT(index, vert.clutX, vert.clutY); // <-- REAL COLOR
+        }
+        case 2: { // 15-bit direct color
+            return m_vram[texY * GPU_VRAM_WIDTH + texX]; // already a color
+        }
+    }
+    return 0;
+}
+
+uint16_t GPU::sampleCLUT(int index, int clutX, int clutY)
+{
+    return m_vram[clutY * GPU_VRAM_WIDTH + (clutX + index)];
+}
+
+uint16_t GPU::modulate(uint16_t texel, const ColorRGBA &color)
+{
+    ColorRGBA t = ColorRGBA::fromABGR1555(texel);
+    t.r = (t.r * color.r) / 255;
+    t.g = (t.g * color.g) / 255;
+    t.b = (t.b * color.b) / 255;
+    t.a = (t.a * color.a) / 255;
+    return t.toABGR1555();
 }
 
 void GPU::rasterizeRectangle(const Vertex &vert, const Vec2i &size)
@@ -616,4 +687,9 @@ uint16_t GPU::getPixel(const Vec2i &pos)
     color = m_vram[index];
     color |= m_vram[index + 1] << 8;
     return color;
+}
+
+void renderPolygon()
+{
+    return;
 }

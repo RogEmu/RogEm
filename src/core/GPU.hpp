@@ -12,6 +12,8 @@
 
 #include "PsxDevice.hpp"
 #include "GPUCommand.hpp"
+#include <iostream>
+#include <vector>
 
 #define GPU_VRAM_WIDTH 2048 // 2048 bytes (1024 pixels)
 #define GPU_VRAM_HEIGHT 512 // 512 lines
@@ -140,6 +142,15 @@ struct ColorRGBA
         return color;
     }
 
+    static ColorRGBA fromABGR1555(uint16_t v) {
+        ColorRGBA c;
+        c.a = (v & 0x8000) ? 255 : 0;
+        c.r = ((v >> 10) & 0x1F) << 3;
+        c.g = ((v >> 5) & 0x1F) << 3;
+        c.b = (v & 0x1F) << 3;
+        return c;
+    }
+
     void fromRGB(uint32_t rgb)
     {
         r = (rgb >> 16) & 0xFF;
@@ -155,11 +166,15 @@ struct ColorRGBA
     }
 };
 
-struct Vertex
-{
+struct Vertex {
     Vec2i pos;
     ColorRGBA color;
+    Vec2i uv;
+    uint16_t clutX, clutY;
+    uint16_t texPageX, texPageY;
+    uint8_t texDepth;
 };
+
 
 struct TextureRectFlip
 {
@@ -231,6 +246,10 @@ class GPU : public PsxDevice
         void rasterizePoly4(const Vertex *verts, const ColorRGBA& color);
         void rasterizeRectangle(const Vertex &vert, const Vec2i &size);
 
+        uint16_t sampleTexture(int u, int v, const Vertex &vert);
+        uint16_t sampleCLUT(int index, int clutX, int clutY);
+        uint16_t modulate(uint16_t texel, const ColorRGBA &color);
+
         void setPixel(const Vec2i &pos, uint16_t color);
         uint16_t getPixel(const Vec2i &pos);
 
@@ -243,6 +262,9 @@ class GPU : public PsxDevice
         TextureRectFlip m_textureRectFlip;
         VramDrawArea m_drawArea;
         Vec2i m_drawOffset;
+        std::vector<ColorRGBA> texture;
+        int textureWidth = 0;
+        int textureHeight = 0;
 
         GpuState m_currentState;
         int m_nbExpectedParams;
