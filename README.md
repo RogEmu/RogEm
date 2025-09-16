@@ -1,8 +1,9 @@
-# RogEm
+![RogEm Banner](img/rogem_banner.svg)
+**Roger Jr's PS1 emulator written in C++**
+
 [![Linux Build and Test](https://github.com/RogEmu/RogEm/actions/workflows/build_and_test_lin.yml/badge.svg?branch=dev)](https://github.com/RogEmu/RogEm/actions/workflows/build_and_test_lin.yml)
 [![Windows Build and Test](https://github.com/RogEmu/RogEm/actions/workflows/build_and_test_win.yml/badge.svg?branch=dev)](https://github.com/RogEmu/RogEm/actions/workflows/build_and_test_win.yml)
 
-Roger Jr's PS1 emulator
 ![Color Table](img/rogem_color_table.png)
 ![Triangles](img/rogem_triangles.png)
 ![Shaded Bios Logo](img/rogem_shaded_bios_diamond.png)
@@ -12,6 +13,28 @@ Roger Jr's PS1 emulator
 RogEm is a new generation PS1 emulator that aims to be performant, easy to use and portable between devices.
 As gaming habits and game consumption evolve, we wanted to give retro-game players the ability to play on multiple platforms without hassle.
 Our goal is to give players the ability to synchronize between **_their_** devices, **_their_** game saves and player data.
+
+## Building RogEm
+
+### Linux:
+
+Please install the `build-essentials` package (Ubuntu) or equivalent for other distributions
+
+```
+git clone https://github.com/RogEmu/RogEm --recurse-submodules
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build
+```
+
+If you have the `ninja` build system installed you can add `-G Ninja` when configuring the project with CMake
+
+### Windows
+
+```
+git clone https://github.com/RogEmu/RogEm --recurse-submodules
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build
+```
 
 ## How to contribute
 If you have any suggestions, improvements or anything else, please refer to the [contribution guide](CONTRIBUTING.md)
