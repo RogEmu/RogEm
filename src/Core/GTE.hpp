@@ -5,8 +5,8 @@
 ** GTE
 */
 
-#ifndef GTE_H_
-#define GTE_H_
+#ifndef GTE_HPP_
+#define GTE_HPP_
 
 #include <cstdint>
 #include <array>
@@ -366,4 +366,4 @@ class GTE : public Coprocessor {
         void updateFlags(int32_t value, int limitHigh, int limitLow, uint32_t flagBit);
 };
 
-#endif /* !GTE_H_ */
+#endif /* !GTE_HPP_ */

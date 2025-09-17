@@ -5,8 +5,8 @@
 ** Coprocessor interface file
 */
 
-#ifndef COPROCESSOR_H_
-#define COPROCESSOR_H_
+#ifndef COPROCESSOR_HPP_
+#define COPROCESSOR_HPP_
 
 #include <cstdint>
 
@@ -25,4 +25,4 @@ class Coprocessor {
         virtual uint32_t cfc(uint8_t reg) = 0;
 };
 
-#endif /* !COPROCESSOR_H_ */
+#endif /* !COPROCESSOR_HPP_ */

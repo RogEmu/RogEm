@@ -5,8 +5,8 @@
 ** CPU
 */
 
-#ifndef CPU_H_
-#define CPU_H_
+#ifndef CPU_HPP_
+#define CPU_HPP_
 
 #include <cstdint>
 #include <memory>
@@ -234,4 +234,4 @@ class CPU {
         Bus *m_bus;
 };
 
-#endif /* !CPU_H_ */
+#endif /* !CPU_HPP_ */

@@ -5,8 +5,8 @@
 ** RAM
 */
 
-#ifndef RAM_H_
-#define RAM_H_
+#ifndef RAM_HPP_
+#define RAM_HPP_
 
 #include "Memory.hpp"
 
@@ -18,4 +18,4 @@ class RAM : public Memory
         void loadExecutable(uint32_t baseAddr, const std::vector<uint8_t> &code);
 };
 
-#endif /* !RAM_H_ */
+#endif /* !RAM_HPP_ */

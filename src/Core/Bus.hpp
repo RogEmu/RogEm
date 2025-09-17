@@ -5,8 +5,8 @@
 ** Bus
 */
 
-#ifndef BUS_H_
-#define BUS_H_
+#ifndef BUS_HPP_
+#define BUS_HPP_
 
 #include <cstdint>
 #include <vector>
@@ -58,4 +58,4 @@ class Bus
         CPU *m_cpu;
 };
 
-#endif /* !BUS_H_ */
+#endif /* !BUS_HPP_ */

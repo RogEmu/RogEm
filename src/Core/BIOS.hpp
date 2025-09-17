@@ -5,8 +5,8 @@
 ** BIOS
 */
 
-#ifndef BIOS_H_
-#define BIOS_H_
+#ifndef BIOS_HPP_
+#define BIOS_HPP_
 
 #include "Memory.hpp"
 
@@ -23,4 +23,4 @@ class BIOS : public Memory
         bool loadFromFile(const std::string &path);
 };
 
-#endif /* !BIOS_H_ */
+#endif /* !BIOS_HPP_ */
