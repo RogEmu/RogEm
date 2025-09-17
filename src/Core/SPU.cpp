@@ -3,7 +3,7 @@
 #include <spdlog/spdlog.h>
 
 #include "MemoryMap.hpp"
-#include "Bus.h"
+#include "Bus.hpp"
 
 SPU::SPU(Bus *bus) :
     PsxDevice(bus)

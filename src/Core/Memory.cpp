@@ -7,7 +7,7 @@
 
 #include "Memory.hpp"
 
-#include "Bus.h"
+#include "Bus.hpp"
 
 Memory::Memory(Bus *bus, uint32_t size, uint8_t initVal) :
     PsxDevice(bus)

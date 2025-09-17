@@ -1,9 +1,9 @@
-#include "RAM.h"
+#include "RAM.hpp"
 
 #include <cstring>
 
 #include "MemoryMap.hpp"
-#include "Bus.h"
+#include "Bus.hpp"
 
 RAM::RAM(Bus *bus) :
     Memory(bus, MemoryMap::RAM_RANGE.length)

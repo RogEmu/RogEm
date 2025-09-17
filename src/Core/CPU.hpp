@@ -12,7 +12,7 @@
 #include <memory>
 #include <string>
 #include "Instruction.h"
-#include "Bus.h"
+#include "Bus.hpp"
 #include "SystemControlCop.hpp"
 
 #define RESET_VECTOR (uint32_t)0xBFC00000

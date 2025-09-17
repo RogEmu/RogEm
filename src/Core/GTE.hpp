@@ -11,7 +11,7 @@
 #include <cstdint>
 #include <array>
 #include "Instruction.h"
-#include "Coprocessor.h"
+#include "Coprocessor.hpp"
 
 template <typename size>
 struct  Vector3{
@@ -181,7 +181,7 @@ class GTE : public Coprocessor {
          * @brief Executes SQR (Square Vector) instruction.
          */
         void executeSQR(bool sf);
-        
+
         /**
          * @brief Executes OP (Cross product of 2 vectors) instruction.
          */

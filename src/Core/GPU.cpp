@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <cmath>
 
-#include "Bus.h"
+#include "Bus.hpp"
 
 Vec2i randomVertex(int width, int height)
 {

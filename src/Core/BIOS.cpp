@@ -5,7 +5,7 @@
 ** BIOS
 */
 
-#include "BIOS.h"
+#include "BIOS.hpp"
 
 #include <fstream>
 #include <spdlog/spdlog.h>

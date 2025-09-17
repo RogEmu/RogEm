@@ -3,7 +3,7 @@
 #include <spdlog/spdlog.h>
 
 #include "MemoryMap.hpp"
-#include "Bus.h"
+#include "Bus.hpp"
 
 #define GPU_GP0_ADDR 0x1F801810
 #define GPU_GP1_ADDR 0x1F801814

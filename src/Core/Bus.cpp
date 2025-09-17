@@ -5,15 +5,15 @@
 ** Bus
 */
 
-#include "Bus.h"
+#include "Bus.hpp"
 
 #include <spdlog/spdlog.h>
 
-#include "CPU.h"
+#include "CPU.hpp"
 #include "MemoryMap.hpp"
 #include "Memory.hpp"
-#include "RAM.h"
-#include "BIOS.h"
+#include "RAM.hpp"
+#include "BIOS.hpp"
 #include "ScratchPad.hpp"
 #include "GPU.hpp"
 #include "DMA.hpp"

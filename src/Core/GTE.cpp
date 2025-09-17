@@ -5,7 +5,7 @@
 ** GTE
 */
 
-#include "GTE.h"
+#include "GTE.hpp"
 #include <stdexcept>
 #include <iostream>
 #include <limits>
@@ -704,10 +704,10 @@ void GTE::executeNColor(const Vector3<int16_t>& normal, bool sf, bool isNormal, 
     uint8_t g = clampMAC(m_dataReg[26] >> 4, FIFO_LIMIT_HIGH, FIFO_LIMIT_LOW, 1 << 20, 1 << 20);
     uint8_t b = clampMAC(m_dataReg[27] >> 4, FIFO_LIMIT_HIGH, FIFO_LIMIT_LOW, 1 << 19, 1 << 19);
     uint8_t c = static_cast<uint8_t>(m_dataReg[2] & 0xFF); // CODE is the upper 8 bits of RGBC?
-    
+
     Rgbc fifo = { r, g, b, c };
     m_dataReg[20] = (fifo.c << 24) | (fifo.r << 16) | (fifo.g << 8) | fifo.b;
-    
+
     // And store IR1–IR3 = MAC1–MAC3 (used later)
     m_dataReg[9]  = m_dataReg[25];
     m_dataReg[10] = m_dataReg[26];
@@ -721,12 +721,12 @@ void GTE::executeNColor(const Vector3<int16_t>& normal, bool sf, bool isNormal, 
  * registers. Each row spans three 32-bit registers, with the relevant signed 16-bit values stored
  * in the lower half of each register.
  *
- * This function extracts one matrix row by selecting three registers (row * 3 + offset) and 
+ * This function extracts one matrix row by selecting three registers (row * 3 + offset) and
  * retrieving their lower 16-bit signed values. It then computes the dot product between this
  * row and the given vector:
  *
  *     result = Mx * Vx + My * Vy + Mz * Vz
- * 
+ *
  */
 int64_t GTE::dotProductMatrixRow(const int32_t* reg, int row, const Vector3<int16_t>& vec) {
     int32_t x = static_cast<int32_t>(extractSigned16(reg[row * 3 + 0], false));

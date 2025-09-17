@@ -8,7 +8,7 @@
 #ifndef SYSTEMCONTROLCOP_HPP_
 #define SYSTEMCONTROLCOP_HPP_
 
-#include "Coprocessor.h"
+#include "Coprocessor.hpp"
 
 #define COP0_NB_REG 16
 

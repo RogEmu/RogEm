@@ -2,7 +2,7 @@
 
 #include <spdlog/spdlog.h>
 
-#include "Bus.h"
+#include "Bus.hpp"
 
 MemoryControl1::MemoryControl1(Bus *bus) :
     PsxDevice(bus)

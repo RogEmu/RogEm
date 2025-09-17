@@ -3,8 +3,8 @@
 #include <spdlog/spdlog.h>
 
 #include "MemoryMap.hpp"
-#include "Bus.h"
-#include "CPU.h"
+#include "Bus.hpp"
+#include "CPU.hpp"
 
 InterruptController::InterruptController(Bus *bus) :
     PsxDevice(bus)

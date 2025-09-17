@@ -5,7 +5,7 @@
 ** CPU
 */
 
-#include "CPU.h"
+#include "CPU.hpp"
 
 #include <iostream>
 #include <cstring>

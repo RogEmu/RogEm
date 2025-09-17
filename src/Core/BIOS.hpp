@@ -12,7 +12,7 @@
 
 #include <string>
 
-#include "Bus.h"
+#include "Bus.hpp"
 
 class BIOS : public Memory
 {

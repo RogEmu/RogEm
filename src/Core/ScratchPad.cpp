@@ -1,7 +1,7 @@
 #include "ScratchPad.hpp"
 
 #include "MemoryMap.hpp"
-#include "Bus.h"
+#include "Bus.hpp"
 
 ScratchPad::ScratchPad(Bus *bus) :
     Memory(bus, MemoryMap::SCRATCHPAD_RANGE.length, 0)
