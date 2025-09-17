@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include "GPU.hpp"
-#include "Bus.hpp"
+#include "Core/GPU.hpp"
+#include "Core/Bus.hpp"
 
 constexpr uint32_t GP0_ADDR = 0x1F801810;
 constexpr uint32_t GP1_ADDR = 0x1F801814;

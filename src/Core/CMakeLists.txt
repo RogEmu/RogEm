@@ -27,10 +27,6 @@ set(CORE_SRC_FILES
 
 add_library(${CORE_LIB_NAME} STATIC ${CORE_SRC_FILES})
 
-target_include_directories(${CORE_LIB_NAME} PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}
-)
-
 target_link_libraries(${CORE_LIB_NAME} PUBLIC
     fmt::fmt
     spdlog::spdlog

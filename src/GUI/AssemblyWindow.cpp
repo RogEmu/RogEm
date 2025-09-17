@@ -1,7 +1,7 @@
 #include "AssemblyWindow.hpp"
 #include <fmt/format.h>
 
-#include "MemoryMap.hpp"
+#include "Core/MemoryMap.hpp"
 #include "MemoryWindow.hpp"
 
 AssemblyWindow::AssemblyWindow(Debugger *debugger) :

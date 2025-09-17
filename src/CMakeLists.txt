@@ -24,9 +24,9 @@ add_subdirectory(Core)
 
 add_executable(${BINARY_NAME} ${SRC_FILES})
 
-target_include_directories(${BINARY_NAME} PUBLIC
-    ${CMAKE_SOURCE_DIR}/src/
-    ${CMAKE_SOURCE_DIR}/third_party/
+target_include_directories(${BINARY_NAME}
+    PRIVATE ${CMAKE_SOURCE_DIR}/src/
+    PRIVATE ${CMAKE_SOURCE_DIR}/third_party/
 )
 
 target_link_libraries(${BINARY_NAME} PRIVATE

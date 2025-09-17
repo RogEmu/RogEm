@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
-#include "GTE.hpp"
+
+#include "Core/GTE.hpp"
 
 class GteCalculationTest : public ::testing::Test {
 protected:

@@ -34,7 +34,11 @@ if (${ENABLE_COVERAGE})
     target_link_libraries(${TEST_BINARY_NAME} PRIVATE gcov)
 endif()
 
-target_link_libraries( ${TEST_BINARY_NAME} PRIVATE
+target_include_directories(${TEST_BINARY_NAME}
+    PRIVATE ${CMAKE_SOURCE_DIR}/src/
+)
+
+target_link_libraries(${TEST_BINARY_NAME} PRIVATE
     GTest::gtest
     GTest::gtest_main
     fmt::fmt

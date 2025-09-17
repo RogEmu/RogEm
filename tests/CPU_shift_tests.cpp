@@ -1,8 +1,9 @@
 #include <gtest/gtest.h>
-#include "BIOS.hpp"
-#include "Bus.hpp"
-#include "CPU.hpp"
-#include "RAM.hpp"
+
+#include "Core/BIOS.hpp"
+#include "Core/Bus.hpp"
+#include "Core/CPU.hpp"
+#include "Core/RAM.hpp"
 
 class CpuShiftTest : public testing::Test
 {
