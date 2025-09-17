@@ -11,7 +11,6 @@
 #include <cstdint>
 #include <string>
 
-#include "Instruction.h"
 #include <capstone/capstone.h>
 
 struct InstructionData

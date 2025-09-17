@@ -3,7 +3,7 @@
 #include <spdlog/spdlog.h>
 
 #include "MemoryMap.hpp"
-#include "Core/Bus.hpp"
+#include "Bus.hpp"
 
 Timers::Timers(Bus *bus) :
     PsxDevice(bus)

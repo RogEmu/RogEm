@@ -17,9 +17,9 @@
 #include <chrono>
 #include <thread>
 
-#include "core/PsxExecutable.hpp"
-#include "core/GPU.hpp"
-#include "core/InterruptController.hpp"
+#include "Core/PsxExecutable.hpp"
+#include "Core/GPU.hpp"
+#include "Core/InterruptController.hpp"
 
 System::System()
 {

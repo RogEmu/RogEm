@@ -26,7 +26,6 @@ add_executable(${BINARY_NAME} ${SRC_FILES})
 
 target_include_directories(${BINARY_NAME} PUBLIC
     ${CMAKE_SOURCE_DIR}/src/
-    ${CMAKE_SOURCE_DIR}/src/Debugger
     ${CMAKE_SOURCE_DIR}/third_party/
 )
 

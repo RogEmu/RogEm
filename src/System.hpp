@@ -7,11 +7,11 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#include "Debugger.hpp"
-#include "core/CPU.h"
-#include "core/BIOS.h"
-#include "core/RAM.h"
-#include "core/Bus.h"
+#include "Debugger/Debugger.hpp"
+#include "Core/CPU.hpp"
+#include "Core/BIOS.hpp"
+#include "Core/RAM.hpp"
+#include "Core/Bus.hpp"
 
 struct EmulatorConfig
 {

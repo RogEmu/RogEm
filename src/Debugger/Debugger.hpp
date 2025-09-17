@@ -9,7 +9,7 @@
 #include <nlohmann/json.hpp>
 
 #include "Disassembler.hpp"
-#include "CPU.h"
+#include "Core/CPU.hpp"
 
 class IWindow;
 class System;
