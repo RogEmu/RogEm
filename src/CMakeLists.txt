@@ -12,15 +12,15 @@ set(SRC_FILES
     System.cpp
     Debugger/Debugger.cpp
     Debugger/Disassembler.cpp
-    Debugger/AssemblyWindow.cpp
-    Debugger/RegisterWindow.cpp
-    Debugger/MemoryWindow.cpp
-    Debugger/BreakpointWindow.cpp
-    Debugger/LogWindow.cpp
-    Debugger/SettingsWindow.cpp
+    GUI/AssemblyWindow.cpp
+    GUI/RegisterWindow.cpp
+    GUI/MemoryWindow.cpp
+    GUI/BreakpointWindow.cpp
+    GUI/LogWindow.cpp
+    GUI/SettingsWindow.cpp
 )
 
-add_subdirectory(core)
+add_subdirectory(Core)
 
 add_executable(${BINARY_NAME} ${SRC_FILES})
 
