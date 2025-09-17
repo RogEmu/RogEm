@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
-#include "BIOS.h"
-#include "RAM.h"
-#include "Bus.h"
-#include "CPU.h"
+#include "BIOS.hpp"
+#include "RAM.hpp"
+#include "Bus.hpp"
+#include "CPU.hpp"
 
 class CpuLoadTest : public testing::Test
 {

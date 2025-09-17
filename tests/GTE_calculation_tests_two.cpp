@@ -1,5 +1,5 @@
 #include "gtest/gtest.h"
-#include "GTE.h"
+#include "GTE.hpp"
 
 // !!! IMPORTANT !!!   This file is meant to be temporary, all test here are meant to be move to GTE_calculation_tests.cpp,
 // !!! IMPORTANT !!!   it was only created while waiting for the main test file to be merged in the dev branch.

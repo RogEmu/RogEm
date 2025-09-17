@@ -2,8 +2,8 @@
 
 #include "MemoryMap.hpp"
 
-#include "Bus.h"
-#include "BIOS.h"
+#include "Bus.hpp"
+#include "BIOS.hpp"
 
 TEST(BusTests, BusMapAddress_KUSEG_Lower_Bound)
 {

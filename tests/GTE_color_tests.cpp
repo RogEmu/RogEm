@@ -1,13 +1,5 @@
-#include <gtest/gtest.h>
-#include "GTE.h"
-
-class GteColorTest : public ::testing::Test {
-    protected:
-        GTE gte;
-    };
-
 #include "gtest/gtest.h"
-#include "GTE.h"
+#include "GTE.hpp"
 
 class GteColorTest : public ::testing::Test {
 protected:

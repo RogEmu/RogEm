@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
-#include "BIOS.h"
-#include "Bus.h"
-#include "RAM.h"
-#include "CPU.h"
+#include "BIOS.hpp"
+#include "Bus.hpp"
+#include "RAM.hpp"
+#include "CPU.hpp"
 
 class CpuExceptionTest : public testing::Test
 {
