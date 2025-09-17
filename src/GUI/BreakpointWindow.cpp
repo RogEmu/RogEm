@@ -1,5 +1,5 @@
 #include "BreakpointWindow.hpp"
-#include "Debugger.hpp"
+#include "Debugger/Debugger.hpp"
 
 #include "imgui.h"
 #include <fmt/format.h>

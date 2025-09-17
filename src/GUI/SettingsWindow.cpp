@@ -1,6 +1,6 @@
 #include "SettingsWindow.hpp"
-#include "Debugger.hpp"
-#include "CPU.h"
+#include "Debugger/Debugger.hpp"
+#include "Core/CPU.hpp"
 
 SettingsWindow::SettingsWindow(Debugger *debugger) : m_debugger(debugger)
 {}

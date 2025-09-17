@@ -3,8 +3,8 @@
 #include <fmt/format.h>
 
 #include "imgui.h"
-#include "Debugger.hpp"
-#include "CPU.h"
+#include "Debugger/Debugger.hpp"
+#include "Core/CPU.hpp"
 
 RegisterWindow::RegisterWindow(Debugger *debugger) :
     m_debugger(debugger),

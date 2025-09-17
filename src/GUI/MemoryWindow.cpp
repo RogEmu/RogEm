@@ -1,7 +1,7 @@
 #include "MemoryWindow.hpp"
 #include <fmt/format.h>
 
-#include "BIOS.h"
+#include "Core/BIOS.hpp"
 
 MemoryWindow::MemoryWindow(Debugger *debugger) :
     m_debugger(debugger),

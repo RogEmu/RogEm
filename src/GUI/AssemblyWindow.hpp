@@ -6,8 +6,8 @@
 #include "imgui.h"
 #include <memory>
 
-#include "CPU.h"
-#include "Debugger.hpp"
+#include "Core/CPU.hpp"
+#include "Debugger/Debugger.hpp"
 
 #define GREY ImColor(171, 183, 183, 255)
 

@@ -2,8 +2,6 @@
 
 #include <cstdint>
 #include "imgui.h"
-#include "imgui/imgui_memory_editor.h"
-
 
 LogWindow::LogWindow(Debugger *debugger) :
     m_debugger(debugger)
