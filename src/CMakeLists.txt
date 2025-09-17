@@ -2,15 +2,16 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 find_package(fmt CONFIG REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
-find_package(OpenGL REQUIRED)
 find_package(imgui CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(glad CONFIG REQUIRED)
+find_package(capstone CONFIG REQUIRED)
 
 set(SRC_FILES
     main.cpp
     System.cpp
     Debugger/Debugger.cpp
+    Debugger/Disassembler.cpp
     Debugger/AssemblyWindow.cpp
     Debugger/RegisterWindow.cpp
     Debugger/MemoryWindow.cpp
@@ -33,8 +34,8 @@ target_link_libraries(${BINARY_NAME} PRIVATE
     rgmcore
     fmt::fmt
     glfw
-    OpenGL::GL
     imgui::imgui
     spdlog::spdlog
     glad::glad
+    capstone::capstone
 )

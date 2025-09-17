@@ -5,7 +5,7 @@
 ** Disassembler
 */
 
-#include "Disassembler.h"
+#include "Disassembler.hpp"
 
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>

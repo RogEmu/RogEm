@@ -4,7 +4,6 @@
 
 #include "imgui.h"
 #include "Debugger.hpp"
-#include "Disassembler.h"
 #include "CPU.h"
 
 RegisterWindow::RegisterWindow(Debugger *debugger) :

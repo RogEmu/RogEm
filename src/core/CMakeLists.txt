@@ -1,9 +1,6 @@
-find_package(fmt CONFIG REQUIRED)
-
 set(CORE_LIB_NAME "rgmcore")
 
 find_package(fmt CONFIG REQUIRED)
-find_package(capstone CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 
 set(CORE_SRC_FILES
@@ -12,7 +9,6 @@ set(CORE_SRC_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Bus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CPU.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/GTE.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Disassembler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/MemoryMap.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Memory.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/PsxExecutable.cpp
@@ -37,7 +33,6 @@ target_include_directories(${CORE_LIB_NAME} PUBLIC
 
 target_link_libraries(${CORE_LIB_NAME} PUBLIC
     fmt::fmt
-    capstone::capstone
     spdlog::spdlog
 )
 

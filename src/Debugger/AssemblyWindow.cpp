@@ -2,7 +2,6 @@
 #include <fmt/format.h>
 
 #include "MemoryMap.hpp"
-#include "Disassembler.h"
 #include "MemoryWindow.hpp"
 
 AssemblyWindow::AssemblyWindow(Debugger *debugger) :

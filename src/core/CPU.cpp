@@ -6,11 +6,10 @@
 */
 
 #include "CPU.h"
+
 #include <iostream>
 #include <cstring>
 #include <spdlog/spdlog.h>
-
-#include "Disassembler.h"
 
 static bool addOverflow(int32_t a, int32_t b)
 {
