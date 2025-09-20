@@ -15,7 +15,7 @@
 
 int main(int ac, char **av)
 {
-    spdlog::set_level(spdlog::level::debug);
+    //spdlog::set_level(spdlog::level::debug);
     argparse::ArgumentParser args("RogEm");
 
     args.add_description("A PSX emulator written in C++ with love");

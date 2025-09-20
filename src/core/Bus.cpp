@@ -21,6 +21,8 @@
 #include "Timers.hpp"
 #include "InterruptController.hpp"
 #include "MemoryControl1.hpp"
+#include "SIO.hpp"
+#include "PadDigital.hpp"
 
 Bus::Bus() :
     m_cacheControl(0),
@@ -35,6 +37,16 @@ Bus::Bus() :
     m_devices[PsxDeviceType::Timers] = std::make_unique<Timers>(this);
     m_devices[PsxDeviceType::IRQController] = std::make_unique<InterruptController>(this);
     m_devices[PsxDeviceType::MemControl1] = std::make_unique<MemoryControl1>(this);
+
+    // SIO0 (controllers/memcards)
+    auto* irq = static_cast<InterruptController*>(m_devices[PsxDeviceType::IRQController].get());
+    auto sio = std::make_unique<SIO>(this, *irq);
+
+    // Attach a digital pad on Port 1 by default
+    auto pad0 = std::make_shared<PadDigital>();
+    sio->attachController(0, pad0);
+
+    m_devices[PsxDeviceType::SIO0] = std::move(sio);
 }
 
 Bus::~Bus()

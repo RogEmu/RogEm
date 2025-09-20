@@ -5,7 +5,7 @@ find_package(glfw3 CONFIG REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(imgui CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
-find_package(glad CONFIG REQUIRED)
+#find_package(glad CONFIG REQUIRED)
 
 set(SRC_FILES
     main.cpp
@@ -17,6 +17,7 @@ set(SRC_FILES
     Debugger/BreakpointWindow.cpp
     Debugger/LogWindow.cpp
     Debugger/SettingsWindow.cpp
+    ${CMAKE_SOURCE_DIR}/third_party/glad/src/glad.c
 )
 
 add_subdirectory(core)
@@ -27,6 +28,7 @@ target_include_directories(${BINARY_NAME} PUBLIC
     ${CMAKE_SOURCE_DIR}/src/
     ${CMAKE_SOURCE_DIR}/src/Debugger
     ${CMAKE_SOURCE_DIR}/third_party/
+    ${CMAKE_SOURCE_DIR}/third_party/glad/include
 )
 
 target_link_libraries(${BINARY_NAME} PRIVATE
@@ -36,5 +38,4 @@ target_link_libraries(${BINARY_NAME} PRIVATE
     OpenGL::GL
     imgui::imgui
     spdlog::spdlog
-    glad::glad
 )

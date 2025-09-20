@@ -20,6 +20,11 @@
 #include "core/PsxExecutable.hpp"
 #include "core/GPU.hpp"
 #include "core/InterruptController.hpp"
+#include "core/SIO.hpp"
+#include "core/PadDigital.hpp"
+
+static uint16_t buildPadMaskFromKeyboard(GLFWwindow* win);
+static GamepadState readGamepadAsAnalog();
 
 System::System()
 {
@@ -81,6 +86,22 @@ void System::run()
     while (m_isRunning)
     {
         update();
+
+        // >>> Input → Port 1
+        if (auto* sio = static_cast<SIO*>(m_bus->getDevice(PsxDeviceType::SIO0))) {
+            GamepadState gp = readGamepadAsAnalog();
+            if (gp.present) {
+                // Prefer gamepad → Analog controller
+                sio->ensurePadType(0, SioPadType::Analog);
+                sio->setControllerAnalog(0, gp.buttonsMask, gp.lx, gp.ly, gp.rx, gp.ry);
+            } else {
+                // No gamepad → Digital controller driven by keyboard
+                sio->ensurePadType(0, SioPadType::Digital);
+                uint16_t kbMask = buildPadMaskFromKeyboard(m_window);
+                sio->setControllerButtons(0, kbMask);
+            }
+        }
+
         if (currentCycles >= cyclesPerFrame) {
             render();
             currentCycles = 0;
@@ -166,6 +187,89 @@ static void renderImGuiFrame()
     glClear(GL_COLOR_BUFFER_BIT);
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     glfwSwapBuffers(glfwGetCurrentContext());
+}
+
+static inline bool key_down(GLFWwindow* win, int key) {
+    return glfwGetKey(win, key) == GLFW_PRESS;
+}
+
+// PSX buttons are active-LOW: 0 = pressed.
+static uint16_t buildPadMaskFromKeyboard(GLFWwindow* win) {
+    uint16_t m = 0xFFFF;
+
+    // D-Pad: Z,Q,S,D => UP,LEFT,DOWN,RIGHT  (AZERTY)
+    if (key_down(win, GLFW_KEY_Z)) m &= ~PadDigital::Up;
+    if (key_down(win, GLFW_KEY_Q)) m &= ~PadDigital::Left;
+    if (key_down(win, GLFW_KEY_S)) m &= ~PadDigital::Down;
+    if (key_down(win, GLFW_KEY_D)) m &= ~PadDigital::Right;
+
+    // Face: O,K,L,M => TRIANGLE,SQUARE,CROSS,CIRCLE
+    if (key_down(win, GLFW_KEY_O)) m &= ~PadDigital::Triangle;
+    if (key_down(win, GLFW_KEY_K)) m &= ~PadDigital::Square;
+    if (key_down(win, GLFW_KEY_L)) m &= ~PadDigital::Cross;
+    if (key_down(win, GLFW_KEY_M)) m &= ~PadDigital::Circle;
+
+    // Shoulders: A,E,I,P => L2,L1,R1,R2
+    if (key_down(win, GLFW_KEY_A)) m &= ~PadDigital::L2;
+    if (key_down(win, GLFW_KEY_E)) m &= ~PadDigital::L1;
+    if (key_down(win, GLFW_KEY_I)) m &= ~PadDigital::R1;
+    if (key_down(win, GLFW_KEY_P)) m &= ~PadDigital::R2;
+
+    // System: F,J => SELECT,START
+    if (key_down(win, GLFW_KEY_F)) m &= ~PadDigital::Select;
+    if (key_down(win, GLFW_KEY_J)) m &= ~PadDigital::Start;
+
+    return m;
+}
+
+static inline uint8_t to_u8_axis(float a, float dead = 0.12f) {
+    // GLFW axes in [-1..1], center 0. Apply deadzone, map to [0..255]
+    if (a > -dead && a < dead) a = 0.0f;
+    float v = (a + 1.0f) * 0.5f * 255.0f; // -1 -> 0, 0 -> 127.5, 1 -> 255
+    if (v < 0.0f) v = 0.0f; else if (v > 255.0f) v = 255.0f;
+    return static_cast<uint8_t>(v + 0.5f);
+}
+
+static GamepadState readGamepadAsAnalog() {
+    GamepadState g;
+    if (!glfwJoystickIsGamepad(GLFW_JOYSTICK_1)) return g;
+
+    GLFWgamepadstate st{};
+    if (!glfwGetGamepadState(GLFW_JOYSTICK_1, &st)) return g;
+    g.present = true;
+
+    auto downB = [&](int b){ return st.buttons[b] == GLFW_PRESS; };
+    auto axis  = [&](int a){ return st.axes[a]; };
+
+    // Face: Y,X,A,B => TRIANGLE,SQUARE,CROSS,CIRCLE
+    if (downB(GLFW_GAMEPAD_BUTTON_Y)) g.buttonsMask &= ~PadDigital::Triangle;
+    if (downB(GLFW_GAMEPAD_BUTTON_X)) g.buttonsMask &= ~PadDigital::Square;
+    if (downB(GLFW_GAMEPAD_BUTTON_A)) g.buttonsMask &= ~PadDigital::Cross;
+    if (downB(GLFW_GAMEPAD_BUTTON_B)) g.buttonsMask &= ~PadDigital::Circle;
+
+    // D-pad
+    if (downB(GLFW_GAMEPAD_BUTTON_DPAD_UP))    g.buttonsMask &= ~PadDigital::Up;
+    if (downB(GLFW_GAMEPAD_BUTTON_DPAD_LEFT))  g.buttonsMask &= ~PadDigital::Left;
+    if (downB(GLFW_GAMEPAD_BUTTON_DPAD_DOWN))  g.buttonsMask &= ~PadDigital::Down;
+    if (downB(GLFW_GAMEPAD_BUTTON_DPAD_RIGHT)) g.buttonsMask &= ~PadDigital::Right;
+
+    // Shoulders / triggers
+    if (downB(GLFW_GAMEPAD_BUTTON_LEFT_BUMPER))  g.buttonsMask &= ~PadDigital::L1;
+    if (downB(GLFW_GAMEPAD_BUTTON_RIGHT_BUMPER)) g.buttonsMask &= ~PadDigital::R1;
+    if (axis(GLFW_GAMEPAD_AXIS_LEFT_TRIGGER)  > 0.5f) g.buttonsMask &= ~PadDigital::L2;
+    if (axis(GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER) > 0.5f) g.buttonsMask &= ~PadDigital::R2;
+
+    // Start / Back → Start / Select
+    if (downB(GLFW_GAMEPAD_BUTTON_START)) g.buttonsMask &= ~PadDigital::Start;
+    if (downB(GLFW_GAMEPAD_BUTTON_BACK))  g.buttonsMask &= ~PadDigital::Select;
+
+    // Sticks
+    g.lx = to_u8_axis(axis(GLFW_GAMEPAD_AXIS_LEFT_X));
+    g.ly = to_u8_axis(-axis(GLFW_GAMEPAD_AXIS_LEFT_Y));  // Y up is negative
+    g.rx = to_u8_axis(axis(GLFW_GAMEPAD_AXIS_RIGHT_X));
+    g.ry = to_u8_axis(-axis(GLFW_GAMEPAD_AXIS_RIGHT_Y));
+
+    return g;
 }
 
 void System::render()

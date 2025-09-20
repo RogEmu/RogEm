@@ -27,7 +27,8 @@ enum class PsxDeviceType {
     Timers,
     IRQController,
     MemControl1,
-    MemControl2
+    MemControl2,
+    SIO0
 };
 
 class Bus

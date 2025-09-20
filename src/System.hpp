@@ -19,6 +19,12 @@ struct EmulatorConfig
     std::string exeFilePath;
 };
 
+struct GamepadState {
+    uint16_t buttonsMask = 0xFFFF; // active-LOW
+    uint8_t  lx = 0x80, ly = 0x80, rx = 0x80, ry = 0x80;
+    bool     present = false;
+};
+
 class System
 {
     public:
