@@ -4,19 +4,15 @@
 #include <memory>
 #include <string>
 
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
+#include "Debugger/Debugger.hpp"
+#include "Core/CPU.hpp"
+#include "Core/BIOS.hpp"
+#include "Core/Bus.hpp"
 
-#include "Debugger.hpp"
-#include "core/CPU.h"
-#include "core/BIOS.h"
-#include "core/RAM.h"
-#include "core/Bus.h"
-
-struct EmulatorConfig
+enum class SystemState
 {
-    std::string biosFilePath;
-    std::string exeFilePath;
+    RUNNING,
+    PAUSED
 };
 
 class System
@@ -25,36 +21,29 @@ class System
         System();
         ~System();
 
-        int init(const EmulatorConfig &config);
-        void run();
-        bool isRunning() const;
+        int init();
+        void update();
 
         CPU *getCPU();
         Bus *getBus();
 
-    private:
-        int initGFLW();
-        int initImGUi();
+        void setExecutablePath(const std::string &path);
 
-        void update();
-        void render();
+        void loadBios(const char *path);
+        void loadExecutable(const char *path);
 
-        void loadPsxExe(const char *path);
-
-        void initVramTexture();
+        void attachDebugger(Debugger *debugger);
 
     private:
-        std::unique_ptr<CPU> m_cpu;
+        void updateDebugger();
+
+    private:
         std::unique_ptr<Bus> m_bus;
+        std::unique_ptr<CPU> m_cpu;
+        Debugger *m_debugger;
 
-        std::unique_ptr<Debugger> m_debug;
-
-        EmulatorConfig m_emuConfig;
-
-        GLFWwindow* m_window;
-        bool m_isRunning;
-
-        GLuint m_vramTexture;
+        SystemState m_state;
+        std::string m_executablePath;
 };
 
 #endif /* !SYSTEM_HPP_ */

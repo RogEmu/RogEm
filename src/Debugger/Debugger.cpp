@@ -8,14 +8,15 @@
 #include <algorithm>
 
 #include "Debugger.hpp"
-#include "RegisterWindow.hpp"
-#include "AssemblyWindow.hpp"
-#include "MemoryWindow.hpp"
-#include "CPU.h"
+
 #include "System.hpp"
-#include "BreakpointWindow.hpp"
-#include "LogWindow.hpp"
-#include "SettingsWindow.hpp"
+
+#include "GUI/RegisterWindow.hpp"
+#include "GUI/AssemblyWindow.hpp"
+#include "GUI/MemoryWindow.hpp"
+#include "GUI/BreakpointWindow.hpp"
+#include "GUI/LogWindow.hpp"
+#include "GUI/SettingsWindow.hpp"
 
 Debugger::Debugger(System *system) :
     m_system(system),
