@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
-#include "GTE.h"
+
+#include "Core/GTE.hpp"
 
 
 class GteGeneralTest : public testing::Test {

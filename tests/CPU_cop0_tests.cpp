@@ -1,8 +1,9 @@
 #include <gtest/gtest.h>
-#include "BIOS.h"
-#include "Bus.h"
-#include "CPU.h"
-#include "RAM.h"
+
+#include "Core/BIOS.hpp"
+#include "Core/Bus.hpp"
+#include "Core/CPU.hpp"
+#include "Core/RAM.hpp"
 
 class CpuCop0Test : public testing::Test
 {

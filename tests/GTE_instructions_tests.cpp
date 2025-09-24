@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
-#include "GTE.h"
+
+#include "Core/GTE.hpp"
 
 class GteInstructionTest : public ::testing::Test {
 protected:
@@ -40,7 +41,7 @@ TEST_F(GteInstructionTest, RTPS_ExecutesWithExpectedProjection) {
     gte.ctc(5, 0);  // TRX
     gte.ctc(6, 0);  // TRY
     gte.ctc(7, 0);  // TRZ
-    
+
     gte.ctc(24, 100);   // OFX
     gte.ctc(25, 100);   // OFY
     gte.ctc(26, 100);   // H

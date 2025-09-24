@@ -7,8 +7,9 @@
 #include <vector>
 #include <fstream>
 #include <nlohmann/json.hpp>
-#include "Disassembler.h"
-#include "CPU.h"
+
+#include "Disassembler.hpp"
+#include "Core/CPU.hpp"
 
 class IWindow;
 class System;

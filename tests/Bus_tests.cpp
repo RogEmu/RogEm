@@ -1,9 +1,8 @@
 #include <gtest/gtest.h>
 
-#include "MemoryMap.hpp"
-
-#include "Bus.h"
-#include "BIOS.h"
+#include "Core/MemoryMap.hpp"
+#include "Core/Bus.hpp"
+#include "Core/BIOS.hpp"
 
 TEST(BusTests, BusMapAddress_KUSEG_Lower_Bound)
 {
