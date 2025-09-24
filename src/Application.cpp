@@ -1,9 +1,5 @@
 #include "Application.hpp"
 
-#ifdef _WIN32
-    #include <Windows.h>
-#endif //_WIN32
-
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
