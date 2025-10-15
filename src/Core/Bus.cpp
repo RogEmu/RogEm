@@ -26,15 +26,15 @@ Bus::Bus() :
     m_cacheControl(0),
     m_cpu(nullptr)
 {
-    m_devices[PsxDeviceType::BIOS] = std::make_unique<BIOS>(this);
-    m_devices[PsxDeviceType::RAM] = std::make_unique<RAM>(this);
-    m_devices[PsxDeviceType::Scratchpad] = std::make_unique<ScratchPad>(this);
-    m_devices[PsxDeviceType::DMA] = std::make_unique<DMA>(this);
-    m_devices[PsxDeviceType::GPU] = std::make_unique<GPU>(this);
-    m_devices[PsxDeviceType::SPU] = std::make_unique<SPU>(this);
-    m_devices[PsxDeviceType::Timers] = std::make_unique<Timers>(this);
-    m_devices[PsxDeviceType::IRQController] = std::make_unique<InterruptController>(this);
-    m_devices[PsxDeviceType::MemControl1] = std::make_unique<MemoryControl1>(this);
+    addDevice(std::make_unique<BIOS>(this));
+    addDevice(std::make_unique<RAM>(this));
+    addDevice(std::make_unique<ScratchPad>(this));
+    addDevice(std::make_unique<DMA>(this));
+    addDevice(std::make_unique<GPU>(this));
+    addDevice(std::make_unique<SPU>(this));
+    addDevice(std::make_unique<Timers>(this));
+    addDevice(std::make_unique<InterruptController>(this));
+    addDevice(std::make_unique<MemoryControl1>(this));
 }
 
 Bus::~Bus()
@@ -234,15 +234,6 @@ const std::vector<uint8_t> *Bus::getMemoryRange(uint32_t addr) const
                 return memoryDev->data();
             }
         }
-    }
-    return nullptr;
-}
-
-PsxDevice *Bus::getDevice(PsxDeviceType deviceType)
-{
-    auto it = m_devices.find(deviceType);
-    if (it != m_devices.end()) {
-        return it->second.get();
     }
     return nullptr;
 }
