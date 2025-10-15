@@ -65,7 +65,7 @@ void System::update()
         updateDebugger();
         cycles += 2;
     }
-    auto irqc = static_cast<InterruptController*>(m_bus->getDevice(PsxDeviceType::IRQController));
+    auto irqc = m_bus->getDevice<InterruptController>();
     irqc->triggerIRQ(DeviceIRQ::VBLANK);
 }
 
@@ -73,7 +73,7 @@ void System::loadExecutable(const char *path)
 {
     PsxExecutable exe(path);
 
-    auto ram = static_cast<RAM *>(m_bus->getDevice(PsxDeviceType::RAM));
+    auto ram = m_bus->getDevice<RAM>();
 
     if (exe.load()) {
         m_cpu->setReg(CpuReg::PC, exe.initialPc);
@@ -89,7 +89,7 @@ void System::loadExecutable(const char *path)
 
 void System::loadBios(const char *path)
 {
-    BIOS *bios = static_cast<BIOS *>(m_bus->getDevice(PsxDeviceType::BIOS));
+    BIOS *bios = m_bus->getDevice<BIOS>();
     bios->loadFromFile(path);
 }
 

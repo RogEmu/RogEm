@@ -171,7 +171,7 @@ void Application::render()
 void Application::drawScreen()
 {
     if (ImGui::Begin("Screen")) {
-        GPU *gpu = static_cast<GPU *>(m_system.getBus()->getDevice(PsxDeviceType::GPU));
+        GPU *gpu = m_system.getBus()->getDevice<GPU>();
         const uint8_t *vram = gpu->getVram();
         glBindTexture(GL_TEXTURE_2D, m_vramTexture);
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 1024, 512, GL_RGBA, GL_UNSIGNED_SHORT_1_5_5_5_REV, vram);

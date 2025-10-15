@@ -12,23 +12,11 @@
 #include <vector>
 #include <memory>
 #include <unordered_map>
+#include <typeindex>
 
 #include "PsxDevice.hpp"
 
 class CPU;
-
-enum class PsxDeviceType {
-    RAM,
-    BIOS,
-    DMA,
-    SPU,
-    GPU,
-    Scratchpad,
-    Timers,
-    IRQController,
-    MemControl1,
-    MemControl2
-};
 
 class Bus
 {
@@ -46,13 +34,25 @@ class Bus
         std::vector<uint8_t> *getMemoryRange(uint32_t addr);
         const std::vector<uint8_t> *getMemoryRange(uint32_t addr) const;
 
-        PsxDevice *getDevice(PsxDeviceType deviceType);
+        template<typename T>
+        void addDevice(std::unique_ptr<T> device) {
+            m_devices[std::type_index(typeid(T))] = std::move(device);
+        }
+
+        template<typename T>
+        T *getDevice() {
+            auto it = m_devices.find(std::type_index(typeid(T)));
+            if (it != m_devices.end()) {
+                return dynamic_cast<T*>(it->second.get());
+            }
+            return nullptr;
+        }
 
         void connectCpu(CPU *cpu);
         CPU *getCpu();
 
     private:
-        std::unordered_map<PsxDeviceType, std::unique_ptr<PsxDevice>> m_devices;
+        std::unordered_map<std::type_index, std::unique_ptr<PsxDevice>> m_devices;
 
         uint32_t m_cacheControl;
         CPU *m_cpu;
