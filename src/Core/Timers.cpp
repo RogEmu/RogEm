@@ -22,6 +22,77 @@ void Timers::update(int cycles)
     }
 }
 
+void Timers::onHBlank()
+{
+    if ((m_timers[1].mode.clockSource & 0b01) && !m_timers[1].paused) {
+        m_timers[1].currentValue++;
+    }
+    if (!m_timers[0].mode.syncEnable) {
+        return;
+    }
+    switch (m_timers[0].mode.syncMode) {
+        case 0: m_timers[0].paused = true; break;
+        case 1: m_timers[0].currentValue = 0; break;
+        case 2:
+            m_timers[0].currentValue = 0;
+            m_timers[0].paused = 0;
+            break;
+        case 3:
+            m_timers[0].paused = false;
+            m_timers[0].mode.syncEnable = false;
+            break;
+        default:
+            break;
+    }
+}
+
+void Timers::onHBlankEnd()
+{
+    if (!m_timers[0].mode.syncEnable) {
+        return;
+    }
+    switch (m_timers[0].mode.syncMode) {
+        case 0: m_timers[0].paused = false; break;
+        case 2: m_timers[0].paused = true; break;
+        default:
+            break;
+    }
+}
+
+void Timers::onVBlank()
+{
+    if (!m_timers[1].mode.syncEnable) {
+        return;
+    }
+    switch (m_timers[1].mode.syncMode) {
+        case 0: m_timers[1].paused = true; break;
+        case 1: m_timers[1].currentValue = 0; break;
+        case 2:
+            m_timers[1].currentValue = 0;
+            m_timers[1].paused = 0;
+            break;
+        case 3:
+            m_timers[1].paused = false;
+            m_timers[1].mode.syncEnable = false;
+            break;
+        default:
+            break;
+    }
+}
+
+void Timers::onVBlankEnd()
+{
+    if (!m_timers[1].mode.syncEnable) {
+        return;
+    }
+    switch (m_timers[1].mode.syncMode) {
+        case 0: m_timers[1].paused = false; break;
+        case 2: m_timers[1].paused = true; break;
+        default:
+            break;
+    }
+}
+
 void Timers::write8(uint8_t value, uint32_t address)
 {
     spdlog::error("Timers: Unhandled write byte 0x{:02x} to 0x{:08X}", value, address);

@@ -33,6 +33,7 @@ struct Timer
         TimerMode mode;
         uint32_t rawMode;
     };
+    bool paused;
 };
 
 class Timers : public PsxDevice
@@ -42,6 +43,10 @@ class Timers : public PsxDevice
         ~Timers();
 
         void update(int cycles) override;
+        void onHBlank();
+        void onHBlankEnd();
+        void onVBlank();
+        void onVBlankEnd();
 
         void write8(uint8_t value, uint32_t address) override;
         void write16(uint16_t value, uint32_t address) override;
