@@ -17,9 +17,73 @@ Timers::~Timers()
 
 void Timers::update(int cycles)
 {
-    for (auto &timer : m_timers) {
-        timer.currentValue += cycles;
+    for (int i = 0; i < 3; i++) {
+        updateTimer(i, cycles);
     }
+}
+
+void Timers::updateTimer(uint8_t index, int cycles)
+{
+    Timer &timer = m_timers[index];
+
+    if (timer.paused) {
+        return;
+    }
+
+    timer.currentValue += computeTimerCycles(cycles, index);
+
+    if (timer.currentValue >= (timer.targetValue & 0xFFFF)) {
+        timer.mode.reachedTarget = true;
+
+        if (timer.mode.irqTarget) {
+            triggerIRQ(index);
+        }
+
+        if (timer.mode.resetCounter) {
+            timer.currentValue = 0;
+        }
+    }
+
+    if (timer.currentValue >= 0xFFFF) {
+        timer.mode.reachedMax = true;
+
+        if (timer.mode.irqMax) {
+            triggerIRQ(index);
+        }
+
+        if (!timer.mode.resetCounter) {
+            timer.currentValue = 0;
+        }
+    }
+}
+
+int Timers::computeTimerCycles(int cycles, uint8_t index)
+{
+    Timer &timer = m_timers[index];
+
+    switch (index) {
+        case 0: return (timer.mode.clockSource & 0b01) ? cycles : cycles;
+        case 1: return (timer.mode.clockSource & 0b01) ? 0 : cycles;
+        case 2: return (timer.mode.clockSource & 0b10) ? cycles / 8 : cycles;
+        default:
+            return 0;
+    }
+}
+
+void Timers::triggerIRQ(uint8_t index)
+{
+    Timer &timer = m_timers[index];
+
+    // Set IRQ bit
+    timer.mode.irq = true;
+
+    // Handle IRQ once mode
+    if (timer.mode.irqOnce) {
+        // Disable further IRQs after first trigger
+        timer.mode.irqTarget = false;
+        timer.mode.irqMax = false;
+    }
+    spdlog::info("Timers: Timer {} IRQ triggered", index);
 }
 
 void Timers::onHBlank()
@@ -135,9 +199,9 @@ uint32_t Timers::readTimer(uint32_t address)
 
     switch (offset)
     {
-        case 0: return m_timers[timer].currentValue;
+        case 0: return m_timers[timer].currentValue & 0xFFFF;
         case 4: return m_timers[timer].rawMode;
-        case 8: return m_timers[timer].targetValue;
+        case 8: return m_timers[timer].targetValue & 0xFFFF;
         default:
             break;
     }
@@ -151,9 +215,9 @@ void Timers::writeTimer(uint32_t address, uint32_t value)
 
     switch (offset)
     {
-        case 0: m_timers[timer].currentValue = value; break;
+        case 0: m_timers[timer].currentValue = value & 0xFFFF; break;
         case 4: m_timers[timer].rawMode = value; break;
-        case 8: m_timers[timer].targetValue = value; break;
+        case 8: m_timers[timer].targetValue = value & 0xFFFF; break;
         default:
             break;
     }

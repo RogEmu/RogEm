@@ -59,6 +59,9 @@ class Timers : public PsxDevice
     private:
         uint32_t readTimer(uint32_t address);
         void writeTimer(uint32_t address, uint32_t value);
+        void updateTimer(uint8_t index, int cycles);
+        int computeTimerCycles(int cycles, uint8_t index);
+        void triggerIRQ(uint8_t index);
 
     private:
         Timer m_timers[3];
