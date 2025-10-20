@@ -48,6 +48,8 @@ class Bus
             return nullptr;
         }
 
+        void updateDevices(int cycles);
+
         void connectCpu(CPU *cpu);
         CPU *getCpu();
 
