@@ -4,6 +4,7 @@
 
 #include "MemoryMap.hpp"
 #include "Bus.hpp"
+#include "InterruptController.hpp"
 
 Timers::Timers(Bus *bus) :
     PsxDevice(bus)
@@ -83,7 +84,17 @@ void Timers::triggerIRQ(uint8_t index)
         timer.mode.irqTarget = false;
         timer.mode.irqMax = false;
     }
-    spdlog::info("Timers: Timer {} IRQ triggered", index);
+    spdlog::debug("Timers: Timer {} IRQ triggered", index);
+    auto irqc = m_bus->getDevice<InterruptController>();
+    if (irqc) {
+        auto deviceIrq = DeviceIRQ::TIMER0;
+        if (index == 1) {
+            deviceIrq = DeviceIRQ::TIMER1;
+        } else if (index == 2) {
+            deviceIrq = DeviceIRQ::TIMER2;
+        }
+        irqc->triggerIRQ(deviceIrq);
+    }
 }
 
 void Timers::onHBlank()
