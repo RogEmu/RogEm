@@ -238,6 +238,13 @@ const std::vector<uint8_t> *Bus::getMemoryRange(uint32_t addr) const
     return nullptr;
 }
 
+void Bus::updateDevices(int cycles)
+{
+    for (auto &[_, device] : m_devices) {
+        device->update(cycles);
+    }
+}
+
 void Bus::connectCpu(CPU *cpu)
 {
     m_cpu = cpu;

@@ -61,6 +61,7 @@ void System::update()
                 loadExecutable(m_executablePath.c_str());
             }
             m_cpu->step();
+            m_bus->updateDevices(2);
         }
         updateDebugger();
         cycles += 2;
