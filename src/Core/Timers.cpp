@@ -18,7 +18,7 @@ Timers::~Timers()
 
 void Timers::update(int cycles)
 {
-    for (int i = 0; i < 3; i++) {
+    for (uint8_t i = 0; i < 3; i++) {
         updateTimer(i, cycles);
     }
 }
@@ -194,7 +194,7 @@ uint8_t Timers::read8(uint32_t address)
 uint16_t Timers::read16(uint32_t address)
 {
     spdlog::debug("Timers: Read halfword at 0x{:08X}", address);
-    return readTimer(address);
+    return static_cast<uint16_t>(readTimer(address));
 }
 
 uint32_t Timers::read32(uint32_t address)
