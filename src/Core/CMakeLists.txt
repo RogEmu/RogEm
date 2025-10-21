@@ -23,6 +23,7 @@ set(CORE_SRC_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/SystemControlCop.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/MemoryControl1.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/GPUCommand.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CacheControl.cpp
 )
 
 add_library(${CORE_LIB_NAME} STATIC ${CORE_SRC_FILES})
