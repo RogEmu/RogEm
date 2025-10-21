@@ -22,6 +22,7 @@
 #include "InterruptController.hpp"
 #include "MemoryControl1.hpp"
 #include "CacheControl.hpp"
+#include "Expansion2.hpp"
 
 Bus::Bus() :
     m_cacheControl(0),
@@ -37,6 +38,7 @@ Bus::Bus() :
     addDevice(std::make_unique<InterruptController>(this));
     addDevice(std::make_unique<MemoryControl1>(this));
     addDevice(std::make_unique<CacheControl>(this));
+    addDevice(std::make_unique<Expansion2>(this));
 }
 
 Bus::~Bus()
@@ -58,11 +60,7 @@ uint32_t Bus::loadWord(uint32_t addr) const
             return device->read32(pAddress);
         }
     }
-    if (MemoryMap::EXP2_RANGE.contains(pAddress))
-    {
-        spdlog::warn("Read word from Expansion Region 2 (0x{:08x}): Not implemented", addr);
-        return 0;
-    }
+    spdlog::error("Bus: Read word at address 0x{:08X} is not supported", addr);
     return 0;
 }
 
@@ -82,14 +80,7 @@ void Bus::storeWord(uint32_t addr, uint32_t value)
             return;
         }
     }
-    if (MemoryMap::EXP2_RANGE.contains(pAddress))
-    {
-        spdlog::warn("Write word 0x{:08X} to Expansion Region 2 (0x{:08X}): Not implemented", value, addr);
-    }
-    else
-    {
-        spdlog::error("Address 0x{:08X} is not supported", addr);
-    }
+    spdlog::error("Bus: Write word at address 0x{:08X} is not supported", addr);
 }
 
 uint16_t Bus::loadHalfWord(uint32_t addr) const
@@ -107,11 +98,7 @@ uint16_t Bus::loadHalfWord(uint32_t addr) const
             return device->read16(pAddress);
         }
     }
-    if (MemoryMap::EXP2_RANGE.contains(pAddress))
-    {
-        spdlog::warn("Read halfword from Expansion Region 2 (0x{:08x}): Not implemented", addr);
-        return 0;
-    }
+    spdlog::error("Bus: Read halfword at address 0x{:08X} is not supported", addr);
     return 0;
 }
 
@@ -131,14 +118,7 @@ void Bus::storeHalfWord(uint32_t addr, uint16_t value)
             return;
         }
     }
-    if (MemoryMap::EXP2_RANGE.contains(pAddress))
-    {
-        spdlog::warn("Write halfword 0x{:04X} to Expansion Region 2 (0x{:08X}): Not implemented", value, addr);
-    }
-    else
-    {
-        spdlog::error("Address 0x{:08X} is not supported", addr);
-    }
+    spdlog::error("Bus: Write halfword at address 0x{:08X} is not supported", addr);
 }
 
 uint8_t Bus::loadByte(uint32_t addr) const
@@ -150,11 +130,7 @@ uint8_t Bus::loadByte(uint32_t addr) const
             return device->read8(pAddress);
         }
     }
-    if (MemoryMap::EXP2_RANGE.contains(pAddress))
-    {
-        spdlog::warn("Read byte from Expansion Region 2 (0x{:08x}): Not implemented", addr);
-        return 0;
-    }
+    spdlog::error("Bus: Read byte at address 0x{:08X} is not supported", addr);
     return 0;
 }
 
@@ -169,14 +145,7 @@ void Bus::storeByte(uint32_t addr, uint8_t value)
             return;
         }
     }
-    if (MemoryMap::EXP2_RANGE.contains(pAddress))
-    {
-        spdlog::warn("Write byte 0x{:02X} to Expansion Region 2 (0x{:08X}): Not implemented", value, addr);
-    }
-    else
-    {
-        spdlog::error("Address 0x{:08X} is not supported", addr);
-    }
+    spdlog::error("Bus: Write byte at address 0x{:08X} is not supported", addr);
 }
 
 std::vector<uint8_t> *Bus::getMemoryRange(uint32_t addr)
