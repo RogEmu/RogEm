@@ -23,6 +23,7 @@
 #include "MemoryControl1.hpp"
 #include "CacheControl.hpp"
 #include "Expansion2.hpp"
+#include "MemoryControl2.hpp"
 
 Bus::Bus() :
     m_cacheControl(0),
@@ -39,6 +40,7 @@ Bus::Bus() :
     addDevice(std::make_unique<MemoryControl1>(this));
     addDevice(std::make_unique<CacheControl>(this));
     addDevice(std::make_unique<Expansion2>(this));
+    addDevice(std::make_unique<MemoryControl2>(this));
 }
 
 Bus::~Bus()

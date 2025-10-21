@@ -22,6 +22,7 @@ set(CORE_SRC_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/InterruptController.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/SystemControlCop.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/MemoryControl1.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/MemoryControl2.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/GPUCommand.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CacheControl.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Expansion2.cpp
