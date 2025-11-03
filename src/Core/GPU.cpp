@@ -205,7 +205,7 @@ void GPU::processGP0(uint32_t data)
             case 0b111:
                 handleEnvCommand(data);
                 break;
-            case 0b001: {
+            case 0b001: { // Draw Polygon
                 int nbVertices = ((data >> 27) & 1) == 0 ? 3 : 4;
                 m_nbExpectedParams = ((data >> 28) & 1) * (nbVertices - 1); // Nb Vertex Colors
                 m_nbExpectedParams += ((data >> 26) & 1) * nbVertices; // Nb UV coordinates
@@ -216,7 +216,7 @@ void GPU::processGP0(uint32_t data)
                 m_nbExpectedParams += 1;
                 break;
             }
-            case 0b010: { // draw Line
+            case 0b010: { // Draw Line
                 if (((data >> 27) & 1) == 1)
                     m_nbExpectedParams = -1;
                 else
@@ -228,7 +228,8 @@ void GPU::processGP0(uint32_t data)
             }
             case 0b011: { // Draw Rectangle
                 m_nbExpectedParams = 2;
-                m_nbExpectedParams += ((data >> 27) & 3) == 0;
+                m_nbExpectedParams += ((data >> 27) & 3) == 0; // Rectangle size parameter
+                m_nbExpectedParams += ((data >> 26) & 1); // Texture flag
                 m_currentCmd.addParam(data & 0xFFFFFF);
                 m_currentCmd.setCommand(data);
                 m_currentState = GpuState::ReceivingParameters;
@@ -426,13 +427,14 @@ void GPU::drawRectangle()
     color.fromBGR(params[0]);
     Vec2i size{};
     int rectSizeFlag = (m_currentCmd.raw() >> 27) & 3;
+    int textureFlag = (m_currentCmd.raw() >> 26) & 1;
 
     if (rectSizeFlag != 0) {
         int scale = (rectSizeFlag - 1) * 8;
         scale = scale ? scale : 1;
         size = {scale, scale};
     } else {
-        size = getVec(params[2]);
+        size = getVec(params[2 + textureFlag]);
     }
     rasterizeRectangle({topLeft, color}, size);
     m_currentCmd.reset();
