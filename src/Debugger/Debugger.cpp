@@ -36,6 +36,7 @@ Debugger::Debugger(System *system) :
     biosMemoryWindow->setTitle("BIOS");
     biosMemoryWindow->setReadOnly(true);
     m_windows.push_back(std::move(biosMemoryWindow));
+    m_mainMenuBar = new MainMenuBar(this);
 
     auto ramMemoryWindow = std::make_unique<MemoryWindow>(this);
     ramMemoryWindow->setBaseAddr(0);
@@ -118,6 +119,17 @@ std::vector<uint8_t> *Debugger::memoryRange(uint32_t addr)
 Disassembler &Debugger::getDisassembler()
 {
     return m_disassembler;
+}
+
+void Debugger::loadBios(const char *path)
+{
+    m_system->loadBios(path);
+    CPUReset();
+}
+
+void Debugger::loadExecutable(const char *path)
+{
+    m_system->loadExecutable(path);
 }
 
 //The following functions are required for nlohmann-json to work, but are called automatically upon conversion
@@ -262,6 +274,7 @@ void Debugger::update()
 
 void Debugger::draw()
 {
+    m_mainMenuBar->draw();
     for (auto &subwin : m_windows)
     {
         subwin->update();

@@ -10,6 +10,7 @@
 
 #include "Disassembler.hpp"
 #include "Core/CPU.hpp"
+#include "GUI/MainMenuBar.hpp"
 
 class IWindow;
 class System;
@@ -78,10 +79,15 @@ class Debugger
         std::vector<uint8_t> *memoryRange(uint32_t addr);
 
         Disassembler &getDisassembler();
+        
+        // File loading
+        void loadBios(const char *path);
+        void loadExecutable(const char *path);
 
     private:
         System *m_system;
 
+        MainMenuBar *m_mainMenuBar;
         std::list<std::shared_ptr<IWindow>> m_windows;
         uint32_t m_currentMemAddr;
 
