@@ -130,6 +130,7 @@ void Debugger::loadBios(const char *path)
 void Debugger::loadExecutable(const char *path)
 {
     m_system->loadExecutable(path);
+    CPUReset();
 }
 
 //The following functions are required for nlohmann-json to work, but are called automatically upon conversion
