@@ -1,6 +1,7 @@
 build/
 .vscode/
 .vs/
+.idea/
 *.bin
 imgui.ini
 /CMakeSettings.json

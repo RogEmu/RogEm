@@ -96,17 +96,17 @@ void Debugger::CPUReset()
 
 uint8_t Debugger::readByte(uint32_t addr) const
 {
-    return m_system->getBus()->loadByte(addr);
+    return m_system->getBus()->load<uint8_t>(addr);
 }
 
 uint16_t Debugger::readHalfWord(uint32_t addr) const
 {
-    return m_system->getBus()->loadHalfWord(addr);
+    return m_system->getBus()->load<uint16_t>(addr);
 }
 
 uint32_t Debugger::readWord(uint32_t addr) const
 {
-    return m_system->getBus()->loadWord(addr);
+    return m_system->getBus()->load<uint32_t>(addr);
 }
 
 std::vector<uint8_t> *Debugger::memoryRange(uint32_t addr)

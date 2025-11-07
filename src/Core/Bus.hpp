@@ -13,6 +13,7 @@
 #include <memory>
 #include <unordered_map>
 #include <typeindex>
+#include <spdlog/spdlog.h>
 
 #include "PsxDevice.hpp"
 
@@ -24,12 +25,49 @@ class Bus
         Bus();
         ~Bus();
 
-        uint32_t loadWord(uint32_t addr) const;
-        void storeWord(uint32_t addr, uint32_t value);
-        uint16_t loadHalfWord(uint32_t addr) const;
-        void storeHalfWord(uint32_t addr, uint16_t value);
-        uint8_t loadByte(uint32_t addr) const;
-        void storeByte(uint32_t addr, uint8_t value);
+        template<typename T>
+        inline T load(uint32_t addr) const {
+            uint32_t pAddress = MemoryMap::mapAddress(addr);
+
+            for (auto &[_, device] : m_devices) {
+                if (device->isAddressed(pAddress)) {
+                    if (std::is_same<T, uint32_t>()) {
+                        return device->read32(pAddress);
+                    } else if (std::is_same<T, uint16_t>()) {
+                        return device->read16(pAddress);
+                    } else if (std::is_same<T, uint8_t>()) {
+                        return device->read8(pAddress);
+                    } else {
+                        static_assert("Unsupported type for Bus::load");
+                    }
+                }
+            }
+            spdlog::error("Bus: Read at address 0x{:08X} is not supported", addr);
+            return T{};
+        }
+
+        template<typename T>
+        inline void store(uint32_t addr, T value) {
+            uint32_t pAddress = MemoryMap::mapAddress(addr);
+
+            for (auto &[_, device] : m_devices) {
+                if (device->isAddressed(pAddress)) {
+                    if (std::is_same<T, uint32_t>()) {
+                        device->write32(value, pAddress);
+                        return;
+                    } else if (std::is_same<T, uint16_t>()) {
+                        device->write16(value, pAddress);
+                        return;
+                    } else if (std::is_same<T, uint8_t>()) {
+                        device->write8(value, pAddress);
+                        return;
+                    } else {
+                        static_assert("Unsupported type for Bus::store");
+                    }
+                }
+            }
+            spdlog::error("Bus: Write at address 0x{:08X} is not supported", addr);
+        }
 
         std::vector<uint8_t> *getMemoryRange(uint32_t addr);
         const std::vector<uint8_t> *getMemoryRange(uint32_t addr) const;

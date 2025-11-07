@@ -157,11 +157,11 @@ void DMA::executeDmaOT()
     uint32_t startAddr = channel.getRegister(DMAChannelReg::MemoryAddress) & OT_END_TAG;
 
     for (uint32_t i = transferSize - 1; i > 0; i--) {
-        m_bus->storeWord(startAddr, startAddr - 4);
+        m_bus->store<uint32_t>(startAddr, startAddr - 4);
         startAddr -= 4;
     }
 
-    m_bus->storeWord(startAddr, OT_END_TAG);
+    m_bus->store<uint32_t>(startAddr, OT_END_TAG);
     channel.channelControl().transferStatus = DMATransferStatus::Stopped;
     channel.channelControl().forceTransferStart = false;
 }
@@ -200,13 +200,13 @@ void DMA::executeDmaGpuLinkedList()
     bool transfer = true;
 
     while (transfer) {
-        uint32_t currentPacket = m_bus->loadWord(currentAddr);
+        uint32_t currentPacket = m_bus->load<uint32_t>(currentAddr);
         uint8_t packetSize = currentPacket >> 24;
 
         for (uint8_t i = 0; i < packetSize; i++) {
             currentAddr += channel.channelControl().step == DMAStep::Increment ? 4 : -4;
-            uint32_t command = m_bus->loadWord(currentAddr);
-            m_bus->storeWord(0x1F801810, command);
+            uint32_t command = m_bus->load<uint32_t>(currentAddr);
+            m_bus->store<uint32_t>(0x1F801810, command);
             channel.setRegister(DMAChannelReg::MemoryAddress, currentAddr);
         }
         currentAddr = currentPacket & 0xFFFFFF;
@@ -236,8 +236,8 @@ void DMA::executeDmaGpuRequest()
 
     if (channelControl.transferDir == DMATransferDirection::RamToDevice) {
         for (uint32_t i = 0; i < transferSize; i++) {
-            uint32_t word = m_bus->loadWord(startAddr);
-            m_bus->storeWord(GPU_GP0_ADDR, word);
+            uint32_t word = m_bus->load<uint32_t>(startAddr);
+            m_bus->store<uint32_t>(GPU_GP0_ADDR, word);
             startAddr += step;
             channel.setRegister(DMAChannelReg::MemoryAddress, startAddr);
         }
