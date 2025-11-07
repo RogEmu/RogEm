@@ -24,7 +24,7 @@ TEST_F(CpuExceptionTest, Syscall)
     const uint32_t syscallInstr = 0x0000000C; // SYSCALL opcode
 
     // Write syscall instruction to RAM
-    bus.storeWord(pc, syscallInstr);
+    bus.store<uint32_t>(pc, syscallInstr);
 
     // Clear EPC, Cause, Status
     cpu.setCop0Reg(static_cast<uint8_t>(CP0Reg::CAUSE), 0);
@@ -57,8 +57,8 @@ TEST_F(CpuExceptionTest, Syscall_BranchDelaySlot)
 {
     auto pc = cpu.getReg(CpuReg::PC);
 
-    bus.storeWord(pc, 0x1000FFFE); // BEQ $zero, $zero, -1 (dummy branch)
-    bus.storeWord(pc + 4, 0x0000000C); // SYSCALL opcode
+    bus.store<uint32_t>(pc, 0x1000FFFE); // BEQ $zero, $zero, -1 (dummy branch)
+    bus.store<uint32_t>(pc + 4, 0x0000000C); // SYSCALL opcode
 
     // Clear EPC, Cause, Status
     cpu.setCop0Reg(static_cast<uint8_t>(CP0Reg::CAUSE), 0);
@@ -91,7 +91,7 @@ TEST_F(CpuExceptionTest, RFE)
 {
     auto pc = cpu.getReg(CpuReg::PC);
 
-    bus.storeWord(pc, 0x42000010); // RFE
+    bus.store<uint32_t>(pc, 0x42000010); // RFE
 
     // Clear EPC, Cause, Status
     cpu.setCop0Reg(static_cast<uint8_t>(CP0Reg::CAUSE), 0);

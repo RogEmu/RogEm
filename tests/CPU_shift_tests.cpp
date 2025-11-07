@@ -30,7 +30,7 @@ class CpuShiftTest : public testing::Test
             i.r.funct = static_cast<uint8_t>(opcode);
 
             auto pc = cpu.getReg(CpuReg::PC);
-            bus.storeWord(pc, i.raw);
+            bus.store<uint32_t>(pc, i.raw);
             cpu.setReg(rd, defaultRegVal);
             cpu.step();
         }
@@ -45,7 +45,7 @@ class CpuShiftTest : public testing::Test
             i.r.funct = static_cast<uint8_t>(opcode);
 
             auto pc = cpu.getReg(CpuReg::PC);
-            bus.storeWord(pc, i.raw);
+            bus.store<uint32_t>(pc, i.raw);
             cpu.setReg(rd, defaultRegVal);
             cpu.step();
         }
@@ -58,7 +58,7 @@ class CpuShiftTest : public testing::Test
             i.i.immediate = imm;
 
             auto pc = cpu.getReg(CpuReg::PC);
-            bus.storeWord(pc, i.raw);
+            bus.store<uint32_t>(pc, i.raw);
             cpu.setReg(rt, defaultRegVal);
             cpu.step();
         }
