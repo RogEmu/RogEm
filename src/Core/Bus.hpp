@@ -32,11 +32,11 @@ class Bus
             for (auto &[_, device] : m_devices) {
                 if (device->isAddressed(pAddress)) {
                     if (std::is_same<T, uint32_t>()) {
-                        return device->read32(pAddress);
+                        return static_cast<uint32_t>(device->read32(pAddress));
                     } else if (std::is_same<T, uint16_t>()) {
-                        return device->read16(pAddress);
+                        return static_cast<uint16_t>(device->read16(pAddress));
                     } else if (std::is_same<T, uint8_t>()) {
-                        return device->read8(pAddress);
+                        return static_cast<uint8_t>(device->read8(pAddress));
                     } else {
                         static_assert("Unsupported type for Bus::load");
                     }
@@ -53,13 +53,13 @@ class Bus
             for (auto &[_, device] : m_devices) {
                 if (device->isAddressed(pAddress)) {
                     if (std::is_same<T, uint32_t>()) {
-                        device->write32(value, pAddress);
+                        device->write32(static_cast<uint32_t>(value), pAddress);
                         return;
                     } else if (std::is_same<T, uint16_t>()) {
-                        device->write16(value, pAddress);
+                        device->write16(static_cast<uint16_t>(value), pAddress);
                         return;
                     } else if (std::is_same<T, uint8_t>()) {
-                        device->write8(value, pAddress);
+                        device->write8(static_cast<uint8_t>(value), pAddress);
                         return;
                     } else {
                         static_assert("Unsupported type for Bus::store");
