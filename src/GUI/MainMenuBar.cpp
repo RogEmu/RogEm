@@ -1,6 +1,7 @@
 #include "MainMenuBar.hpp"
 #include "Debugger/Debugger.hpp"
 #include "Application.hpp"
+#include "GUI/IWindow.hpp"
 
 #include <iostream>
 #include <memory>
@@ -28,6 +29,7 @@ void MainMenuBar::draw()
         drawFileMenu();
         drawEmulationMenu();
         drawDebugMenu();
+        drawWindowsMenu();
 
         ImGui::EndMainMenuBar();
     }
@@ -63,7 +65,7 @@ void MainMenuBar::drawEmulationMenu()
     if (ImGui::BeginMenu("Emulation"))
     {
         bool paused = m_debugger->isPaused();
-        
+
         if (ImGui::MenuItem(paused ? "Resume" : "Pause", "F5", &paused))
         {
             m_debugger->pause(paused);
@@ -118,10 +120,49 @@ void MainMenuBar::drawDebugMenu()
                     }
                 }
             }
-            
+
             ImGui::EndMenu();
         }
-        
+
+        ImGui::EndMenu();
+    }
+}
+
+void MainMenuBar::drawWindowsMenu()
+{
+    if (ImGui::BeginMenu("Windows"))
+    {
+        auto &windows = m_debugger->getWindows();
+
+        for (auto &window : windows)
+        {
+            const char* title = window->getTitleChar();
+            bool isVisible = window->isVisible();
+            
+            if (ImGui::MenuItem(title, nullptr, &isVisible))
+            {
+                window->setVisible(isVisible);
+            }
+        }
+
+        ImGui::Separator();
+
+        if (ImGui::MenuItem("Show All"))
+        {
+            for (auto &window : windows)
+            {
+                window->setVisible(true);
+            }
+        }
+
+        if (ImGui::MenuItem("Hide All"))
+        {
+            for (auto &window : windows)
+            {
+                window->setVisible(false);
+            }
+        }
+
         ImGui::EndMenu();
     }
 }
@@ -129,7 +170,7 @@ void MainMenuBar::drawDebugMenu()
 void MainMenuBar::drawFileDialog()
 {
     const char* title = m_isLoadingBios ? "Load BIOS File" : "Load ROM File";
-    
+
     ImGui::SetNextWindowSize(ImVec2(700, 500), ImGuiCond_FirstUseEver);
     if (ImGui::Begin(title, &m_showFileDialog, ImGuiWindowFlags_NoCollapse))
     {

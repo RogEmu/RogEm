@@ -8,6 +8,7 @@ BreakpointWindow::BreakpointWindow(Debugger *debugger) :
     m_debugger(debugger),
     m_displayBreakpoints(true)
 {
+    setTitle("Breakpoints");
     m_breakpointType = 0;
 }
 

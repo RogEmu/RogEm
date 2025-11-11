@@ -11,6 +11,7 @@ RegisterWindow::RegisterWindow(Debugger *debugger) :
     m_editorOpen(false),
     m_registerNameToChange("")
 {
+    setTitle("Registers");
     is_highlighted.resize(NB_GPR, false);
 }
 

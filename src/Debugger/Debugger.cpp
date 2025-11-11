@@ -278,7 +278,10 @@ void Debugger::draw()
     m_mainMenuBar->draw();
     for (auto &subwin : m_windows)
     {
-        subwin->update();
+        if (subwin->isVisible())
+        {
+            subwin->update();
+        }
     }
 }
 

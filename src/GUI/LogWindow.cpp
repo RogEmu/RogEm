@@ -6,6 +6,7 @@
 LogWindow::LogWindow(Debugger *debugger) :
     m_debugger(debugger)
 {
+    setTitle("Logs");
 }
 
 LogWindow::~LogWindow()
