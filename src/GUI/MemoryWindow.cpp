@@ -7,7 +7,6 @@ MemoryWindow::MemoryWindow(Debugger *debugger) :
     m_debugger(debugger),
     m_baseAddr(0)
 {
-    setTitle("Memory");
 }
 
 MemoryWindow::~MemoryWindow()

@@ -28,10 +28,8 @@ Debugger::Debugger(System *system) :
     m_windows.emplace_back(std::make_unique<AssemblyWindow>(this));
     m_windows.emplace_back(std::make_unique<BreakpointWindow>(this));
     m_windows.emplace_back(std::make_unique<SettingsWindow>(this));
+    m_windows.emplace_back(std::make_unique<LogWindow>(this));
     auto biosMemoryWindow = std::make_unique<MemoryWindow>(this);
-    auto logWindow = std::make_unique<LogWindow>(this);
-    logWindow->setTitle("Log");
-    m_windows.push_back(std::move(logWindow));
     biosMemoryWindow->setBaseAddr(0xBFC00000);
     biosMemoryWindow->setTitle("BIOS");
     biosMemoryWindow->setReadOnly(true);
