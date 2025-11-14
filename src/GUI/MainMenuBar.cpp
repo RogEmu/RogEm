@@ -169,6 +169,8 @@ void MainMenuBar::drawWindowsMenu()
 
 void MainMenuBar::drawFileDialog()
 {
+    bool shouldNavigate = false;
+    std::filesystem::path pathToNavigate;
     const char* title = m_isLoadingBios ? "Load BIOS File" : "Load ROM File";
 
     ImGui::SetNextWindowSize(ImVec2(700, 500), ImGuiCond_FirstUseEver);
@@ -199,7 +201,8 @@ void MainMenuBar::drawFileDialog()
                 {
                     if (ImGui::IsMouseDoubleClicked(0))
                     {
-                        navigateToDirectory(entry.path());
+                        pathToNavigate = entry.path();
+                        shouldNavigate = true;
                     }
                 }
                 ImGui::PopStyleColor();
@@ -251,6 +254,11 @@ void MainMenuBar::drawFileDialog()
             }
         }
         ImGui::EndChild();
+
+        if (shouldNavigate)
+        {
+            navigateToDirectory(pathToNavigate);
+        }
 
         ImGui::Separator();
 

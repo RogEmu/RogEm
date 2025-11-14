@@ -34,12 +34,12 @@ Debugger::Debugger(System *system) :
     biosMemoryWindow->setTitle("BIOS");
     biosMemoryWindow->setReadOnly(true);
     m_windows.push_back(std::move(biosMemoryWindow));
-    m_mainMenuBar = new MainMenuBar(this);
 
     auto ramMemoryWindow = std::make_unique<MemoryWindow>(this);
     ramMemoryWindow->setBaseAddr(0);
     ramMemoryWindow->setTitle("RAM");
     m_windows.push_back(std::move(ramMemoryWindow));
+    m_mainMenuBar = new MainMenuBar(this);
 
     loadBreakpointsFromFile();
 }
