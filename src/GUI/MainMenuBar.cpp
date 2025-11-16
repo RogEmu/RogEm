@@ -25,8 +25,7 @@ MainMenuBar::~MainMenuBar()
 
 void MainMenuBar::draw()
 {
-    if (ImGui::BeginMainMenuBar())
-    {
+    if (ImGui::BeginMainMenuBar()) {
         drawFileMenu();
         drawEmulationMenu();
         drawDebugMenu();
@@ -34,25 +33,21 @@ void MainMenuBar::draw()
 
         ImGui::EndMainMenuBar();
     }
-    if (m_showFileDialog)
-    {
+    if (m_showFileDialog) {
         drawFileDialog();
     }
 }
 
 void MainMenuBar::drawFileMenu()
 {
-    if (ImGui::BeginMenu("File"))
-    {
-        if (ImGui::MenuItem("Load ROM...", "Ctrl+O"))
-        {
+    if (ImGui::BeginMenu("File")) {
+        if (ImGui::MenuItem("Load ROM...", "Ctrl+O")) {
             m_isLoadingBios = false;
             m_showFileDialog = true;
             m_filenameBuffer[0] = '\0';
         }
 
-        if (ImGui::MenuItem("Load BIOS...", "Ctrl+B"))
-        {
+        if (ImGui::MenuItem("Load BIOS...", "Ctrl+B")) {
             m_isLoadingBios = true;
             m_showFileDialog = true;
             m_filenameBuffer[0] = '\0';
@@ -63,17 +58,14 @@ void MainMenuBar::drawFileMenu()
 
 void MainMenuBar::drawEmulationMenu()
 {
-    if (ImGui::BeginMenu("Emulation"))
-    {
+    if (ImGui::BeginMenu("Emulation")) {
         bool paused = m_debugger->isPaused();
 
-        if (ImGui::MenuItem(paused ? "Resume" : "Pause", "F5", &paused))
-        {
+        if (ImGui::MenuItem(paused ? "Resume" : "Pause", "F5", &paused)) {
             m_debugger->pause(paused);
         }
 
-        if (ImGui::MenuItem("Reset", "Ctrl+R"))
-        {
+        if (ImGui::MenuItem("Reset", "Ctrl+R")) {
             m_debugger->CPUReset();
         }
         ImGui::EndMenu();
@@ -82,22 +74,16 @@ void MainMenuBar::drawEmulationMenu()
 
 void MainMenuBar::drawDebugMenu()
 {
-    if (ImGui::BeginMenu("Debug"))
-    {
+    if (ImGui::BeginMenu("Debug")) {
         ImGui::Separator();
         
-        if (ImGui::BeginMenu("Breakpoints"))
-        {
+        if (ImGui::BeginMenu("Breakpoints")) {
             auto &breakpoints = m_debugger->getBreakpoints();
             
-            if (breakpoints.empty())
-            {
+            if (breakpoints.empty()) {
                 ImGui::MenuItem("No breakpoints", nullptr, false, false);
-            }
-            else
-            {
-                for (size_t i = 0; i < breakpoints.size(); i++)
-                {
+            } else {
+                for (size_t i = 0; i < breakpoints.size(); i++) {
                     auto &bp = breakpoints[i];
                     bool enabled = bp.enabled;
                     
@@ -105,18 +91,15 @@ void MainMenuBar::drawDebugMenu()
                     snprintf(label, sizeof(label), "0x%08X - %s###bp%zu", 
                              bp.addr, bp.label.c_str(), i);
                     
-                    if (ImGui::MenuItem(label, nullptr, &enabled))
-                    {
+                    if (ImGui::MenuItem(label, nullptr, &enabled)) {
                         m_debugger->toggleBreakpoint(i, enabled);
                     }
                 }
                 
                 ImGui::Separator();
                 
-                if (ImGui::MenuItem("Clear All"))
-                {
-                    for (long i = breakpoints.size() - 1; i >= 0; i--)
-                    {
+                if (ImGui::MenuItem("Clear All")) {
+                    for (long i = breakpoints.size() - 1; i >= 0; i--) {
                         m_debugger->removeBreakpoint(i);
                     }
                 }
@@ -131,35 +114,28 @@ void MainMenuBar::drawDebugMenu()
 
 void MainMenuBar::drawWindowsMenu()
 {
-    if (ImGui::BeginMenu("Windows"))
-    {
+    if (ImGui::BeginMenu("Windows")) {
         auto &windows = m_debugger->getWindows();
 
-        for (auto &window : windows)
-        {
+        for (auto &window : windows) {
             const char* title = window->getTitleChar();
             bool isVisible = window->isVisible();
             
-            if (ImGui::MenuItem(title, nullptr, &isVisible))
-            {
+            if (ImGui::MenuItem(title, nullptr, &isVisible)) {
                 window->setVisible(isVisible);
             }
         }
 
         ImGui::Separator();
 
-        if (ImGui::MenuItem("Show All"))
-        {
-            for (auto &window : windows)
-            {
+        if (ImGui::MenuItem("Show All")) {
+            for (auto &window : windows) {
                 window->setVisible(true);
             }
         }
 
-        if (ImGui::MenuItem("Hide All"))
-        {
-            for (auto &window : windows)
-            {
+        if (ImGui::MenuItem("Hide All")) {
+            for (auto &window : windows) {
                 window->setVisible(false);
             }
         }
@@ -175,13 +151,11 @@ void MainMenuBar::drawFileDialog()
     const char* title = m_isLoadingBios ? "Load BIOS File" : "Load ROM File";
 
     ImGui::SetNextWindowSize(ImVec2(700, 500), ImGuiCond_FirstUseEver);
-    if (ImGui::Begin(title, &m_showFileDialog, ImGuiWindowFlags_NoCollapse))
-    {
+    if (ImGui::Begin(title, &m_showFileDialog, ImGuiWindowFlags_NoCollapse)) {
         ImGui::Text("Current Path: %s", m_currentPath.string().c_str());
         ImGui::Separator();
 
-        if (ImGui::Button("..") && m_currentPath.has_parent_path())
-        {
+        if (ImGui::Button("..") && m_currentPath.has_parent_path()) {
             navigateToDirectory(m_currentPath.parent_path());
         }
         ImGui::SameLine();
@@ -190,54 +164,39 @@ void MainMenuBar::drawFileDialog()
         ImGui::Separator();
 
         ImGui::BeginChild("FileList", ImVec2(0, -70), true);
-        for (const auto &entry : m_directoryContents)
-        {
+        for (const auto &entry : m_directoryContents) {
             bool isDirectory = entry.is_directory();
             std::string filename = entry.path().filename().string();
 
-            if (isDirectory)
-            {
+            if (isDirectory) {
                 ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 0.0f, 1.0f)); // Directories color. Set as yellow but can be changed
-                if (ImGui::Selectable(("[DIR] " + filename).c_str(), false, ImGuiSelectableFlags_AllowDoubleClick))
-                {
-                    if (ImGui::IsMouseDoubleClicked(0))
-                    {
+                if (ImGui::Selectable(("[DIR] " + filename).c_str(), false, ImGuiSelectableFlags_AllowDoubleClick)) {
+                    if (ImGui::IsMouseDoubleClicked(0)) {
                         pathToNavigate = entry.path();
                         shouldNavigate = true;
                     }
                 }
                 ImGui::PopStyleColor();
-            }
-            else
-            {
+            } else {
                 std::string ext = entry.path().extension().string();
                 std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
                 bool validFile = false;
-                if (m_isLoadingBios)
-                {
+                if (m_isLoadingBios) {
                     validFile = (ext == ".bin" || ext == ".bios" || ext == ".rom");
-                }
-                else
-                {
+                } else {
                     validFile = (ext == ".bin" || ext == ".exe" || ext == ".ps-exe" || ext == ".psx" || ext == ".rom");
                 }
-                
-                if (validFile)
-                {
-                    if (ImGui::Selectable(("[FILE] " + filename).c_str(), false, ImGuiSelectableFlags_AllowDoubleClick))
-                    {
+
+                if (validFile) {
+                    if (ImGui::Selectable(("[FILE] " + filename).c_str(), false, ImGuiSelectableFlags_AllowDoubleClick)) {
                         strncpy(m_filenameBuffer, entry.path().string().c_str(), sizeof(m_filenameBuffer) - 1);
                         m_filenameBuffer[sizeof(m_filenameBuffer) - 1] = '\0';
                         
-                        if (ImGui::IsMouseDoubleClicked(0))
-                        {
-                            if (m_isLoadingBios)
-                            {
+                        if (ImGui::IsMouseDoubleClicked(0)) {
+                            if (m_isLoadingBios) {
                                 m_debugger->loadBios(m_filenameBuffer);
                                 m_debugger->CPUReset();
-                            }
-                            else
-                            {
+                            } else {
                                 m_debugger->loadExecutable(m_filenameBuffer);
                             }
                             m_debugger->CPUReset();
@@ -245,9 +204,7 @@ void MainMenuBar::drawFileDialog()
                             m_showFileDialog = false;
                         }
                     }
-                }
-                else
-                {
+                } else {
                     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 0.5f, 0.5f, 1.0f)); // Non-matching files color. Set as gray but can be changed
                     ImGui::Selectable(("[FILE] " + filename).c_str(), false, ImGuiSelectableFlags_Disabled);
                     ImGui::PopStyleColor();
@@ -256,8 +213,7 @@ void MainMenuBar::drawFileDialog()
         }
         ImGui::EndChild();
 
-        if (shouldNavigate)
-        {
+        if (shouldNavigate) {
             navigateToDirectory(pathToNavigate);
         }
 
@@ -265,18 +221,13 @@ void MainMenuBar::drawFileDialog()
 
         ImGui::Text("Selected File:");
         ImGui::InputText("##filepath", m_filenameBuffer, sizeof(m_filenameBuffer));
-        if (ImGui::Button("Load", ImVec2(100, 0)))
-        {
-            if (m_filenameBuffer[0] != '\0')
-            {
+        if (ImGui::Button("Load", ImVec2(100, 0))) {
+            if (m_filenameBuffer[0] != '\0') {
                 std::string filePath(m_filenameBuffer);
-                if (m_isLoadingBios)
-                {
+                if (m_isLoadingBios) {
                     m_debugger->loadBios(filePath.c_str());
                     m_debugger->CPUReset();
-                }
-                else
-                {
+                } else {
                     m_debugger->loadExecutable(filePath.c_str());
                 }
 
@@ -284,8 +235,7 @@ void MainMenuBar::drawFileDialog()
             }
         }
         ImGui::SameLine();
-        if (ImGui::Button("Cancel", ImVec2(100, 0)))
-        {
+        if (ImGui::Button("Cancel", ImVec2(100, 0))) {
             m_showFileDialog = false;
         }
     }
@@ -296,8 +246,7 @@ void MainMenuBar::refreshFileList()
 {
     m_directoryContents.clear();
     try {
-        for (const auto &entry : std::filesystem::directory_iterator(m_currentPath))
-        {
+        for (const auto &entry : std::filesystem::directory_iterator(m_currentPath)) {
             m_directoryContents.push_back(entry);
         }
         // Sort: directories first, then files, alphabetically
