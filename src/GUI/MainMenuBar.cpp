@@ -15,6 +15,7 @@ MainMenuBar::MainMenuBar(Debugger *debugger)
         refreshFileList();
     } catch (const std::exception &e) {
         m_currentPath = std::filesystem::path(".");
+        std::cerr << "Error getting current path: " << e.what() << std::endl;
     }
 }
 
@@ -307,7 +308,7 @@ void MainMenuBar::refreshFileList()
                 return a.path().filename().string() < b.path().filename().string();
             });
     } catch (const std::exception &e) {
-        // Potential error handling here
+        std::cerr << "Error getting current path: " << e.what() << std::endl;
     }
 }
 
@@ -317,6 +318,6 @@ void MainMenuBar::navigateToDirectory(const std::filesystem::path &path)
         m_currentPath = std::filesystem::canonical(path);
         refreshFileList();
     } catch (const std::exception &e) {
-        // Potential error handling here
+        std::cerr << "Error navigating to directory: " << e.what() << std::endl;
     }
 }
