@@ -30,7 +30,6 @@ void MainMenuBar::draw()
         drawEmulationMenu();
         drawDebugMenu();
         drawWindowsMenu();
-
         ImGui::EndMainMenuBar();
     }
     if (m_showFileDialog) {
@@ -46,7 +45,6 @@ void MainMenuBar::drawFileMenu()
             m_showFileDialog = true;
             m_filenameBuffer[0] = '\0';
         }
-
         if (ImGui::MenuItem("Load BIOS...", "Ctrl+B")) {
             m_isLoadingBios = true;
             m_showFileDialog = true;
@@ -60,11 +58,9 @@ void MainMenuBar::drawEmulationMenu()
 {
     if (ImGui::BeginMenu("Emulation")) {
         bool paused = m_debugger->isPaused();
-
         if (ImGui::MenuItem(paused ? "Resume" : "Pause", "F5", &paused)) {
             m_debugger->pause(paused);
         }
-
         if (ImGui::MenuItem("Reset", "Ctrl+R")) {
             m_debugger->CPUReset();
         }
@@ -76,38 +72,33 @@ void MainMenuBar::drawDebugMenu()
 {
     if (ImGui::BeginMenu("Debug")) {
         ImGui::Separator();
-        
+
         if (ImGui::BeginMenu("Breakpoints")) {
             auto &breakpoints = m_debugger->getBreakpoints();
-            
             if (breakpoints.empty()) {
                 ImGui::MenuItem("No breakpoints", nullptr, false, false);
             } else {
-                for (size_t i = 0; i < breakpoints.size(); i++) {
-                    auto &bp = breakpoints[i];
+                for (auto &bp : breakpoints) {
                     bool enabled = bp.enabled;
-                    
                     char label[128];
-                    snprintf(label, sizeof(label), "0x%08X - %s###bp%zu", 
-                             bp.addr, bp.label.c_str(), i);
-                    
+                    snprintf(label, sizeof(label), "0x%08X - %s###bp%08X", bp.addr, bp.label.c_str(), bp.addr);
                     if (ImGui::MenuItem(label, nullptr, &enabled)) {
-                        m_debugger->toggleBreakpoint(i, enabled);
+                        long index = m_debugger->getBreakpointIndex(bp.addr);
+                        if (index != -1) {
+                            m_debugger->toggleBreakpoint(index, enabled);
+                        }
                     }
                 }
-                
                 ImGui::Separator();
-                
                 if (ImGui::MenuItem("Clear All")) {
-                    for (long i = breakpoints.size() - 1; i >= 0; i--) {
+                    int breakpointCount = static_cast<int>(breakpoints.size());
+                    for (int i = breakpointCount - 1; i >= 0; i--) {
                         m_debugger->removeBreakpoint(i);
                     }
                 }
             }
-
             ImGui::EndMenu();
         }
-
         ImGui::EndMenu();
     }
 }
@@ -116,30 +107,24 @@ void MainMenuBar::drawWindowsMenu()
 {
     if (ImGui::BeginMenu("Windows")) {
         auto &windows = m_debugger->getWindows();
-
         for (auto &window : windows) {
             const char* title = window->getTitleChar();
             bool isVisible = window->isVisible();
-            
             if (ImGui::MenuItem(title, nullptr, &isVisible)) {
                 window->setVisible(isVisible);
             }
         }
-
         ImGui::Separator();
-
         if (ImGui::MenuItem("Show All")) {
             for (auto &window : windows) {
                 window->setVisible(true);
             }
         }
-
         if (ImGui::MenuItem("Hide All")) {
             for (auto &window : windows) {
                 window->setVisible(false);
             }
         }
-
         ImGui::EndMenu();
     }
 }
@@ -154,7 +139,6 @@ void MainMenuBar::drawFileDialog()
     if (ImGui::Begin(title, &m_showFileDialog, ImGuiWindowFlags_NoCollapse)) {
         ImGui::Text("Current Path: %s", m_currentPath.string().c_str());
         ImGui::Separator();
-
         if (ImGui::Button("..") && m_currentPath.has_parent_path()) {
             navigateToDirectory(m_currentPath.parent_path());
         }
@@ -162,7 +146,6 @@ void MainMenuBar::drawFileDialog()
         ImGui::Text("(Parent Directory)");
 
         ImGui::Separator();
-
         ImGui::BeginChild("FileList", ImVec2(0, -70), true);
         for (const auto &entry : m_directoryContents) {
             bool isDirectory = entry.is_directory();
@@ -186,7 +169,6 @@ void MainMenuBar::drawFileDialog()
                 } else {
                     validFile = (ext == ".bin" || ext == ".exe" || ext == ".ps-exe" || ext == ".psx" || ext == ".rom");
                 }
-
                 if (validFile) {
                     if (ImGui::Selectable(("[FILE] " + filename).c_str(), false, ImGuiSelectableFlags_AllowDoubleClick)) {
                         strncpy(m_filenameBuffer, entry.path().string().c_str(), sizeof(m_filenameBuffer) - 1);
@@ -212,13 +194,10 @@ void MainMenuBar::drawFileDialog()
             }
         }
         ImGui::EndChild();
-
         if (shouldNavigate) {
             navigateToDirectory(pathToNavigate);
         }
-
         ImGui::Separator();
-
         ImGui::Text("Selected File:");
         ImGui::InputText("##filepath", m_filenameBuffer, sizeof(m_filenameBuffer));
         if (ImGui::Button("Load", ImVec2(100, 0))) {
