@@ -87,7 +87,7 @@ class Debugger
     private:
         System *m_system;
 
-        MainMenuBar *m_mainMenuBar;
+        std::unique_ptr<MainMenuBar> m_mainMenuBar;
         std::list<std::shared_ptr<IWindow>> m_windows;
         uint32_t m_currentMemAddr;
 

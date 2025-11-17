@@ -2,6 +2,7 @@
 #include "Debugger/Debugger.hpp"
 #include "Application.hpp"
 #include "GUI/IWindow.hpp"
+#include <fmt/format.h>
 
 #include <iostream>
 #include <memory>
@@ -171,9 +172,9 @@ void MainMenuBar::drawFileDialog()
                 }
                 if (validFile) {
                     if (ImGui::Selectable(("[FILE] " + filename).c_str(), false, ImGuiSelectableFlags_AllowDoubleClick)) {
-                        strncpy(m_filenameBuffer, entry.path().string().c_str(), sizeof(m_filenameBuffer) - 1);
-                        m_filenameBuffer[sizeof(m_filenameBuffer) - 1] = '\0';
-                        
+                        std::string pathStr = fmt::format("{}", entry.path().string());
+                        pathStr.copy(m_filenameBuffer, sizeof(m_filenameBuffer) - 1);
+                        m_filenameBuffer[std::min(pathStr.size(), sizeof(m_filenameBuffer) - 1)] = '\0';
                         if (ImGui::IsMouseDoubleClicked(0)) {
                             if (m_isLoadingBios) {
                                 m_debugger->loadBios(m_filenameBuffer);

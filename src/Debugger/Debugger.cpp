@@ -39,7 +39,7 @@ Debugger::Debugger(System *system) :
     ramMemoryWindow->setBaseAddr(0);
     ramMemoryWindow->setTitle("RAM");
     m_windows.push_back(std::move(ramMemoryWindow));
-    m_mainMenuBar = new MainMenuBar(this);
+    m_mainMenuBar = std::make_unique<MainMenuBar>(this);
 
     loadBreakpointsFromFile();
 }
