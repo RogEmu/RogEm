@@ -10,6 +10,7 @@ AssemblyWindow::AssemblyWindow(Debugger *debugger) :
     m_pcCursor(0.0f),
     m_debugger(debugger)
 {
+    setTitle("Assembly");
 }
 
 AssemblyWindow::~AssemblyWindow()
