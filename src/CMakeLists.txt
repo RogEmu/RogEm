@@ -16,6 +16,7 @@ set(SRC_FILES
     GUI/AssemblyWindow.cpp
     GUI/RegisterWindow.cpp
     GUI/MemoryWindow.cpp
+    GUI/MainMenuBar.cpp
     GUI/BreakpointWindow.cpp
     GUI/LogWindow.cpp
     GUI/SettingsWindow.cpp

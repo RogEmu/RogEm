@@ -28,10 +28,8 @@ Debugger::Debugger(System *system) :
     m_windows.emplace_back(std::make_unique<AssemblyWindow>(this));
     m_windows.emplace_back(std::make_unique<BreakpointWindow>(this));
     m_windows.emplace_back(std::make_unique<SettingsWindow>(this));
+    m_windows.emplace_back(std::make_unique<LogWindow>(this));
     auto biosMemoryWindow = std::make_unique<MemoryWindow>(this);
-    auto logWindow = std::make_unique<LogWindow>(this);
-    logWindow->setTitle("Log");
-    m_windows.push_back(std::move(logWindow));
     biosMemoryWindow->setBaseAddr(0xBFC00000);
     biosMemoryWindow->setTitle("BIOS");
     biosMemoryWindow->setReadOnly(true);
@@ -41,6 +39,7 @@ Debugger::Debugger(System *system) :
     ramMemoryWindow->setBaseAddr(0);
     ramMemoryWindow->setTitle("RAM");
     m_windows.push_back(std::move(ramMemoryWindow));
+    m_mainMenuBar = std::make_unique<MainMenuBar>(this);
 
     loadBreakpointsFromFile();
 }
@@ -118,6 +117,18 @@ std::vector<uint8_t> *Debugger::memoryRange(uint32_t addr)
 Disassembler &Debugger::getDisassembler()
 {
     return m_disassembler;
+}
+
+void Debugger::loadBios(const char *path)
+{
+    m_system->loadBios(path);
+    CPUReset();
+}
+
+void Debugger::loadExecutable(const char *path)
+{
+    m_system->loadExecutable(path);
+    CPUReset();
 }
 
 //The following functions are required for nlohmann-json to work, but are called automatically upon conversion
@@ -262,9 +273,13 @@ void Debugger::update()
 
 void Debugger::draw()
 {
+    m_mainMenuBar->draw();
     for (auto &subwin : m_windows)
     {
-        subwin->update();
+        if (subwin->isVisible())
+        {
+            subwin->update();
+        }
     }
 }
 

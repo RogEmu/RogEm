@@ -3,10 +3,13 @@
 #include "Core/CPU.hpp"
 
 SettingsWindow::SettingsWindow(Debugger *debugger) : m_debugger(debugger)
-{}
+{
+    setTitle("Settings");
+}
 
 SettingsWindow::~SettingsWindow()
-{}
+{
+}
 
 void SettingsWindow::resetButton()
 {
