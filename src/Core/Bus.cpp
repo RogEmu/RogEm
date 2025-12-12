@@ -132,6 +132,15 @@ uint8_t Bus::loadByte(uint32_t addr) const
             return device->read8(pAddress);
         }
     }
+
+    if (pAddress >= 0x1F801800 && pAddress <= 0x1F801FFF) {
+        return 0;
+    }
+
+    if (pAddress >= 0xFFFF0000 && pAddress <= 0xFFFFFFFF) {
+        return 0;
+    }
+
     spdlog::error("Bus: Read byte at address 0x{:08X} is not supported", addr);
     return 0;
 }
@@ -146,6 +155,9 @@ void Bus::storeByte(uint32_t addr, uint8_t value)
             device->write8(value, pAddress);
             return;
         }
+    }
+    if (pAddress >= 0x1F801800 && pAddress <= 0x1F801FFF) {
+        return;
     }
     spdlog::error("Bus: Write byte at address 0x{:08X} is not supported", addr);
 }

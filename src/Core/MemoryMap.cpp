@@ -21,6 +21,9 @@ uint32_t MemoryMap::mapAddress(uint32_t addr)
         case MemorySegments::KSEG1:
             return addr & 0x1FFFFFFF;
         case MemorySegments::KSEG2:
+            if (addr >= 0xF0000000 && addr <= 0xF000FFFF) {
+                return (addr & 0x000FFFFF) | 0x1F800000;
+            }
             return addr;
         default:
             spdlog::error("Unsupported address space: {:08X}", addr);
