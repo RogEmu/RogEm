@@ -242,7 +242,7 @@ void CPU::handleLoadDelay()
 
 bool CPU::shouldExecuteInterrupt()
 {
-    return (m_cop0.mfc(12) & 0x401);
+    return (m_cop0.mfc(12) & 0x401) == 0x401;
 }
 
 void CPU::branchOnConditionZero(const Instruction &instruction)
