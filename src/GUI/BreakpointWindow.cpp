@@ -2,6 +2,7 @@
 #include "Debugger/Debugger.hpp"
 
 #include "imgui.h"
+#include "imgui_stdlib.h"
 #include <fmt/format.h>
 
 BreakpointWindow::BreakpointWindow(Debugger *debugger) :
@@ -19,9 +20,9 @@ BreakpointWindow::~BreakpointWindow()
 void BreakpointWindow::addBreakpointButton()
 {
     if (ImGui::Button("Add Breakpoint")){
-        ImGui::OpenPopup("Breapkpoint Popup");
+        ImGui::OpenPopup("Breakpoint Popup");
     }
-    if (ImGui::BeginPopupContextItem("Breapkpoint Popup"))
+    if (ImGui::BeginPopupContextItem("Breakpoint Popup"))
     {
         static char addr[9] = "\0";
         static char labelText[32] = "\0";
@@ -94,7 +95,11 @@ void BreakpointWindow::displayBreakpoints()
         else
             ImGui::Text("%s", "Write");
         ImGui::TableNextColumn();
-        ImGui::Text("%s", bp.label.c_str());
+        std::string labelId = fmt::format("##label{}", index);
+        ImGui::PushItemWidth(-1);
+        ImGui::InputText(labelId.c_str(), &bp.label, ImGuiInputTextFlags_AutoSelectAll);
+        ImGui::PopItemWidth();
+        m_debugger->saveBreakpointsToFile();
         ImGui::TableNextColumn();
         std::string EnableLabel = fmt::format("Enable##{}", index);
         ImGui::Checkbox(EnableLabel.c_str(), &bp.enabled);
