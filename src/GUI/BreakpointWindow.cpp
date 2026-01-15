@@ -6,8 +6,7 @@
 #include <fmt/format.h>
 
 BreakpointWindow::BreakpointWindow(Debugger *debugger) :
-    m_debugger(debugger),
-    m_displayBreakpoints(true)
+    m_debugger(debugger)
 {
     setTitle("Breakpoints");
     m_breakpointType = 0;
@@ -68,9 +67,6 @@ void BreakpointWindow::addBreakpointButton()
 
 void BreakpointWindow::displayBreakpoints()
 {
-    ImGui::Checkbox("Display Breakpoints", &m_displayBreakpoints);
-    if (!m_displayBreakpoints)
-        return;
     ImGui::BeginTable("Breakpoints", 5, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_Resizable);
     ImGui::TableSetupColumn("#");
     ImGui::TableSetupColumn("Address");
@@ -105,8 +101,7 @@ void BreakpointWindow::displayBreakpoints()
         ImGui::Checkbox(EnableLabel.c_str(), &bp.enabled);
         ImGui::SameLine();
         std::string RemoveLabel = fmt::format("Remove##{}", index);
-        if (ImGui::Button(RemoveLabel.c_str()))
-        {
+        if (ImGui::Button(RemoveLabel.c_str())) {
             m_debugger->removeBreakpoint(index);
         }
         index++;
@@ -117,8 +112,19 @@ void BreakpointWindow::displayBreakpoints()
 void BreakpointWindow::update()
 {
     if (ImGui::Begin("Breakpoints")) {
-        if (!m_debugger->getBreakpoints().empty())
-           displayBreakpoints();
+        static bool enableBreakpoints = true;
+
+        if (ImGui::Checkbox("Enable breakpoints", &enableBreakpoints)) {
+            for (auto &bp : m_debugger->getBreakpoints()) {
+                bp.enabled = enableBreakpoints;
+            }
+            m_debugger->saveBreakpointsToFile();
+        }
+
+        if (!m_debugger->getBreakpoints().empty()) {
+
+            displayBreakpoints();
+        }
         addBreakpointButton();
     }
     ImGui::End();
