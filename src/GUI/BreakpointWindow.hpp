@@ -23,7 +23,6 @@ class BreakpointWindow : public IWindow
     private:
         Debugger *m_debugger;
         int m_breakpointType;
-        bool m_displayBreakpoints;
 };
 
 #endif
