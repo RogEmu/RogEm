@@ -34,7 +34,7 @@ class CpuLoadTest : public testing::Test
         {
             Instruction i = newLoadInstruction(opcode, rs, rt, imm);
             auto pc = cpu.getReg(CpuReg::PC);
-            bus.storeWord(pc, i.raw);
+            bus.store<uint32_t>(pc, i.raw);
             cpu.setReg(rt, defaultRegVal);
             cpu.step();
         }
@@ -84,7 +84,7 @@ TEST_F(CpuLoadTest, LW_AlignedAddress)
     CpuReg rt = CpuReg::T1;
 
     cpu.setReg(rs, base);
-    bus.storeWord(base + offset, value);
+    bus.store<uint32_t>(base + offset, value);
     runLW(rt, rs, offset);
     EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
     cpu.step();
@@ -143,7 +143,7 @@ TEST_F(CpuLoadTest, LW_PositiveOffset)
     CpuReg rt = CpuReg::T3;
 
     cpu.setReg(rs, base);
-    bus.storeWord(base + offset, value);
+    bus.store<uint32_t>(base + offset, value);
     runLW(rt, rs, offset);
     EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
     cpu.step();
@@ -159,7 +159,7 @@ TEST_F(CpuLoadTest, LW_NegativeOffset)
     CpuReg rt = CpuReg::T5;
 
     cpu.setReg(rs, base);
-    bus.storeWord(base + offset, value);  // base - 16
+    bus.store<uint32_t>(base + offset, value);  // base - 16
     runLW(rt, rs, offset);
     EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
     cpu.step();
@@ -175,7 +175,7 @@ TEST_F(CpuLoadTest, LW_MaxOffset)
     CpuReg rt = CpuReg::T7;
 
     cpu.setReg(rs, base);
-    bus.storeWord(base + offset, value);
+    bus.store<uint32_t>(base + offset, value);
     runLW(rt, rs, offset);
     EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
     cpu.step();
@@ -191,7 +191,7 @@ TEST_F(CpuLoadTest, LW_MinOffset)
     CpuReg rt = CpuReg::S1;
 
     cpu.setReg(rs, base);
-    bus.storeWord(base + offset, value);  // base - 32768
+    bus.store<uint32_t>(base + offset, value);  // base - 32768
     runLW(rt, rs, offset);
     EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
     cpu.step();
@@ -206,7 +206,7 @@ TEST_F(CpuLoadTest, LW_BaseRegisterZero)
     CpuReg rs = CpuReg::ZERO;
     CpuReg rt = CpuReg::T0;
 
-    bus.storeWord(base + offset, value);
+    bus.store<uint32_t>(base + offset, value);
     runLW(rt, rs, offset);
     EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
     cpu.step();
@@ -222,7 +222,7 @@ TEST_F(CpuLoadTest, LW_TargetRegisterZero)
     CpuReg rt = CpuReg::ZERO;
 
     cpu.setReg(rs, base);
-    bus.storeWord(base + offset, value);
+    bus.store<uint32_t>(base + offset, value);
     runLW(rt, rs, offset);
     EXPECT_EQ(cpu.getReg(rt), 0);
     cpu.step();
@@ -238,7 +238,7 @@ TEST_F(CpuLoadTest, LH_PositiveOffset)
     CpuReg rt = CpuReg::T1;
 
     cpu.setReg(rs, base);
-    bus.storeHalfWord(base + offset, value);
+    bus.store<uint16_t>(base + offset, value);
     runLH(rt, rs, offset);
     EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
     cpu.step();
@@ -254,7 +254,7 @@ TEST_F(CpuLoadTest, LH_NegativeOffset)
     CpuReg rt = CpuReg::T1;
 
     cpu.setReg(rs, base);
-    bus.storeHalfWord(base + offset, value);
+    bus.store<uint16_t>(base + offset, value);
     runLH(rt, rs, offset);
     EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
     cpu.step();
@@ -270,7 +270,7 @@ TEST_F(CpuLoadTest, LH_MinNegativeValue)
     CpuReg rt = CpuReg::T1;
 
     cpu.setReg(rs, base);
-    bus.storeHalfWord(base + offset, value);
+    bus.store<uint16_t>(base + offset, value);
     runLH(rt, rs, offset);
     EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
     cpu.step();
@@ -310,7 +310,7 @@ TEST_F(CpuLoadTest, LH_MaxPositiveOffset)
     CpuReg rt = CpuReg::T1;
 
     cpu.setReg(rs, base);
-    bus.storeHalfWord(base + offset, value);
+    bus.store<uint16_t>(base + offset, value);
     runLH(rt, rs, offset);
     EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
     cpu.step();
@@ -326,7 +326,7 @@ TEST_F(CpuLoadTest, LH_MaxNegativeOffset)
     CpuReg rt = CpuReg::T1;
 
     cpu.setReg(rs, base);
-    bus.storeHalfWord(base + offset, value);
+    bus.store<uint16_t>(base + offset, value);
     runLH(rt, rs, offset);
     EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
     cpu.step();
@@ -342,7 +342,7 @@ TEST_F(CpuLoadTest, LH_SignExtension)
     CpuReg rt = CpuReg::T1;
 
     cpu.setReg(rs, base);
-    bus.storeHalfWord(base + offset, value);
+    bus.store<uint16_t>(base + offset, value);
     runLH(rt, rs, offset);
     EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
     cpu.step();
@@ -358,7 +358,7 @@ TEST_F(CpuLoadTest, LB_RegularLoad)
     CpuReg rt = CpuReg::T1;
 
     cpu.setReg(rs, base);
-    bus.storeByte(base + offset, value);
+    bus.store<uint8_t>(base + offset, value);
     runLB(rt, rs, offset);
     EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
     cpu.step();
@@ -374,7 +374,7 @@ TEST_F(CpuLoadTest, LB_SignExtension_NegativeValue)
     CpuReg rt = CpuReg::T1;
 
     cpu.setReg(rs, base);
-    bus.storeByte(base + offset, value);
+    bus.store<uint8_t>(base + offset, value);
     runLB(rt, rs, offset);
     EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
     cpu.step();
@@ -390,7 +390,7 @@ TEST_F(CpuLoadTest, LB_SignExtension_PositiveValue)
     CpuReg rt = CpuReg::T1;
 
     cpu.setReg(rs, base);
-    bus.storeByte(base + offset, value);
+    bus.store<uint8_t>(base + offset, value);
     runLB(rt, rs, offset);
     EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
     cpu.step();
@@ -406,7 +406,7 @@ TEST_F(CpuLoadTest, LHU_PositiveOffset)
     CpuReg rt = CpuReg::T1;
 
     cpu.setReg(rs, base);
-    bus.storeHalfWord(base + offset, value);
+    bus.store<uint16_t>(base + offset, value);
     runLHU(rt, rs, offset);
     EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
     cpu.step();
@@ -422,7 +422,7 @@ TEST_F(CpuLoadTest, LHU_NegativeOffset)
     CpuReg rt = CpuReg::T1;
 
     cpu.setReg(rs, base);
-    bus.storeHalfWord(base + offset, value);
+    bus.store<uint16_t>(base + offset, value);
     runLHU(rt, rs, offset);
     EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
     cpu.step();
@@ -438,7 +438,7 @@ TEST_F(CpuLoadTest, LHU_ZeroOffset)
     CpuReg rt = CpuReg::T1;
 
     cpu.setReg(rs, base);
-    bus.storeHalfWord(base + offset, value);
+    bus.store<uint16_t>(base + offset, value);
     runLHU(rt, rs, offset);
     EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
     cpu.step();
@@ -454,7 +454,7 @@ TEST_F(CpuLoadTest, LHU_MaxOffset)
     CpuReg rt = CpuReg::T1;
 
     cpu.setReg(rs, base);
-    bus.storeHalfWord(base + offset, value);
+    bus.store<uint16_t>(base + offset, value);
     runLHU(rt, rs, offset);
     EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
     cpu.step();
@@ -470,7 +470,7 @@ TEST_F(CpuLoadTest, LHU_MinOffset)
     CpuReg rt = CpuReg::T1;
 
     cpu.setReg(rs, base);
-    bus.storeHalfWord(base + offset, value);
+    bus.store<uint16_t>(base + offset, value);
     runLHU(rt, rs, offset);
     EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
     cpu.step();
@@ -510,7 +510,7 @@ TEST_F(CpuLoadTest, LHU_ZeroExtension)
     CpuReg rt = CpuReg::T1;
 
     cpu.setReg(rs, base);
-    bus.storeHalfWord(base + offset, value);
+    bus.store<uint16_t>(base + offset, value);
     runLHU(rt, rs, offset);
     EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
     cpu.step();
@@ -526,7 +526,7 @@ TEST_F(CpuLoadTest, LBU_PositiveOffset)
     CpuReg rt = CpuReg::T1;
 
     cpu.setReg(rs, base);
-    bus.storeByte(base + offset, value);
+    bus.store<uint8_t>(base + offset, value);
     runLBU(rt, rs, offset);
     EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
     cpu.step();
@@ -542,7 +542,7 @@ TEST_F(CpuLoadTest, LBU_NegativeOffset)
     CpuReg rt = CpuReg::T1;
 
     cpu.setReg(rs, base);
-    bus.storeByte(base + offset, value);
+    bus.store<uint8_t>(base + offset, value);
     runLBU(rt, rs, offset);
     EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
     cpu.step();
@@ -558,7 +558,7 @@ TEST_F(CpuLoadTest, LBU_ZeroOffset)
     CpuReg rt = CpuReg::T1;
 
     cpu.setReg(rs, base);
-    bus.storeByte(base + offset, value);
+    bus.store<uint8_t>(base + offset, value);
     runLBU(rt, rs, offset);
     EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
     cpu.step();
@@ -574,7 +574,7 @@ TEST_F(CpuLoadTest, LBU_MaxOffset)
     CpuReg rt = CpuReg::T1;
 
     cpu.setReg(rs, base);
-    bus.storeByte(base + offset, value);
+    bus.store<uint8_t>(base + offset, value);
     runLBU(rt, rs, offset);
     EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
     cpu.step();
@@ -590,7 +590,7 @@ TEST_F(CpuLoadTest, LBU_MinOffset)
     CpuReg rt = CpuReg::T1;
 
     cpu.setReg(rs, base);
-    bus.storeByte(base + offset, value);
+    bus.store<uint8_t>(base + offset, value);
     runLBU(rt, rs, offset);
     EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
     cpu.step();
@@ -606,7 +606,7 @@ TEST_F(CpuLoadTest, LBU_ZeroExtension)
     CpuReg rt = CpuReg::T1;
 
     cpu.setReg(rs, base);
-    bus.storeByte(base + offset, value);
+    bus.store<uint8_t>(base + offset, value);
     runLBU(rt, rs, offset);
     EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
     cpu.step();
@@ -622,7 +622,7 @@ TEST_F(CpuLoadTest, LWL_AlignedLoad)
     CpuReg rt = CpuReg::T1;
 
     cpu.setReg(rs, base);
-    bus.storeWord(base, value);
+    bus.store<uint32_t>(base, value);
     runLWL(rt, rs, offset);
     EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
     cpu.step();
@@ -638,7 +638,7 @@ TEST_F(CpuLoadTest, LWL_Offset1)
     CpuReg rt = CpuReg::T1;
 
     cpu.setReg(rs, base);
-    bus.storeWord(base, value);
+    bus.store<uint32_t>(base, value);
     runLWL(rt, rs, offset);
     EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
     cpu.step();
@@ -654,7 +654,7 @@ TEST_F(CpuLoadTest, LWL_Offset2)
     CpuReg rt = CpuReg::T1;
 
     cpu.setReg(rs, base);
-    bus.storeWord(base, value);
+    bus.store<uint32_t>(base, value);
     runLWL(rt, rs, offset);
     EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
     cpu.step();
@@ -670,7 +670,7 @@ TEST_F(CpuLoadTest, LWL_Offset3)
     CpuReg rt = CpuReg::T1;
 
     cpu.setReg(rs, base);
-    bus.storeWord(base, value);
+    bus.store<uint32_t>(base, value);
     runLWL(rt, rs, offset);
     EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
     cpu.step();
@@ -686,7 +686,7 @@ TEST_F(CpuLoadTest, LWR_AlignedLoad)
     CpuReg rt = CpuReg::T1;
 
     cpu.setReg(rs, base);
-    bus.storeWord(base, value);
+    bus.store<uint32_t>(base, value);
     runLWR(rt, rs, offset);
     EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
     cpu.step();
@@ -702,7 +702,7 @@ TEST_F(CpuLoadTest, LWR_Offset1)
     CpuReg rt = CpuReg::T1;
 
     cpu.setReg(rs, base);
-    bus.storeWord(base, value);
+    bus.store<uint32_t>(base, value);
     runLWR(rt, rs, offset);
     EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
     cpu.step();
@@ -718,7 +718,7 @@ TEST_F(CpuLoadTest, LWR_Offset2)
     CpuReg rt = CpuReg::T1;
 
     cpu.setReg(rs, base);
-    bus.storeWord(base, value);
+    bus.store<uint32_t>(base, value);
     runLWR(rt, rs, offset);
     EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
     cpu.step();
@@ -734,7 +734,7 @@ TEST_F(CpuLoadTest, LWR_Offset3)
     CpuReg rt = CpuReg::T1;
 
     cpu.setReg(rs, base);
-    bus.storeWord(base, value);
+    bus.store<uint32_t>(base, value);
     runLWR(rt, rs, offset);
     EXPECT_EQ(cpu.getReg(rt), defaultRegVal);
     cpu.step();
@@ -745,10 +745,10 @@ TEST_F(CpuLoadTest, LWL_LWR_0_0)
 {
     cpu.setReg(CpuReg::T0, 0);
     cpu.setReg(CpuReg::PC, 0x1000);
-    bus.storeWord(0, 0xCAFEBABE);
-    bus.storeWord(4, 0x12345678);
-    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 0).raw);
-    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 0).raw);
+    bus.store<uint32_t>(0, 0xCAFEBABE);
+    bus.store<uint32_t>(4, 0x12345678);
+    bus.store<uint32_t>(0x1000, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 0).raw);
+    bus.store<uint32_t>(0x1004, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 0).raw);
     cpu.step();
     cpu.setReg(CpuReg::T0, 4);
     cpu.step();
@@ -760,10 +760,10 @@ TEST_F(CpuLoadTest, LWL_LWR_0_1)
 {
     cpu.setReg(CpuReg::T0, 0);
     cpu.setReg(CpuReg::PC, 0x1000);
-    bus.storeWord(0, 0xCAFEBABE);
-    bus.storeWord(4, 0x12345678);
-    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 0).raw);
-    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 1).raw);
+    bus.store<uint32_t>(0, 0xCAFEBABE);
+    bus.store<uint32_t>(4, 0x12345678);
+    bus.store<uint32_t>(0x1000, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 0).raw);
+    bus.store<uint32_t>(0x1004, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 1).raw);
     cpu.step();
     cpu.setReg(CpuReg::T0, 4);
     cpu.step();
@@ -775,10 +775,10 @@ TEST_F(CpuLoadTest, LWL_LWR_0_2)
 {
     cpu.setReg(CpuReg::T0, 0);
     cpu.setReg(CpuReg::PC, 0x1000);
-    bus.storeWord(0, 0xCAFEBABE);
-    bus.storeWord(4, 0x12345678);
-    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 0).raw);
-    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 2).raw);
+    bus.store<uint32_t>(0, 0xCAFEBABE);
+    bus.store<uint32_t>(4, 0x12345678);
+    bus.store<uint32_t>(0x1000, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 0).raw);
+    bus.store<uint32_t>(0x1004, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 2).raw);
     cpu.step();
     cpu.setReg(CpuReg::T0, 4);
     cpu.step();
@@ -790,10 +790,10 @@ TEST_F(CpuLoadTest, LWL_LWR_0_3)
 {
     cpu.setReg(CpuReg::T0, 0);
     cpu.setReg(CpuReg::PC, 0x1000);
-    bus.storeWord(0, 0xCAFEBABE);
-    bus.storeWord(4, 0x12345678);
-    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 0).raw);
-    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 3).raw);
+    bus.store<uint32_t>(0, 0xCAFEBABE);
+    bus.store<uint32_t>(4, 0x12345678);
+    bus.store<uint32_t>(0x1000, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 0).raw);
+    bus.store<uint32_t>(0x1004, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 3).raw);
     cpu.step();
     cpu.setReg(CpuReg::T0, 4);
     cpu.step();
@@ -805,10 +805,10 @@ TEST_F(CpuLoadTest, LWL_LWR_1_0)
 {
     cpu.setReg(CpuReg::T0, 0);
     cpu.setReg(CpuReg::PC, 0x1000);
-    bus.storeWord(0, 0xCAFEBABE);
-    bus.storeWord(4, 0x12345678);
-    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 1).raw);
-    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 0).raw);
+    bus.store<uint32_t>(0, 0xCAFEBABE);
+    bus.store<uint32_t>(4, 0x12345678);
+    bus.store<uint32_t>(0x1000, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 1).raw);
+    bus.store<uint32_t>(0x1004, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 0).raw);
     cpu.step();
     cpu.setReg(CpuReg::T0, 4);
     cpu.step();
@@ -820,10 +820,10 @@ TEST_F(CpuLoadTest, LWL_LWR_1_1)
 {
     cpu.setReg(CpuReg::T0, 0);
     cpu.setReg(CpuReg::PC, 0x1000);
-    bus.storeWord(0, 0xCAFEBABE);
-    bus.storeWord(4, 0x12345678);
-    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 1).raw);
-    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 1).raw);
+    bus.store<uint32_t>(0, 0xCAFEBABE);
+    bus.store<uint32_t>(4, 0x12345678);
+    bus.store<uint32_t>(0x1000, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 1).raw);
+    bus.store<uint32_t>(0x1004, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 1).raw);
     cpu.step();
     cpu.setReg(CpuReg::T0, 4);
     cpu.step();
@@ -835,10 +835,10 @@ TEST_F(CpuLoadTest, LWL_LWR_1_2)
 {
     cpu.setReg(CpuReg::T0, 0);
     cpu.setReg(CpuReg::PC, 0x1000);
-    bus.storeWord(0, 0xCAFEBABE);
-    bus.storeWord(4, 0x12345678);
-    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 1).raw);
-    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 2).raw);
+    bus.store<uint32_t>(0, 0xCAFEBABE);
+    bus.store<uint32_t>(4, 0x12345678);
+    bus.store<uint32_t>(0x1000, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 1).raw);
+    bus.store<uint32_t>(0x1004, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 2).raw);
     cpu.step();
     cpu.setReg(CpuReg::T0, 4);
     cpu.step();
@@ -850,10 +850,10 @@ TEST_F(CpuLoadTest, LWL_LWR_1_3)
 {
     cpu.setReg(CpuReg::T0, 0);
     cpu.setReg(CpuReg::PC, 0x1000);
-    bus.storeWord(0, 0xCAFEBABE);
-    bus.storeWord(4, 0x12345678);
-    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 1).raw);
-    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 3).raw);
+    bus.store<uint32_t>(0, 0xCAFEBABE);
+    bus.store<uint32_t>(4, 0x12345678);
+    bus.store<uint32_t>(0x1000, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 1).raw);
+    bus.store<uint32_t>(0x1004, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 3).raw);
     cpu.step();
     cpu.setReg(CpuReg::T0, 4);
     cpu.step();
@@ -865,10 +865,10 @@ TEST_F(CpuLoadTest, LWL_LWR_2_0)
 {
     cpu.setReg(CpuReg::T0, 0);
     cpu.setReg(CpuReg::PC, 0x1000);
-    bus.storeWord(0, 0xCAFEBABE);
-    bus.storeWord(4, 0x12345678);
-    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 2).raw);
-    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 0).raw);
+    bus.store<uint32_t>(0, 0xCAFEBABE);
+    bus.store<uint32_t>(4, 0x12345678);
+    bus.store<uint32_t>(0x1000, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 2).raw);
+    bus.store<uint32_t>(0x1004, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 0).raw);
     cpu.step();
     cpu.setReg(CpuReg::T0, 4);
     cpu.step();
@@ -880,10 +880,10 @@ TEST_F(CpuLoadTest, LWL_LWR_2_1)
 {
     cpu.setReg(CpuReg::T0, 0);
     cpu.setReg(CpuReg::PC, 0x1000);
-    bus.storeWord(0, 0xCAFEBABE);
-    bus.storeWord(4, 0x12345678);
-    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 2).raw);
-    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 1).raw);
+    bus.store<uint32_t>(0, 0xCAFEBABE);
+    bus.store<uint32_t>(4, 0x12345678);
+    bus.store<uint32_t>(0x1000, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 2).raw);
+    bus.store<uint32_t>(0x1004, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 1).raw);
     cpu.step();
     cpu.setReg(CpuReg::T0, 4);
     cpu.step();
@@ -895,10 +895,10 @@ TEST_F(CpuLoadTest, LWL_LWR_2_2)
 {
     cpu.setReg(CpuReg::T0, 0);
     cpu.setReg(CpuReg::PC, 0x1000);
-    bus.storeWord(0, 0xCAFEBABE);
-    bus.storeWord(4, 0x12345678);
-    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 2).raw);
-    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 2).raw);
+    bus.store<uint32_t>(0, 0xCAFEBABE);
+    bus.store<uint32_t>(4, 0x12345678);
+    bus.store<uint32_t>(0x1000, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 2).raw);
+    bus.store<uint32_t>(0x1004, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 2).raw);
     cpu.step();
     cpu.setReg(CpuReg::T0, 4);
     cpu.step();
@@ -910,10 +910,10 @@ TEST_F(CpuLoadTest, LWL_LWR_2_3)
 {
     cpu.setReg(CpuReg::T0, 0);
     cpu.setReg(CpuReg::PC, 0x1000);
-    bus.storeWord(0, 0xCAFEBABE);
-    bus.storeWord(4, 0x12345678);
-    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 2).raw);
-    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 3).raw);
+    bus.store<uint32_t>(0, 0xCAFEBABE);
+    bus.store<uint32_t>(4, 0x12345678);
+    bus.store<uint32_t>(0x1000, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 2).raw);
+    bus.store<uint32_t>(0x1004, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 3).raw);
     cpu.step();
     cpu.setReg(CpuReg::T0, 4);
     cpu.step();
@@ -925,10 +925,10 @@ TEST_F(CpuLoadTest, LWL_LWR_3_0)
 {
     cpu.setReg(CpuReg::T0, 0);
     cpu.setReg(CpuReg::PC, 0x1000);
-    bus.storeWord(0, 0xCAFEBABE);
-    bus.storeWord(4, 0x12345678);
-    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 3).raw);
-    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 0).raw);
+    bus.store<uint32_t>(0, 0xCAFEBABE);
+    bus.store<uint32_t>(4, 0x12345678);
+    bus.store<uint32_t>(0x1000, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 3).raw);
+    bus.store<uint32_t>(0x1004, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 0).raw);
     cpu.step();
     cpu.setReg(CpuReg::T0, 4);
     cpu.step();
@@ -940,10 +940,10 @@ TEST_F(CpuLoadTest, LWL_LWR_3_1)
 {
     cpu.setReg(CpuReg::T0, 0);
     cpu.setReg(CpuReg::PC, 0x1000);
-    bus.storeWord(0, 0xCAFEBABE);
-    bus.storeWord(4, 0x12345678);
-    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 3).raw);
-    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 1).raw);
+    bus.store<uint32_t>(0, 0xCAFEBABE);
+    bus.store<uint32_t>(4, 0x12345678);
+    bus.store<uint32_t>(0x1000, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 3).raw);
+    bus.store<uint32_t>(0x1004, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 1).raw);
     cpu.step();
     cpu.setReg(CpuReg::T0, 4);
     cpu.step();
@@ -955,10 +955,10 @@ TEST_F(CpuLoadTest, LWL_LWR_3_2)
 {
     cpu.setReg(CpuReg::T0, 0);
     cpu.setReg(CpuReg::PC, 0x1000);
-    bus.storeWord(0, 0xCAFEBABE);
-    bus.storeWord(4, 0x12345678);
-    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 3).raw);
-    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 2).raw);
+    bus.store<uint32_t>(0, 0xCAFEBABE);
+    bus.store<uint32_t>(4, 0x12345678);
+    bus.store<uint32_t>(0x1000, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 3).raw);
+    bus.store<uint32_t>(0x1004, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 2).raw);
     cpu.step();
     cpu.setReg(CpuReg::T0, 4);
     cpu.step();
@@ -970,10 +970,10 @@ TEST_F(CpuLoadTest, LWL_LWR_3_3)
 {
     cpu.setReg(CpuReg::T0, 0);
     cpu.setReg(CpuReg::PC, 0x1000);
-    bus.storeWord(0, 0xCAFEBABE);
-    bus.storeWord(4, 0x12345678);
-    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 3).raw);
-    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 3).raw);
+    bus.store<uint32_t>(0, 0xCAFEBABE);
+    bus.store<uint32_t>(4, 0x12345678);
+    bus.store<uint32_t>(0x1000, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 3).raw);
+    bus.store<uint32_t>(0x1004, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 3).raw);
     cpu.step();
     cpu.setReg(CpuReg::T0, 4);
     cpu.step();
@@ -985,10 +985,10 @@ TEST_F(CpuLoadTest, LWR_LWL_0_0)
 {
     cpu.setReg(CpuReg::T0, 0);
     cpu.setReg(CpuReg::PC, 0x1000);
-    bus.storeWord(0, 0xCAFEBABE);
-    bus.storeWord(4, 0x12345678);
-    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 0).raw);
-    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 0).raw);
+    bus.store<uint32_t>(0, 0xCAFEBABE);
+    bus.store<uint32_t>(4, 0x12345678);
+    bus.store<uint32_t>(0x1000, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 0).raw);
+    bus.store<uint32_t>(0x1004, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 0).raw);
     cpu.step();
     cpu.setReg(CpuReg::T0, 4);
     cpu.step();
@@ -1000,10 +1000,10 @@ TEST_F(CpuLoadTest, LWR_LWL_0_1)
 {
     cpu.setReg(CpuReg::T0, 0);
     cpu.setReg(CpuReg::PC, 0x1000);
-    bus.storeWord(0, 0xCAFEBABE);
-    bus.storeWord(4, 0x12345678);
-    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 0).raw);
-    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 1).raw);
+    bus.store<uint32_t>(0, 0xCAFEBABE);
+    bus.store<uint32_t>(4, 0x12345678);
+    bus.store<uint32_t>(0x1000, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 0).raw);
+    bus.store<uint32_t>(0x1004, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 1).raw);
     cpu.step();
     cpu.setReg(CpuReg::T0, 4);
     cpu.step();
@@ -1015,10 +1015,10 @@ TEST_F(CpuLoadTest, LWR_LWL_0_2)
 {
     cpu.setReg(CpuReg::T0, 0);
     cpu.setReg(CpuReg::PC, 0x1000);
-    bus.storeWord(0, 0xCAFEBABE);
-    bus.storeWord(4, 0x12345678);
-    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 0).raw);
-    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 2).raw);
+    bus.store<uint32_t>(0, 0xCAFEBABE);
+    bus.store<uint32_t>(4, 0x12345678);
+    bus.store<uint32_t>(0x1000, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 0).raw);
+    bus.store<uint32_t>(0x1004, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 2).raw);
     cpu.step();
     cpu.setReg(CpuReg::T0, 4);
     cpu.step();
@@ -1030,10 +1030,10 @@ TEST_F(CpuLoadTest, LWR_LWL_0_3)
 {
     cpu.setReg(CpuReg::T0, 0);
     cpu.setReg(CpuReg::PC, 0x1000);
-    bus.storeWord(0, 0xCAFEBABE);
-    bus.storeWord(4, 0x12345678);
-    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 0).raw);
-    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 3).raw);
+    bus.store<uint32_t>(0, 0xCAFEBABE);
+    bus.store<uint32_t>(4, 0x12345678);
+    bus.store<uint32_t>(0x1000, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 0).raw);
+    bus.store<uint32_t>(0x1004, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 3).raw);
     cpu.step();
     cpu.setReg(CpuReg::T0, 4);
     cpu.step();
@@ -1045,10 +1045,10 @@ TEST_F(CpuLoadTest, LWR_LWL_1_0)
 {
     cpu.setReg(CpuReg::T0, 0);
     cpu.setReg(CpuReg::PC, 0x1000);
-    bus.storeWord(0, 0xCAFEBABE);
-    bus.storeWord(4, 0x12345678);
-    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 1).raw);
-    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 0).raw);
+    bus.store<uint32_t>(0, 0xCAFEBABE);
+    bus.store<uint32_t>(4, 0x12345678);
+    bus.store<uint32_t>(0x1000, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 1).raw);
+    bus.store<uint32_t>(0x1004, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 0).raw);
     cpu.step();
     cpu.setReg(CpuReg::T0, 4);
     cpu.step();
@@ -1060,10 +1060,10 @@ TEST_F(CpuLoadTest, LWR_LWL_1_1)
 {
     cpu.setReg(CpuReg::T0, 0);
     cpu.setReg(CpuReg::PC, 0x1000);
-    bus.storeWord(0, 0xCAFEBABE);
-    bus.storeWord(4, 0x12345678);
-    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 1).raw);
-    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 1).raw);
+    bus.store<uint32_t>(0, 0xCAFEBABE);
+    bus.store<uint32_t>(4, 0x12345678);
+    bus.store<uint32_t>(0x1000, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 1).raw);
+    bus.store<uint32_t>(0x1004, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 1).raw);
     cpu.step();
     cpu.setReg(CpuReg::T0, 4);
     cpu.step();
@@ -1075,10 +1075,10 @@ TEST_F(CpuLoadTest, LWR_LWL_1_2)
 {
     cpu.setReg(CpuReg::T0, 0);
     cpu.setReg(CpuReg::PC, 0x1000);
-    bus.storeWord(0, 0xCAFEBABE);
-    bus.storeWord(4, 0x12345678);
-    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 1).raw);
-    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 2).raw);
+    bus.store<uint32_t>(0, 0xCAFEBABE);
+    bus.store<uint32_t>(4, 0x12345678);
+    bus.store<uint32_t>(0x1000, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 1).raw);
+    bus.store<uint32_t>(0x1004, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 2).raw);
     cpu.step();
     cpu.setReg(CpuReg::T0, 4);
     cpu.step();
@@ -1090,10 +1090,10 @@ TEST_F(CpuLoadTest, LWR_LWL_1_3)
 {
     cpu.setReg(CpuReg::T0, 0);
     cpu.setReg(CpuReg::PC, 0x1000);
-    bus.storeWord(0, 0xCAFEBABE);
-    bus.storeWord(4, 0x12345678);
-    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 1).raw);
-    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 3).raw);
+    bus.store<uint32_t>(0, 0xCAFEBABE);
+    bus.store<uint32_t>(4, 0x12345678);
+    bus.store<uint32_t>(0x1000, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 1).raw);
+    bus.store<uint32_t>(0x1004, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 3).raw);
     cpu.step();
     cpu.setReg(CpuReg::T0, 4);
     cpu.step();
@@ -1105,10 +1105,10 @@ TEST_F(CpuLoadTest, LWR_LWL_2_0)
 {
     cpu.setReg(CpuReg::T0, 0);
     cpu.setReg(CpuReg::PC, 0x1000);
-    bus.storeWord(0, 0xCAFEBABE);
-    bus.storeWord(4, 0x12345678);
-    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 2).raw);
-    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 0).raw);
+    bus.store<uint32_t>(0, 0xCAFEBABE);
+    bus.store<uint32_t>(4, 0x12345678);
+    bus.store<uint32_t>(0x1000, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 2).raw);
+    bus.store<uint32_t>(0x1004, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 0).raw);
     cpu.step();
     cpu.setReg(CpuReg::T0, 4);
     cpu.step();
@@ -1120,10 +1120,10 @@ TEST_F(CpuLoadTest, LWR_LWL_2_1)
 {
     cpu.setReg(CpuReg::T0, 0);
     cpu.setReg(CpuReg::PC, 0x1000);
-    bus.storeWord(0, 0xCAFEBABE);
-    bus.storeWord(4, 0x12345678);
-    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 2).raw);
-    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 1).raw);
+    bus.store<uint32_t>(0, 0xCAFEBABE);
+    bus.store<uint32_t>(4, 0x12345678);
+    bus.store<uint32_t>(0x1000, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 2).raw);
+    bus.store<uint32_t>(0x1004, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 1).raw);
     cpu.step();
     cpu.setReg(CpuReg::T0, 4);
     cpu.step();
@@ -1135,10 +1135,10 @@ TEST_F(CpuLoadTest, LWR_LWL_2_2)
 {
     cpu.setReg(CpuReg::T0, 0);
     cpu.setReg(CpuReg::PC, 0x1000);
-    bus.storeWord(0, 0xCAFEBABE);
-    bus.storeWord(4, 0x12345678);
-    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 2).raw);
-    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 2).raw);
+    bus.store<uint32_t>(0, 0xCAFEBABE);
+    bus.store<uint32_t>(4, 0x12345678);
+    bus.store<uint32_t>(0x1000, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 2).raw);
+    bus.store<uint32_t>(0x1004, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 2).raw);
     cpu.step();
     cpu.setReg(CpuReg::T0, 4);
     cpu.step();
@@ -1150,10 +1150,10 @@ TEST_F(CpuLoadTest, LWR_LWL_2_3)
 {
     cpu.setReg(CpuReg::T0, 0);
     cpu.setReg(CpuReg::PC, 0x1000);
-    bus.storeWord(0, 0xCAFEBABE);
-    bus.storeWord(4, 0x12345678);
-    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 2).raw);
-    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 3).raw);
+    bus.store<uint32_t>(0, 0xCAFEBABE);
+    bus.store<uint32_t>(4, 0x12345678);
+    bus.store<uint32_t>(0x1000, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 2).raw);
+    bus.store<uint32_t>(0x1004, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 3).raw);
     cpu.step();
     cpu.setReg(CpuReg::T0, 4);
     cpu.step();
@@ -1165,10 +1165,10 @@ TEST_F(CpuLoadTest, LWR_LWL_3_0)
 {
     cpu.setReg(CpuReg::T0, 0);
     cpu.setReg(CpuReg::PC, 0x1000);
-    bus.storeWord(0, 0xCAFEBABE);
-    bus.storeWord(4, 0x12345678);
-    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 3).raw);
-    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 0).raw);
+    bus.store<uint32_t>(0, 0xCAFEBABE);
+    bus.store<uint32_t>(4, 0x12345678);
+    bus.store<uint32_t>(0x1000, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 3).raw);
+    bus.store<uint32_t>(0x1004, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 0).raw);
     cpu.step();
     cpu.setReg(CpuReg::T0, 4);
     cpu.step();
@@ -1180,10 +1180,10 @@ TEST_F(CpuLoadTest, LWR_LWL_3_1)
 {
     cpu.setReg(CpuReg::T0, 0);
     cpu.setReg(CpuReg::PC, 0x1000);
-    bus.storeWord(0, 0xCAFEBABE);
-    bus.storeWord(4, 0x12345678);
-    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 3).raw);
-    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 1).raw);
+    bus.store<uint32_t>(0, 0xCAFEBABE);
+    bus.store<uint32_t>(4, 0x12345678);
+    bus.store<uint32_t>(0x1000, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 3).raw);
+    bus.store<uint32_t>(0x1004, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 1).raw);
     cpu.step();
     cpu.setReg(CpuReg::T0, 4);
     cpu.step();
@@ -1195,10 +1195,10 @@ TEST_F(CpuLoadTest, LWR_LWL_3_2)
 {
     cpu.setReg(CpuReg::T0, 0);
     cpu.setReg(CpuReg::PC, 0x1000);
-    bus.storeWord(0, 0xCAFEBABE);
-    bus.storeWord(4, 0x12345678);
-    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 3).raw);
-    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 2).raw);
+    bus.store<uint32_t>(0, 0xCAFEBABE);
+    bus.store<uint32_t>(4, 0x12345678);
+    bus.store<uint32_t>(0x1000, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 3).raw);
+    bus.store<uint32_t>(0x1004, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 2).raw);
     cpu.step();
     cpu.setReg(CpuReg::T0, 4);
     cpu.step();
@@ -1210,10 +1210,10 @@ TEST_F(CpuLoadTest, LWR_LWL_3_3)
 {
     cpu.setReg(CpuReg::T0, 0);
     cpu.setReg(CpuReg::PC, 0x1000);
-    bus.storeWord(0, 0xCAFEBABE);
-    bus.storeWord(4, 0x12345678);
-    bus.storeWord(0x1000, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 3).raw);
-    bus.storeWord(0x1004, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 3).raw);
+    bus.store<uint32_t>(0, 0xCAFEBABE);
+    bus.store<uint32_t>(4, 0x12345678);
+    bus.store<uint32_t>(0x1000, newLoadInstruction(PrimaryOpCode::LWR, CpuReg::T0, CpuReg::T1, 3).raw);
+    bus.store<uint32_t>(0x1004, newLoadInstruction(PrimaryOpCode::LWL, CpuReg::T0, CpuReg::T1, 3).raw);
     cpu.step();
     cpu.setReg(CpuReg::T0, 4);
     cpu.step();

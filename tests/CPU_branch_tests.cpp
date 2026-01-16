@@ -34,8 +34,8 @@ class CpuBranchTest : public testing::Test
             cpu.setReg(CpuReg::T1, rt);
             cpu.setReg(CpuReg::T2, 0x10);
 
-            bus.storeWord(pc, i.raw); // Branch instruction
-            bus.storeWord(pc + 4, 0x254B0020); // ADDIU $t3, $t2, 0x20 (delay slot)
+            bus.store<uint32_t>(pc, i.raw); // Branch instruction
+            bus.store<uint32_t>(pc + 4, 0x254B0020); // ADDIU $t3, $t2, 0x20 (delay slot)
 
             cpu.step();
             EXPECT_EQ(cpu.getReg(CpuReg::PC), pc + 4);
@@ -60,8 +60,8 @@ class CpuBranchTest : public testing::Test
             cpu.setReg(CpuReg::T1, 0);
             cpu.setReg(CpuReg::RA, defaultRegVal);
 
-            bus.storeWord(pc, i.raw);
-            bus.storeWord(pc + 4, 0x34091234); // ORI $t1, $zero, 0x1234 (delay slot)
+            bus.store<uint32_t>(pc, i.raw);
+            bus.store<uint32_t>(pc + 4, 0x34091234); // ORI $t1, $zero, 0x1234 (delay slot)
 
             cpu.step();
             EXPECT_EQ(cpu.getReg(CpuReg::PC), pc + 4);

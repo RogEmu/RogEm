@@ -29,7 +29,7 @@ class CpuArithmeticTest : public testing::Test
             i.r.funct = static_cast<uint8_t>(opcode);
 
             auto pc = cpu.getReg(CpuReg::PC);
-            bus.storeWord(pc, i.raw);
+            bus.store<uint32_t>(pc, i.raw);
 
             cpu.setReg(CpuReg::T0, defaultRegVal);
             cpu.setReg(CpuReg::T1, left);
@@ -48,7 +48,7 @@ class CpuArithmeticTest : public testing::Test
             i.i.immediate = immediate;
 
             auto pc = cpu.getReg(CpuReg::PC);
-            bus.storeWord(pc, i.raw);
+            bus.store<uint32_t>(pc, i.raw);
 
             cpu.setReg(CpuReg::T0, defaultRegVal);
             cpu.setReg(CpuReg::T1, value);

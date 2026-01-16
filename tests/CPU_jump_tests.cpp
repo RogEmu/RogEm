@@ -21,8 +21,8 @@ class CpuJumpTest : public testing::Test
 TEST_F(CpuJumpTest, JUMP)
 {
     auto pc = cpu.getReg(CpuReg::PC);
-    bus.storeWord(pc, 0x08002000); // J 0x2000
-    bus.storeWord(pc + 4, 0x25090010); // ADDIU $t1, $t2, 0x10
+    bus.store<uint32_t>(pc, 0x08002000); // J 0x2000
+    bus.store<uint32_t>(pc + 4, 0x25090010); // ADDIU $t1, $t2, 0x10
 
     cpu.setReg(CpuReg::T0, 0x5);
 
@@ -37,8 +37,8 @@ TEST_F(CpuJumpTest, JUMP)
 TEST_F(CpuJumpTest, JUMP_AND_LINK)
 {
     auto pc = cpu.getReg(CpuReg::PC);
-    bus.storeWord(pc, 0x0C002000); // JAL 0x2000
-    bus.storeWord(pc + 4, 0x25090010); // ADDIU $t1, $t2, 0x10
+    bus.store<uint32_t>(pc, 0x0C002000); // JAL 0x2000
+    bus.store<uint32_t>(pc + 4, 0x25090010); // ADDIU $t1, $t2, 0x10
 
     cpu.setReg(CpuReg::T0, 5);
 
@@ -54,8 +54,8 @@ TEST_F(CpuJumpTest, JUMP_AND_LINK)
 TEST_F(CpuJumpTest, JUMP_REGISTER)
 {
     auto pc = cpu.getReg(CpuReg::PC);
-    bus.storeWord(pc, 0x01800008); // JR $t4
-    bus.storeWord(pc + 4, 0x25490010); // ADDIU $t1, $t2, 0x10
+    bus.store<uint32_t>(pc, 0x01800008); // JR $t4
+    bus.store<uint32_t>(pc + 4, 0x25490010); // ADDIU $t1, $t2, 0x10
 
     cpu.setReg(CpuReg::T2, 0x10);
     cpu.setReg(CpuReg::T4, 0xFABC);
@@ -71,8 +71,8 @@ TEST_F(CpuJumpTest, JUMP_REGISTER)
 TEST_F(CpuJumpTest, JUMP_AND_LINK_REGISTER)
 {
     auto pc = cpu.getReg(CpuReg::PC);
-    bus.storeWord(pc, 0x01A06009); // JALR $t4, $t5
-    bus.storeWord(pc + 4, 0x25490010); // ADDIU $t1, $t2, 0x10
+    bus.store<uint32_t>(pc, 0x01A06009); // JALR $t4, $t5
+    bus.store<uint32_t>(pc + 4, 0x25490010); // ADDIU $t1, $t2, 0x10
 
     cpu.setReg(CpuReg::T2, 0x10);
     cpu.setReg(CpuReg::T5, 0xFABC); // Set jump address
@@ -89,8 +89,8 @@ TEST_F(CpuJumpTest, JUMP_AND_LINK_REGISTER)
 TEST_F(CpuJumpTest, JUMP_AND_LINK_REGISTER_RA)
 {
     auto pc = cpu.getReg(CpuReg::PC);
-    bus.storeWord(pc, 0x0180F809); // JALR $t4, $ra
-    bus.storeWord(pc + 4, 0x25490010); // ADDIU $t1, $t2, 0x10
+    bus.store<uint32_t>(pc, 0x0180F809); // JALR $t4, $ra
+    bus.store<uint32_t>(pc + 4, 0x25490010); // ADDIU $t1, $t2, 0x10
 
     cpu.setReg(CpuReg::T2, 0x10);
     cpu.setReg(CpuReg::T4, 0xFABC); // Set jump address

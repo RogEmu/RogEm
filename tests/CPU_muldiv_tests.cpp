@@ -29,7 +29,7 @@ class CpuMuldivTest : public testing::Test
             i.r.funct = static_cast<uint8_t>(opcode);
 
             auto pc = cpu.getReg(CpuReg::PC);
-            bus.storeWord(pc, i.raw);
+            bus.store<uint32_t>(pc, i.raw);
             cpu.setReg(CpuReg::HI, defaultRegVal);
             cpu.setReg(CpuReg::LO, defaultRegVal);
             cpu.step();
@@ -56,7 +56,7 @@ class CpuMuldivTest : public testing::Test
             }
 
             auto pc = cpu.getReg(CpuReg::PC);
-            bus.storeWord(pc, i.raw);
+            bus.store<uint32_t>(pc, i.raw);
             cpu.setReg(CpuReg::HI, defaultRegVal);
             cpu.setReg(CpuReg::LO, defaultRegVal);
             cpu.step();

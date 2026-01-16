@@ -28,7 +28,7 @@ class CpuCop0Test : public testing::Test
             i.r.rd = srcReg;
 
             auto pc = cpu.getReg(CpuReg::PC);
-            bus.storeWord(pc, i.raw);
+            bus.store<uint32_t>(pc, i.raw);
             cpu.setCop0Reg(srcReg, 0xCAFEBABE);
             cpu.setReg(destReg, defaultRegVal);
 
@@ -46,7 +46,7 @@ class CpuCop0Test : public testing::Test
             i.r.rd = destReg;
 
             auto pc = cpu.getReg(CpuReg::PC);
-            bus.storeWord(pc, i.raw);
+            bus.store<uint32_t>(pc, i.raw);
             cpu.setReg(srcReg, 0xCAFEBABE);
             cpu.setCop0Reg(destReg, defaultRegVal);
 

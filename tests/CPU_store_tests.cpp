@@ -29,20 +29,20 @@ class CpuStoreTest : public testing::Test
             i.i.immediate = static_cast<uint16_t>(imm);
 
             auto pc = cpu.getReg(CpuReg::PC);
-            bus.storeWord(pc, i.raw);
+            bus.store<uint32_t>(pc, i.raw);
             uint32_t base = cpu.getReg(rs);
             uint32_t address = base + imm;
 
             switch (opcode)
             {
                 case PrimaryOpCode::SW:
-                    bus.storeWord(address, defaultRegVal);
+                    bus.store<uint32_t>(address, defaultRegVal);
                     break;
                 case PrimaryOpCode::SH:
-                    bus.storeHalfWord(address, defaultRegVal & 0xFFFF);
+                    bus.store<uint16_t>(address, defaultRegVal & 0xFFFF);
                     break;
                 case PrimaryOpCode::SB:
-                    bus.storeByte(address, defaultRegVal & 0xFF);
+                    bus.store<uint8_t>(address, defaultRegVal & 0xFF);
                 default:
                     break;
             }
@@ -62,7 +62,7 @@ TEST_F(CpuStoreTest, SW_PositiveOffset)
     cpu.setReg(rt, value);
     runStore(PrimaryOpCode::SW, rs, rt, offset);
 
-    EXPECT_EQ(bus.loadWord(base + offset), value);
+    EXPECT_EQ(bus.load<uint32_t>(base + offset), value);
 }
 
 TEST_F(CpuStoreTest, SW_NegativeOffset)
@@ -77,7 +77,7 @@ TEST_F(CpuStoreTest, SW_NegativeOffset)
     cpu.setReg(rt, value);
     runStore(PrimaryOpCode::SW, rs, rt, offset);
 
-    EXPECT_EQ(bus.loadWord(base + offset), value);
+    EXPECT_EQ(bus.load<uint32_t>(base + offset), value);
 }
 
 TEST_F(CpuStoreTest, SW_ZeroOffset)
@@ -92,7 +92,7 @@ TEST_F(CpuStoreTest, SW_ZeroOffset)
     cpu.setReg(rt, value);
     runStore(PrimaryOpCode::SW, rs, rt, offset);
 
-    EXPECT_EQ(bus.loadWord(base + offset), value);
+    EXPECT_EQ(bus.load<uint32_t>(base + offset), value);
 }
 
 TEST_F(CpuStoreTest, SW_MaxOffset)
@@ -107,7 +107,7 @@ TEST_F(CpuStoreTest, SW_MaxOffset)
     cpu.setReg(rt, value);
     runStore(PrimaryOpCode::SW, rs, rt, offset);
 
-    EXPECT_EQ(bus.loadWord(base + offset), value);
+    EXPECT_EQ(bus.load<uint32_t>(base + offset), value);
 }
 
 TEST_F(CpuStoreTest, SW_MinOffset)
@@ -122,7 +122,7 @@ TEST_F(CpuStoreTest, SW_MinOffset)
     cpu.setReg(rt, value);
     runStore(PrimaryOpCode::SW, rs, rt, offset);
 
-    EXPECT_EQ(bus.loadWord(base + offset), value);
+    EXPECT_EQ(bus.load<uint32_t>(base + offset), value);
 }
 
 TEST_F(CpuStoreTest, SH_PositiveOffset)
@@ -137,7 +137,7 @@ TEST_F(CpuStoreTest, SH_PositiveOffset)
     cpu.setReg(rt, value);
     runStore(PrimaryOpCode::SH, rs, rt, offset);
 
-    EXPECT_EQ(bus.loadHalfWord(base + offset), value);
+    EXPECT_EQ(bus.load<uint16_t>(base + offset), value);
 }
 
 TEST_F(CpuStoreTest, SH_NegativeOffset)
@@ -152,7 +152,7 @@ TEST_F(CpuStoreTest, SH_NegativeOffset)
     cpu.setReg(rt, value);
     runStore(PrimaryOpCode::SH, rs, rt, offset);
 
-    EXPECT_EQ(bus.loadHalfWord(base + offset), value);
+    EXPECT_EQ(bus.load<uint16_t>(base + offset), value);
 }
 
 TEST_F(CpuStoreTest, SH_ZeroOffset)
@@ -167,7 +167,7 @@ TEST_F(CpuStoreTest, SH_ZeroOffset)
     cpu.setReg(rt, value);
     runStore(PrimaryOpCode::SH, rs, rt, offset);
 
-    EXPECT_EQ(bus.loadHalfWord(base + offset), value);
+    EXPECT_EQ(bus.load<uint16_t>(base + offset), value);
 }
 
 TEST_F(CpuStoreTest, SH_MaxOffset)
@@ -182,7 +182,7 @@ TEST_F(CpuStoreTest, SH_MaxOffset)
     cpu.setReg(rt, value);
     runStore(PrimaryOpCode::SH, rs, rt, offset);
 
-    EXPECT_EQ(bus.loadHalfWord(base + offset), value);
+    EXPECT_EQ(bus.load<uint16_t>(base + offset), value);
 }
 
 TEST_F(CpuStoreTest, SH_MinOffset)
@@ -197,7 +197,7 @@ TEST_F(CpuStoreTest, SH_MinOffset)
     cpu.setReg(rt, value);
     runStore(PrimaryOpCode::SH, rs, rt, offset);
 
-    EXPECT_EQ(bus.loadHalfWord(base + offset), value);
+    EXPECT_EQ(bus.load<uint16_t>(base + offset), value);
 }
 
 TEST_F(CpuStoreTest, SB_PositiveOffset)
@@ -212,7 +212,7 @@ TEST_F(CpuStoreTest, SB_PositiveOffset)
     cpu.setReg(rt, value);
     runStore(PrimaryOpCode::SB, rs, rt, offset);
 
-    EXPECT_EQ(bus.loadByte(base + offset), value);
+    EXPECT_EQ(bus.load<uint8_t>(base + offset), value);
 }
 
 TEST_F(CpuStoreTest, SB_NegativeOffset)
@@ -227,7 +227,7 @@ TEST_F(CpuStoreTest, SB_NegativeOffset)
     cpu.setReg(rt, value);
     runStore(PrimaryOpCode::SB, rs, rt, offset);
 
-    EXPECT_EQ(bus.loadByte(base + offset), value);
+    EXPECT_EQ(bus.load<uint8_t>(base + offset), value);
 }
 
 TEST_F(CpuStoreTest, SB_ZeroOffset)
@@ -242,7 +242,7 @@ TEST_F(CpuStoreTest, SB_ZeroOffset)
     cpu.setReg(rt, value);
     runStore(PrimaryOpCode::SB, rs, rt, offset);
 
-    EXPECT_EQ(bus.loadByte(base + offset), value);
+    EXPECT_EQ(bus.load<uint8_t>(base + offset), value);
 }
 
 TEST_F(CpuStoreTest, SB_MaxOffset)
@@ -257,7 +257,7 @@ TEST_F(CpuStoreTest, SB_MaxOffset)
     cpu.setReg(rt, value);
     runStore(PrimaryOpCode::SB, rs, rt, offset);
 
-    EXPECT_EQ(bus.loadByte(base + offset), value);
+    EXPECT_EQ(bus.load<uint8_t>(base + offset), value);
 }
 
 TEST_F(CpuStoreTest, SB_MinOffset)
@@ -272,7 +272,7 @@ TEST_F(CpuStoreTest, SB_MinOffset)
     cpu.setReg(rt, value);
     runStore(PrimaryOpCode::SB, rs, rt, offset);
 
-    EXPECT_EQ(bus.loadByte(base + offset), value);
+    EXPECT_EQ(bus.load<uint8_t>(base + offset), value);
 }
 
 TEST_F(CpuStoreTest, SWR_Offset0)
@@ -285,9 +285,9 @@ TEST_F(CpuStoreTest, SWR_Offset0)
 
     cpu.setReg(rs, base);
     cpu.setReg(rt, value);
-    bus.storeWord(base, 0xCAFEBABE);
+    bus.store<uint32_t>(base, 0xCAFEBABE);
     runStore(PrimaryOpCode::SWR, rs, rt, offset);
-    EXPECT_EQ(bus.loadWord(base), value);
+    EXPECT_EQ(bus.load<uint32_t>(base), value);
 }
 
 TEST_F(CpuStoreTest, SWR_Offset1)
@@ -300,9 +300,9 @@ TEST_F(CpuStoreTest, SWR_Offset1)
 
     cpu.setReg(rs, base);
     cpu.setReg(rt, value);
-    bus.storeWord(base, 0xCAFEBABE);
+    bus.store<uint32_t>(base, 0xCAFEBABE);
     runStore(PrimaryOpCode::SWR, rs, rt, offset);
-    EXPECT_EQ(bus.loadWord(base), 0xBBCCDDBE);
+    EXPECT_EQ(bus.load<uint32_t>(base), 0xBBCCDDBE);
 }
 
 TEST_F(CpuStoreTest, SWR_Offset2)
@@ -315,9 +315,9 @@ TEST_F(CpuStoreTest, SWR_Offset2)
 
     cpu.setReg(rs, base);
     cpu.setReg(rt, value);
-    bus.storeWord(base, 0xCAFEBABE);
+    bus.store<uint32_t>(base, 0xCAFEBABE);
     runStore(PrimaryOpCode::SWR, rs, rt, offset);
-    EXPECT_EQ(bus.loadWord(base), 0xCCDDBABE);
+    EXPECT_EQ(bus.load<uint32_t>(base), 0xCCDDBABE);
 }
 
 TEST_F(CpuStoreTest, SWR_Offset3)
@@ -330,7 +330,7 @@ TEST_F(CpuStoreTest, SWR_Offset3)
 
     cpu.setReg(rs, base);
     cpu.setReg(rt, value);
-    bus.storeWord(base, 0xCAFEBABE);
+    bus.store<uint32_t>(base, 0xCAFEBABE);
     runStore(PrimaryOpCode::SWR, rs, rt, offset);
-    EXPECT_EQ(bus.loadWord(base), 0xDDFEBABE);
+    EXPECT_EQ(bus.load<uint32_t>(base), 0xDDFEBABE);
 }

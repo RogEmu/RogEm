@@ -125,7 +125,7 @@ void CPU::checkTtyOutput()
 
 Instruction CPU::fetchInstruction()
 {
-    uint32_t instruction = m_bus->loadWord(m_pc);
+    uint32_t instruction = m_bus->load<uint32_t>(m_pc);
     checkTtyOutput();
     return Instruction{.raw=instruction};
 }
@@ -443,7 +443,7 @@ void CPU::storeWord(const Instruction &instruction)
     }
     uint32_t value = getReg(static_cast<CpuReg>(instruction.i.rt));
 
-    m_bus->storeWord(address, value);
+    m_bus->store<uint32_t>(address, value);
 }
 
 void CPU::storeHalfWord(const Instruction &instruction)
@@ -466,7 +466,7 @@ void CPU::storeHalfWord(const Instruction &instruction)
 
     uint16_t value = static_cast<uint16_t>(getReg(static_cast<CpuReg>(instruction.i.rt)));
 
-    m_bus->storeHalfWord(address, value);
+    m_bus->store<uint16_t>(address, value);
 }
 
 void CPU::storeByte(const Instruction &instruction)
@@ -484,7 +484,7 @@ void CPU::storeByte(const Instruction &instruction)
     uint32_t address = getReg(static_cast<CpuReg>(instruction.i.rs)) + imm;
     uint8_t value = static_cast<uint8_t>(getReg(static_cast<CpuReg>(instruction.i.rt)));
 
-    m_bus->storeByte(address, value);
+    m_bus->store<uint8_t>(address, value);
 }
 
 void CPU::shiftLeftLogical(const Instruction &instruction)
@@ -640,7 +640,7 @@ void CPU::loadWord(const Instruction &instruction)
         return;
     }
 
-    uint32_t value = m_bus->loadWord(address);
+    uint32_t value = m_bus->load<uint32_t>(address);
     loadWithDelay(static_cast<CpuReg>(instruction.i.rt), value);
 }
 
@@ -654,7 +654,7 @@ void CPU::loadHalfWord(const Instruction &instruction)
         return;
     }
 
-    int16_t value = static_cast<int16_t>(m_bus->loadHalfWord(address));
+    int16_t value = static_cast<int16_t>(m_bus->load<uint16_t>(address));
     loadWithDelay(static_cast<CpuReg>(instruction.i.rt), value);
 }
 
@@ -668,7 +668,7 @@ void CPU::loadHalfWordUnsigned(const Instruction &instruction)
         return;
     }
 
-    uint16_t value = m_bus->loadHalfWord(address);
+    uint16_t value = m_bus->load<uint16_t>(address);
     loadWithDelay(static_cast<CpuReg>(instruction.i.rt), value);
 }
 
@@ -677,7 +677,7 @@ void CPU::loadByte(const Instruction &instruction)
     int32_t imm = static_cast<int16_t>(instruction.i.immediate);
     uint32_t address = getReg(static_cast<CpuReg>(instruction.i.rs)) + imm;
 
-    int8_t value = static_cast<int8_t>(m_bus->loadByte(address));
+    int8_t value = static_cast<int8_t>(m_bus->load<uint8_t>(address));
     loadWithDelay(static_cast<CpuReg>(instruction.i.rt), value);
 }
 
@@ -686,7 +686,7 @@ void CPU::loadByteUnsigned(const Instruction &instruction)
     int32_t imm = static_cast<int16_t>(instruction.i.immediate);
     uint32_t address = getReg(static_cast<CpuReg>(instruction.i.rs)) + imm;
 
-    uint8_t value = m_bus->loadByte(address);
+    uint8_t value = m_bus->load<uint8_t>(address);
     loadWithDelay(static_cast<CpuReg>(instruction.i.rt), value);
 }
 
@@ -695,7 +695,7 @@ void CPU::loadWordRight(const Instruction &instruction)
     int32_t offset = static_cast<int16_t>(instruction.i.immediate);
     uint32_t address = getReg(static_cast<CpuReg>(instruction.i.rs)) + offset;
 
-    uint32_t loadedWord = m_bus->loadWord(address & ~3);
+    uint32_t loadedWord = m_bus->load<uint32_t>(address & ~3);
     uint32_t shift = (address & 3) * 8;
     uint32_t mask = 0xFFFFFFFF << shift;
 
@@ -718,7 +718,7 @@ void CPU::loadWordLeft(const Instruction &instruction)
     int32_t offset = static_cast<int16_t>(instruction.i.immediate);
     uint32_t address = getReg(static_cast<CpuReg>(instruction.i.rs)) + offset;
 
-    uint32_t loadedWord = m_bus->loadWord(address & ~3);
+    uint32_t loadedWord = m_bus->load<uint32_t>(address & ~3);
     uint32_t shift = (3 - (address & 3)) * 8;
     uint32_t mask = 0xFFFFFFFF >> shift;
 
@@ -743,12 +743,12 @@ void CPU::storeWordRight(const Instruction &instruction)
     uint32_t address = getReg(static_cast<CpuReg>(instruction.i.rs)) + offset;
     uint32_t storedWord = getReg(static_cast<CpuReg>(instruction.i.rt));
 
-    uint32_t currentWord = m_bus->loadWord(address & ~3);
+    uint32_t currentWord = m_bus->load<uint32_t>(address & ~3);
     uint32_t shift = (address & 3) * 8;
     uint32_t mask = 0xFFFFFFFF >> shift;
 
     uint32_t result = (currentWord & ~(mask << shift)) | ((storedWord & mask) << shift);
-    m_bus->storeWord(address & ~3, result);
+    m_bus->store<uint32_t>(address & ~3, result);
 }
 
 void CPU::storeWordLeft(const Instruction &instruction)
@@ -759,10 +759,10 @@ void CPU::storeWordLeft(const Instruction &instruction)
 
     uint32_t shift = (3 - (address & 3)) * 8;
     uint32_t mask = 0xFFFFFFFF << shift;
-    uint32_t currentWord = m_bus->loadWord(address & ~3);
+    uint32_t currentWord = m_bus->load<uint32_t>(address & ~3);
 
     uint32_t result = (currentWord & ~(mask >> shift)) | ((storedWord & mask) >> shift);
-    m_bus->storeWord(address & ~3, result);
+    m_bus->store<uint32_t>(address & ~3, result);
 }
 
 void CPU::setOnLessThan(const Instruction &instruction)
