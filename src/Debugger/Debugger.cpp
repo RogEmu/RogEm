@@ -9,7 +9,7 @@
 
 #include <algorithm>
 
-#include "System.hpp"
+#include "Core/System.hpp"
 
 Debugger::Debugger(System *system) :
     m_system(system)

@@ -6,7 +6,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#include "System.hpp"
+#include "Core/System.hpp"
 #include "Debugger/Debugger.hpp"
 
 struct EmulatorConfig
