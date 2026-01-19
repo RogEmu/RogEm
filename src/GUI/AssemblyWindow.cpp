@@ -3,11 +3,14 @@
 
 #include "Core/MemoryMap.hpp"
 #include "MemoryWindow.hpp"
+#include "Debugger/Debugger.hpp"
+#include "Application.hpp"
 
-AssemblyWindow::AssemblyWindow(Debugger *debugger) :
+AssemblyWindow::AssemblyWindow(Application *application, Debugger *debugger) :
     m_jumpToPc(false),
     m_autoFollowPc(false),
     m_pcCursor(0.0f),
+    m_application(application),
     m_debugger(debugger)
 {
     setTitle("Assembly");
@@ -30,16 +33,10 @@ void AssemblyWindow::update()
 void AssemblyWindow::drawTopBar()
 {
     bool paused = m_debugger->isPaused();
-    float simSpeed = m_debugger->getSimulationSpeed();
-    uint32_t pc = m_debugger->getCpuReg(CpuReg::PC);
-    bool isBreakpoint = (m_debugger->getBreakpointIndex(pc) != -1);
 
     ImGui::BeginGroup();
     if (ImGui::Checkbox("Pause", &paused)) {
-        if (isBreakpoint)
-            m_debugger->setResumeOnBreakpoint(true);
-        else
-            m_debugger->pause(paused);
+        m_debugger->pause(paused);
     }
     ImGui::SameLine();
     if (ImGui::ArrowButton("##CPU_Step_Fw", ImGuiDir_Right) && paused)
@@ -51,9 +48,6 @@ void AssemblyWindow::drawTopBar()
     ImGui::SameLine();
     ImGui::Checkbox("Auto follow PC", &m_autoFollowPc);
     ImGui::EndGroup();
-    ImGui::SliderFloat("Simulation Speed", &simSpeed, 0.00001f, 1.0f, "%.5f");
-
-    m_debugger->setSimulationSpeed(simSpeed);
 }
 
 void AssemblyWindow::drawAssembly()
@@ -94,15 +88,12 @@ void AssemblyWindow::drawAssembly()
 
 void AssemblyWindow::drawContextMenu(uint32_t addr, bool isSelected, bool hasBreakpoint)
 {
-    uint32_t pc = m_debugger->getCpuReg(CpuReg::PC);
-    bool isBreakpoint = (m_debugger->getBreakpointIndex(pc) != -1);
-
     if (isSelected && ImGui::BeginPopupContextItem("BreakpointContextMenu"))
     {
         if (ImGui::MenuItem("Jump to memory address"))
         {
             std::string windowTitle = (addr < 0xBFC00000) ? "RAM" : "BIOS";
-            for (auto& window : m_debugger->getWindows()) {
+            for (auto& window : m_application->getWindows()) {
                 if (auto memWin = dynamic_cast<MemoryWindow*>(window.get())) {
                     if (memWin->getTitleString() == windowTitle) {
                         memWin->gotoAddress(addr);
@@ -114,8 +105,6 @@ void AssemblyWindow::drawContextMenu(uint32_t addr, bool isSelected, bool hasBre
         ImGui::Separator();
         if (ImGui::MenuItem("Run to address"))
         {
-            if (isBreakpoint)
-                m_debugger->setResumeOnBreakpoint(true);
             m_debugger->pause(false);
             m_debugger->addBreakpoint(addr, BreakpointType::EXEC, fmt::format("Run to 0x{:08X}", addr), true);
         }

@@ -93,7 +93,6 @@ class CPU {
 
         void step();
         void reset();
-        void checkTtyOutput();
         void setTtyOutputFlag(bool ttyOutput);
         bool getTtyOutputFlag();
         std::string getTtyOutput();
@@ -206,6 +205,8 @@ class CPU {
 
         void illegalInstruction(const Instruction &instruction);
         void specialInstruction(const Instruction &instruction);
+
+        void checkTtyOutput();
 
     private:
         // Main CPU registers

@@ -22,7 +22,11 @@ class System
         ~System();
 
         int init();
+        void tick();
         void update();
+        void reset();
+        void setState(SystemState state) { m_state = state; }
+        SystemState getState() const { return m_state; }
 
         CPU *getCPU();
         Bus *getBus();
@@ -33,13 +37,12 @@ class System
         void loadExecutable(const char *path);
 
         void attachDebugger(Debugger *debugger);
-
-    private:
-        void updateDebugger();
+        void setTtyCallback(const std::function<void(const std::string &)> &callback);
 
     private:
         std::unique_ptr<Bus> m_bus;
         std::unique_ptr<CPU> m_cpu;
+        std::function<void(const std::string &)> m_ttyCallback;
 
         Debugger *m_debugger;
         bool m_debuggerAttached;
