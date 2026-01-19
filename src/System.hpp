@@ -40,7 +40,9 @@ class System
     private:
         std::unique_ptr<Bus> m_bus;
         std::unique_ptr<CPU> m_cpu;
+
         Debugger *m_debugger;
+        bool m_debuggerAttached;
 
         SystemState m_state;
         std::string m_executablePath;
