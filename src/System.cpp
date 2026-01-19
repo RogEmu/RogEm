@@ -97,13 +97,13 @@ void System::loadBios(const char *path)
 void System::attachDebugger(Debugger *debugger)
 {
     m_debugger = debugger;
+    m_debuggerAttached = debugger != nullptr;
 }
 
 void System::updateDebugger()
 {
-    if (!m_debugger) {
-        return;
+    if (m_debuggerAttached) {
+        m_debugger->update();
+        m_state = m_debugger->isPaused() ? SystemState::PAUSED : SystemState::RUNNING;
     }
-    m_debugger->update();
-    m_state = m_debugger->isPaused() ? SystemState::PAUSED : SystemState::RUNNING;
 }
