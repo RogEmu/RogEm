@@ -8,6 +8,13 @@
 #include <argparse/argparse.hpp>
 
 #include "Core/GPU.hpp"
+#include "GUI/RegisterWindow.hpp"
+#include "GUI/AssemblyWindow.hpp"
+#include "GUI/BreakpointWindow.hpp"
+#include "GUI/SettingsWindow.hpp"
+#include "GUI/LogWindow.hpp"
+#include "GUI/MemoryWindow.hpp"
+#include "GUI/MainMenuBar.hpp"
 
 const char *glsl_version = "#version 330";
 
@@ -16,6 +23,8 @@ Application::Application() :
 {
     m_system.init();
     m_system.attachDebugger(&m_debugger);
+
+    initWindows();
 }
 
 Application::~Application()
@@ -79,6 +88,31 @@ void Application::initVramTexture()
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1024, 512, 0, GL_RGBA, GL_UNSIGNED_SHORT_1_5_5_5_REV, 0);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+}
+
+void Application::initWindows()
+{
+    m_windows.emplace_back(std::make_unique<RegisterWindow>(&m_debugger));
+    m_windows.emplace_back(std::make_unique<AssemblyWindow>(this, &m_debugger));
+    m_windows.emplace_back(std::make_unique<BreakpointWindow>(&m_debugger));
+    m_windows.emplace_back(std::make_unique<SettingsWindow>(&m_debugger));
+    auto logWindow = std::make_unique<LogWindow>(&m_debugger);
+    m_system.setTtyCallback([window = logWindow.get()](const std::string &log) {
+        window->addLog(log);
+    });
+    m_windows.emplace_back(std::move(logWindow));
+    auto biosMemoryWindow = std::make_unique<MemoryWindow>(&m_debugger);
+    biosMemoryWindow->setBaseAddr(0xBFC00000);
+    biosMemoryWindow->setTitle("BIOS");
+    biosMemoryWindow->setReadOnly(true);
+    m_windows.push_back(std::move(biosMemoryWindow));
+
+    auto ramMemoryWindow = std::make_unique<MemoryWindow>(&m_debugger);
+    ramMemoryWindow->setBaseAddr(0);
+    ramMemoryWindow->setTitle("RAM");
+    m_windows.push_back(std::move(ramMemoryWindow));
+
+    m_mainMenuBar = std::make_unique<MainMenuBar>(this);
 }
 
 int Application::run()
@@ -155,14 +189,18 @@ void Application::update()
         m_isRunning = false;
     }
     m_system.update();
-    m_debugger.update();
 }
 
 void Application::render()
 {
     imguiNewFrame();
     ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport());
-    m_debugger.draw();
+    m_mainMenuBar->draw();
+    for (auto &window : m_windows) {
+        if (window->isVisible()) {
+            window->update();
+        }
+    }
     drawScreen();
     imguiRenderFrame();
     glfwSwapBuffers(glfwGetCurrentContext());

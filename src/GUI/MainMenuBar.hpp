@@ -12,7 +12,7 @@ class Application;
 class MainMenuBar
 {
     public:
-        MainMenuBar(Debugger *debugger);
+        MainMenuBar(Application *application);
         ~MainMenuBar();
 
         void draw();
@@ -22,7 +22,7 @@ class MainMenuBar
         void drawEmulationMenu();
         void drawDebugMenu();
         void drawWindowsMenu();
-        
+
         // File dialog functions
         void drawFileDialog();
         void refreshFileList();
@@ -31,7 +31,7 @@ class MainMenuBar
     private:
         Debugger *m_debugger;
         Application *m_application;
-        
+
         // File dialog state
         bool m_showFileDialog = false;
         bool m_isLoadingBios = false;  // true for BIOS, false for ROM

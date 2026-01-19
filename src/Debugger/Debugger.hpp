@@ -38,12 +38,9 @@ class Debugger
         ~Debugger();
 
         void update();
-        void draw();
 
         void pause(bool pause);
         bool isPaused() const;
-
-        void outputConsoleTTY();
 
         // Debugger CPU Controls
         void stepOver();
@@ -58,9 +55,6 @@ class Debugger
         uint16_t readHalfWord(uint32_t addr) const;
         uint32_t readWord(uint32_t addr) const;
 
-        // Get window
-        std::list<std::shared_ptr<IWindow>> &getWindows() { return m_windows; }
-
         // Breakpoints
         void addBreakpoint(uint32_t addr, BreakpointType type, const std::string &label, bool isRunTo);
         void removeBreakpoint(long index);
@@ -70,8 +64,6 @@ class Debugger
         void saveBreakpointsToFile();
         void loadBreakpointsFromFile();
         std::vector<Breakpoint> &getBreakpoints();
-        void setResumeOnBreakpoint(bool resume);
-        void setBreakpoint(uint32_t addr, BreakpointType type, const std::string &label, bool enabled, bool isRunTo);
 
         std::vector<uint8_t> *memoryRange(uint32_t addr);
 
@@ -84,17 +76,12 @@ class Debugger
     private:
         System *m_system;
 
-        std::unique_ptr<MainMenuBar> m_mainMenuBar;
-        std::list<std::shared_ptr<IWindow>> m_windows;
         uint32_t m_currentMemAddr;
 
         std::vector<Breakpoint> m_breakpoints;
         std::string breakpointsFilePath = "breakpoints.json";
 
         Disassembler m_disassembler;
-
-        bool m_paused;
-        bool m_resumeOnBreakpoint;
 };
 
 #endif /* !DEBUGGER_HPP_ */

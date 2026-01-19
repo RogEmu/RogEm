@@ -8,8 +8,8 @@
 #include <memory>
 #include <algorithm>
 
-MainMenuBar::MainMenuBar(Debugger *debugger)
-    : m_debugger(debugger)
+MainMenuBar::MainMenuBar(Application *application)
+    : m_application(application)
 {
     try {
         m_currentPath = std::filesystem::current_path();
@@ -58,12 +58,12 @@ void MainMenuBar::drawFileMenu()
 void MainMenuBar::drawEmulationMenu()
 {
     if (ImGui::BeginMenu("Emulation")) {
-        bool paused = m_debugger->isPaused();
+        bool paused = m_application->getSystem().getState() == SystemState::PAUSED;
         if (ImGui::MenuItem(paused ? "Resume" : "Pause", "F5", &paused)) {
-            m_debugger->pause(paused);
+            m_application->getSystem().setState(paused ? SystemState::PAUSED : SystemState::RUNNING);
         }
         if (ImGui::MenuItem("Reset", "Ctrl+R")) {
-            m_debugger->CPUReset();
+            m_application->getSystem().reset();
         }
         ImGui::EndMenu();
     }
@@ -75,7 +75,7 @@ void MainMenuBar::drawDebugMenu()
         ImGui::Separator();
 
         if (ImGui::BeginMenu("Breakpoints")) {
-            auto &breakpoints = m_debugger->getBreakpoints();
+            auto &breakpoints = m_application->getDebugger().getBreakpoints();
             if (breakpoints.empty()) {
                 ImGui::MenuItem("No breakpoints", nullptr, false, false);
             } else {
@@ -84,9 +84,9 @@ void MainMenuBar::drawDebugMenu()
                     char label[128];
                     snprintf(label, sizeof(label), "0x%08X - %s###bp%08X", bp.addr, bp.label.c_str(), bp.addr);
                     if (ImGui::MenuItem(label, nullptr, &enabled)) {
-                        long index = m_debugger->getBreakpointIndex(bp.addr);
+                        long index = m_application->getDebugger().getBreakpointIndex(bp.addr);
                         if (index != -1) {
-                            m_debugger->toggleBreakpoint(index, enabled);
+                            m_application->getDebugger().toggleBreakpoint(index, enabled);
                         }
                     }
                 }
@@ -94,7 +94,7 @@ void MainMenuBar::drawDebugMenu()
                 if (ImGui::MenuItem("Clear All")) {
                     int breakpointCount = static_cast<int>(breakpoints.size());
                     for (int i = breakpointCount - 1; i >= 0; i--) {
-                        m_debugger->removeBreakpoint(i);
+                        m_application->getDebugger().removeBreakpoint(i);
                     }
                 }
             }
@@ -107,7 +107,7 @@ void MainMenuBar::drawDebugMenu()
 void MainMenuBar::drawWindowsMenu()
 {
     if (ImGui::BeginMenu("Windows")) {
-        auto &windows = m_debugger->getWindows();
+        auto &windows = m_application->getWindows();
         for (auto &window : windows) {
             const char* title = window->getTitleChar();
             bool isVisible = window->isVisible();
