@@ -21,7 +21,6 @@
 Debugger::Debugger(System *system) :
     m_system(system),
     m_paused(true),
-    m_simSpeed(1.0f),
     m_resumeOnBreakpoint(false)
 {
     m_windows.emplace_back(std::make_unique<RegisterWindow>(this));
@@ -51,16 +50,6 @@ Debugger::~Debugger()
 bool Debugger::isPaused() const
 {
     return m_paused;
-}
-
-float Debugger::getSimulationSpeed() const
-{
-    return m_simSpeed;
-}
-
-void Debugger::setSimulationSpeed(float speed)
-{
-    m_simSpeed = std::max(speed, 0.0f);
 }
 
 void Debugger::stepOver()
