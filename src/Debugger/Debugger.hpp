@@ -43,9 +43,6 @@ class Debugger
         void pause(bool pause);
         bool isPaused() const;
 
-        float getSimulationSpeed() const;
-        void setSimulationSpeed(float speed);
-
         void checkTtyOutput();
 
         // Debugger CPU Controls
@@ -79,7 +76,7 @@ class Debugger
         std::vector<uint8_t> *memoryRange(uint32_t addr);
 
         Disassembler &getDisassembler();
-        
+
         // File loading
         void loadBios(const char *path);
         void loadExecutable(const char *path);
@@ -97,7 +94,6 @@ class Debugger
         Disassembler m_disassembler;
 
         bool m_paused;
-        float m_simSpeed;
         bool m_resumeOnBreakpoint;
 };
 
