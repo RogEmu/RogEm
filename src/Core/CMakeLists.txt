@@ -26,9 +26,14 @@ set(CORE_SRC_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/GPUCommand.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CacheControl.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Expansion2.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/System.cpp
 )
 
 add_library(${CORE_LIB_NAME} STATIC ${CORE_SRC_FILES})
+
+target_include_directories(${CORE_LIB_NAME} PUBLIC
+    ${CMAKE_SOURCE_DIR}/src
+)
 
 target_link_libraries(${CORE_LIB_NAME} PUBLIC
     fmt::fmt
