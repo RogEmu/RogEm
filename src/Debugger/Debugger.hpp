@@ -43,7 +43,7 @@ class Debugger
         void pause(bool pause);
         bool isPaused() const;
 
-        void checkTtyOutput();
+        void outputConsoleTTY();
 
         // Debugger CPU Controls
         void stepOver();

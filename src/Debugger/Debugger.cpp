@@ -224,7 +224,7 @@ void Debugger::setResumeOnBreakpoint(bool resume)
     m_resumeOnBreakpoint = resume;
 }
 
-void Debugger::checkTtyOutput()
+void Debugger::outputConsoleTTY()
 {
     for (auto &subwin : m_windows) {
         if (auto logWindow = dynamic_cast<LogWindow*>(subwin.get())) {
@@ -238,7 +238,7 @@ void Debugger::update()
     uint32_t pc = getCpuReg(CpuReg::PC);
 
     if (m_system->getCPU()->getTtyOutputFlag() == true) {
-        checkTtyOutput();
+        outputConsoleTTY();
     }
 
     for (auto bp : m_breakpoints) {
