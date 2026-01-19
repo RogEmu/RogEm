@@ -7,14 +7,16 @@
 #include <memory>
 
 #include "Core/CPU.hpp"
-#include "Debugger/Debugger.hpp"
 
 #define GREY ImColor(171, 183, 183, 255)
+
+class Application;
+class Debugger;
 
 class AssemblyWindow : public IWindow
 {
     public:
-        AssemblyWindow(Debugger *debugger);
+        AssemblyWindow(Application *application, Debugger *debugger);
         ~AssemblyWindow();
 
         void update() override;
@@ -35,6 +37,7 @@ class AssemblyWindow : public IWindow
         bool m_jumpToPc;
         bool m_autoFollowPc;
         float m_pcCursor;
+        Application *m_application;
         Debugger *m_debugger;
         uint32_t m_selectedAddr;
 };

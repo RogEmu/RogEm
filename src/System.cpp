@@ -49,6 +49,24 @@ int System::init()
     return 0;
 }
 
+void System::tick()
+{
+    if (m_cpu->getReg(CpuReg::PC) == 0x80030000 && !m_executablePath.empty()) {
+        loadExecutable(m_executablePath.c_str());
+    }
+    m_cpu->step();
+    m_bus->updateDevices(2);
+    if (m_debuggerAttached) {
+        m_debugger->update();
+    }
+    if (m_cpu->getTtyOutputFlag()) {
+        auto output = m_cpu->getTtyOutput();
+        if (m_ttyCallback) {
+            m_ttyCallback(output);
+        }
+    }
+}
+
 void System::update()
 {
     const int cpuFreq = 33868800;
@@ -57,17 +75,17 @@ void System::update()
 
     while (cycles < cyclesPerFrame) {
         if (m_state == SystemState::RUNNING) {
-            if (m_cpu->getReg(CpuReg::PC) == 0x80030000 && !m_executablePath.empty()) {
-                loadExecutable(m_executablePath.c_str());
-            }
-            m_cpu->step();
-            m_bus->updateDevices(2);
+            tick();
         }
-        updateDebugger();
         cycles += 2;
     }
     auto irqc = m_bus->getDevice<InterruptController>();
     irqc->triggerIRQ(DeviceIRQ::VBLANK);
+}
+
+void System::reset()
+{
+    m_cpu->reset();
 }
 
 void System::loadExecutable(const char *path)
@@ -100,10 +118,7 @@ void System::attachDebugger(Debugger *debugger)
     m_debuggerAttached = debugger != nullptr;
 }
 
-void System::updateDebugger()
+void System::setTtyCallback(const std::function<void(const std::string &)> &callback)
 {
-    if (m_debuggerAttached) {
-        m_debugger->update();
-        m_state = m_debugger->isPaused() ? SystemState::PAUSED : SystemState::RUNNING;
-    }
+    m_ttyCallback = callback;
 }

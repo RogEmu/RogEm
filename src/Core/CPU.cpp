@@ -59,6 +59,8 @@ void CPU::step()
     }
     executeInstruction(instruction);
     handleLoadDelay();
+    checkTtyOutput();
+
     m_pc = m_nextPc;
     m_inBranchDelay = false;
 }
@@ -126,7 +128,6 @@ void CPU::checkTtyOutput()
 Instruction CPU::fetchInstruction()
 {
     uint32_t instruction = m_bus->loadWord(m_pc);
-    checkTtyOutput();
     return Instruction{.raw=instruction};
 }
 

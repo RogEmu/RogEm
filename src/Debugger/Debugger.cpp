@@ -5,41 +5,15 @@
 ** Debugger
 */
 
-#include <algorithm>
-
 #include "Debugger.hpp"
+
+#include <algorithm>
 
 #include "System.hpp"
 
-#include "GUI/RegisterWindow.hpp"
-#include "GUI/AssemblyWindow.hpp"
-#include "GUI/MemoryWindow.hpp"
-#include "GUI/BreakpointWindow.hpp"
-#include "GUI/LogWindow.hpp"
-#include "GUI/SettingsWindow.hpp"
-
 Debugger::Debugger(System *system) :
-    m_system(system),
-    m_paused(true),
-    m_resumeOnBreakpoint(false)
+    m_system(system)
 {
-    m_windows.emplace_back(std::make_unique<RegisterWindow>(this));
-    m_windows.emplace_back(std::make_unique<AssemblyWindow>(this));
-    m_windows.emplace_back(std::make_unique<BreakpointWindow>(this));
-    m_windows.emplace_back(std::make_unique<SettingsWindow>(this));
-    m_windows.emplace_back(std::make_unique<LogWindow>(this));
-    auto biosMemoryWindow = std::make_unique<MemoryWindow>(this);
-    biosMemoryWindow->setBaseAddr(0xBFC00000);
-    biosMemoryWindow->setTitle("BIOS");
-    biosMemoryWindow->setReadOnly(true);
-    m_windows.push_back(std::move(biosMemoryWindow));
-
-    auto ramMemoryWindow = std::make_unique<MemoryWindow>(this);
-    ramMemoryWindow->setBaseAddr(0);
-    ramMemoryWindow->setTitle("RAM");
-    m_windows.push_back(std::move(ramMemoryWindow));
-    m_mainMenuBar = std::make_unique<MainMenuBar>(this);
-
     loadBreakpointsFromFile();
 }
 
@@ -49,7 +23,7 @@ Debugger::~Debugger()
 
 bool Debugger::isPaused() const
 {
-    return m_paused;
+    return m_system->getState() == SystemState::PAUSED;
 }
 
 void Debugger::stepOver()
@@ -199,80 +173,33 @@ void Debugger::loadBreakpointsFromFile()
     }
 }
 
-void Debugger::setBreakpoint(uint32_t addr, BreakpointType type, const std::string &label, bool enabled, bool isRunTo)
-{
-    auto it = std::find_if(m_breakpoints.begin(), m_breakpoints.end(), [addr](const Breakpoint &bp) {
-        return bp.addr == addr;
-    });
-    if (it != m_breakpoints.end()) {
-        it->enabled = enabled;
-        it->instructionType = type;
-        it->label = label;
-        it->isRunTo = isRunTo;
-    } else {
-        m_breakpoints.push_back({addr, type, label, enabled, isRunTo});
-    }
-}
-
 std::vector<Breakpoint> &Debugger::getBreakpoints()
 {
     return m_breakpoints;
 }
 
-void Debugger::setResumeOnBreakpoint(bool resume)
-{
-    m_resumeOnBreakpoint = resume;
-}
-
-void Debugger::outputConsoleTTY()
-{
-    for (auto &subwin : m_windows) {
-        if (auto logWindow = dynamic_cast<LogWindow*>(subwin.get())) {
-            logWindow->addLog(m_system->getCPU()->getTtyOutput());
-        }
-    }
-}
 
 void Debugger::update()
 {
     uint32_t pc = getCpuReg(CpuReg::PC);
 
-    if (m_system->getCPU()->getTtyOutputFlag() == true) {
-        outputConsoleTTY();
-    }
-
     for (auto bp : m_breakpoints) {
-        if (bp.enabled){
+        if (!bp.enabled) {
+            continue;
+        }
+        if (bp.addr == pc) {
             if (bp.instructionType == BreakpointType::EXEC) {
-                if (bp.addr == pc) {
-                    if (bp.isRunTo == true) {
-                        removeBreakpoint(getBreakpointIndex(bp.addr));
-                    }
-                    m_paused = true;
-                    break;
+                m_system->setState(SystemState::PAUSED);
+                if (bp.isRunTo == true) {
+                    removeBreakpoint(getBreakpointIndex(bp.addr));
                 }
             }
-        }
-    }
-    if (m_resumeOnBreakpoint && m_paused) {
-        m_paused = false;
-        m_resumeOnBreakpoint = false;
-    }
-}
-
-void Debugger::draw()
-{
-    m_mainMenuBar->draw();
-    for (auto &subwin : m_windows)
-    {
-        if (subwin->isVisible())
-        {
-            subwin->update();
         }
     }
 }
 
 void Debugger::pause(bool pause)
 {
-    m_paused = pause;
+    m_system->setState(pause ? SystemState::PAUSED : SystemState::RUNNING);
+    m_system->tick();
 }
