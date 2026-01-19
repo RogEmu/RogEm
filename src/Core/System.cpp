@@ -8,10 +8,12 @@
 #include <chrono>
 #include <thread>
 
-#include "Core/PsxExecutable.hpp"
-#include "Core/GPU.hpp"
-#include "Core/InterruptController.hpp"
-#include "Core/RAM.hpp"
+#include "PsxExecutable.hpp"
+#include "GPU.hpp"
+#include "InterruptController.hpp"
+#include "RAM.hpp"
+
+#include "Debugger/Debugger.hpp"
 
 System::System() :
     m_bus(std::make_unique<Bus>()),

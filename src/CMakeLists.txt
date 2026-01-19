@@ -9,7 +9,6 @@ find_package(capstone CONFIG REQUIRED)
 
 set(SRC_FILES
     main.cpp
-    System.cpp
     Application.cpp
     Debugger/Debugger.cpp
     Debugger/Disassembler.cpp

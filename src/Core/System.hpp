@@ -3,11 +3,13 @@
 
 #include <memory>
 #include <string>
+#include <functional>
 
-#include "Debugger/Debugger.hpp"
-#include "Core/CPU.hpp"
-#include "Core/BIOS.hpp"
-#include "Core/Bus.hpp"
+#include "CPU.hpp"
+#include "BIOS.hpp"
+#include "Bus.hpp"
+
+class Debugger;
 
 enum class SystemState
 {
