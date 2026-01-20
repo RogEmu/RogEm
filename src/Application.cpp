@@ -112,15 +112,12 @@ void Application::initWindows()
     ramMemoryWindow->setTitle("RAM");
     m_windows.push_back(std::move(ramMemoryWindow));
 
-    m_mainMenuBar = std::make_unique<MainMenuBar>(this);
+    m_mainMenuBar = std::make_unique<MainMenuBar>(this, &m_debugger);
 }
 
 int Application::run()
 {
-    if (initGlfw()) {
-        return -1;
-    }
-    if (initImgui()) {
+    if (initGlfw() || initImgui()) {
         return -1;
     }
     initVramTexture();
