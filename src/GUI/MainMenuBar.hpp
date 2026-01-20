@@ -12,7 +12,7 @@ class Application;
 class MainMenuBar
 {
     public:
-        MainMenuBar(Application *application);
+        MainMenuBar(Application *application, Debugger *debugger);
         ~MainMenuBar();
 
         void draw();
@@ -29,8 +29,8 @@ class MainMenuBar
         void navigateToDirectory(const std::filesystem::path &path);
 
     private:
-        Debugger *m_debugger;
         Application *m_application;
+        Debugger *m_debugger;
 
         // File dialog state
         bool m_showFileDialog = false;

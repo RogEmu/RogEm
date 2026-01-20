@@ -8,8 +8,9 @@
 #include <memory>
 #include <algorithm>
 
-MainMenuBar::MainMenuBar(Application *application)
-    : m_application(application)
+MainMenuBar::MainMenuBar(Application *application, Debugger *debugger) :
+    m_application(application),
+    m_debugger(debugger)
 {
     try {
         m_currentPath = std::filesystem::current_path();
