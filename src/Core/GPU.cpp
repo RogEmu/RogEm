@@ -25,6 +25,31 @@ GPU::~GPU()
 {
 }
 
+static constexpr float NTSC_CLOCK_MULTIPLIER = 11.0f/7.0f;
+static constexpr uint32_t NTSC_VRES_HEIGHT = 240;
+static constexpr uint32_t NTSC_SCANLINES = 263;
+static constexpr uint32_t NTSC_HCYCLES = 3413;
+
+void GPU::update(int cycles)
+{
+    static float cycleCount = 0;
+    static uint32_t scanline = 0;
+
+    cycleCount += cycles * NTSC_CLOCK_MULTIPLIER;
+    if (cycleCount >= NTSC_HCYCLES) {
+        cycleCount = 0.0f;
+        if (m_gpuStat.vInterlace || m_gpuStat.interlaceField) {
+            m_gpuStat.interlaceDrawLines = !m_gpuStat.interlaceDrawLines;
+        }
+        scanline++;
+        if (scanline >= NTSC_SCANLINES) {
+            scanline = 0;
+            m_gpuStat.interlaceDrawLines = false;
+            // TODO trigger VBlank interrupt
+        }
+    }
+}
+
 void GPU::reset()
 {
     // m_statRegister = 0x1C000000;
