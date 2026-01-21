@@ -12,7 +12,7 @@ class Application;
 class MainMenuBar
 {
     public:
-        MainMenuBar(Application *application, Debugger *debugger);
+        MainMenuBar(Application *application);
         ~MainMenuBar();
 
         void draw();
@@ -30,7 +30,6 @@ class MainMenuBar
 
     private:
         Application *m_application;
-        Debugger *m_debugger;
 
         // File dialog state
         bool m_showFileDialog = false;

@@ -112,7 +112,7 @@ void Application::initWindows()
     ramMemoryWindow->setTitle("RAM");
     m_windows.push_back(std::move(ramMemoryWindow));
 
-    m_mainMenuBar = std::make_unique<MainMenuBar>(this, &m_debugger);
+    m_mainMenuBar = std::make_unique<MainMenuBar>(this);
 }
 
 int Application::run()
