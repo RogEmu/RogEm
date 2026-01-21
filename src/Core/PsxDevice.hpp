@@ -20,6 +20,7 @@ class PsxDevice
         PsxDevice(Bus *bus) : m_bus(bus) {}
         virtual ~PsxDevice() = default;
 
+        virtual void update(int cycles) { (void)cycles; };
         virtual void reset() {};
 
         bool isAddressed(uint32_t address) const {
@@ -29,8 +30,6 @@ class PsxDevice
         uint32_t mapAddress(uint32_t address) const {
             return m_memoryRange.remap(address);
         }
-
-        virtual void update(int cycles) { (void)cycles; };
 
         virtual void write8(uint8_t data, uint32_t address) = 0;
         virtual void write16(uint16_t data, uint32_t address) = 0;

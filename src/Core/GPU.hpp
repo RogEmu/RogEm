@@ -193,6 +193,7 @@ class GPU : public PsxDevice
         GPU(Bus *bus);
         ~GPU();
 
+        void update(int cycles) override;
         void reset();
 
         void write8(uint8_t value, uint32_t address) override;
