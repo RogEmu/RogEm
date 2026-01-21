@@ -47,6 +47,13 @@ Bus::~Bus()
 {
 }
 
+void Bus::reset()
+{
+    for (auto &[_, device] : m_devices) {
+        device->reset();
+    }
+}
+
 uint32_t Bus::loadWord(uint32_t addr) const
 {
     uint32_t pAddress = MemoryMap::mapAddress(addr);
