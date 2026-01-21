@@ -20,6 +20,8 @@ class PsxDevice
         PsxDevice(Bus *bus) : m_bus(bus) {}
         virtual ~PsxDevice() = default;
 
+        virtual void reset() {};
+
         bool isAddressed(uint32_t address) const {
             return m_memoryRange.contains(address);
         }

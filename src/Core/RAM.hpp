@@ -15,6 +15,7 @@ class RAM : public Memory
     public:
         RAM(Bus *bus);
 
+        void reset() override;
         void loadExecutable(uint32_t baseAddr, const std::vector<uint8_t> &code);
 };
 

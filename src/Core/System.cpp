@@ -88,6 +88,7 @@ void System::update()
 void System::reset()
 {
     m_cpu->reset();
+    m_bus->reset();
 }
 
 void System::loadExecutable(const char *path)

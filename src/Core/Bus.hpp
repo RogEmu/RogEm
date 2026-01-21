@@ -24,6 +24,8 @@ class Bus
         Bus();
         ~Bus();
 
+        void reset();
+
         uint32_t loadWord(uint32_t addr) const;
         void storeWord(uint32_t addr, uint32_t value);
         uint16_t loadHalfWord(uint32_t addr) const;
