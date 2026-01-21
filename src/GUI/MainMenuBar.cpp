@@ -8,9 +8,8 @@
 #include <memory>
 #include <algorithm>
 
-MainMenuBar::MainMenuBar(Application *application, Debugger *debugger) :
-    m_application(application),
-    m_debugger(debugger)
+MainMenuBar::MainMenuBar(Application *application) :
+    m_application(application)
 {
     try {
         m_currentPath = std::filesystem::current_path();
@@ -177,13 +176,12 @@ void MainMenuBar::drawFileDialog()
                         pathStr.copy(m_filenameBuffer, sizeof(m_filenameBuffer) - 1);
                         m_filenameBuffer[std::min(pathStr.size(), sizeof(m_filenameBuffer) - 1)] = '\0';
                         if (ImGui::IsMouseDoubleClicked(0)) {
+                            m_application->getSystem().reset();
                             if (m_isLoadingBios) {
-                                m_debugger->loadBios(m_filenameBuffer);
-                                m_debugger->CPUReset();
+                                m_application->getSystem().loadBios(m_filenameBuffer);
                             } else {
-                                m_debugger->loadExecutable(m_filenameBuffer);
+                                m_application->getSystem().loadExecutable(m_filenameBuffer);
                             }
-                            m_debugger->CPUReset();
                             ImGui::CloseCurrentPopup();
                             m_showFileDialog = false;
                         }
@@ -205,13 +203,12 @@ void MainMenuBar::drawFileDialog()
         if (ImGui::Button("Load", ImVec2(100, 0))) {
             if (m_filenameBuffer[0] != '\0') {
                 std::string filePath(m_filenameBuffer);
+                m_application->getSystem().reset();
                 if (m_isLoadingBios) {
-                    m_debugger->loadBios(filePath.c_str());
-                    m_debugger->CPUReset();
+                    m_application->getSystem().loadBios(m_filenameBuffer);
                 } else {
-                    m_debugger->loadExecutable(filePath.c_str());
+                    m_application->getSystem().loadExecutable(m_filenameBuffer);
                 }
-
                 m_showFileDialog = false;
             }
         }
