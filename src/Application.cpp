@@ -206,11 +206,39 @@ void Application::render()
 void Application::drawScreen()
 {
     if (ImGui::Begin("Screen")) {
+        ImDrawList* drawList = ImGui::GetWindowDrawList();
+        drawList->AddRectFilled(ImGui::GetCursorScreenPos(),
+                                ImVec2(ImGui::GetCursorScreenPos().x + ImGui::GetContentRegionAvail().x,
+                                       ImGui::GetCursorScreenPos().y + ImGui::GetContentRegionAvail().y),
+                                IM_COL32(255, 0, 0, 255));
         GPU *gpu = m_system.getBus()->getDevice<GPU>();
         const uint8_t *vram = gpu->getVram();
         glBindTexture(GL_TEXTURE_2D, m_vramTexture);
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 1024, 512, GL_RGBA, GL_UNSIGNED_SHORT_1_5_5_5_REV, vram);
         ImGui::Image((ImTextureID)(intptr_t)m_vramTexture, ImGui::GetContentRegionAvail());
+    }
+    ImGui::End();
+
+    if (ImGui::Begin("GPU Debug")) {
+        auto gpu = m_system.getBus()->getDevice<GPU>();
+        auto gpuStat = gpu->getGpuStat();
+        auto drawArea = gpu->getDrawArea();
+        auto drawOffset = gpu->getDrawOffset();
+        auto hres = gpu->getHorizontalRes();
+        auto vres = gpu->getVerticalRes();
+        ImGui::Text("GPUStat: 0x%08X", gpu->getGpuStatRaw());
+        ImGui::Text("Vertical Interlace: %s", gpuStat.vInterlace ? "Yes" : "No");
+        ImGui::Text("Video Mode: %s",  gpuStat.videoMode == VideoMode::NTSC ? "NTSC" : "PAL");
+        ImGui::Text("Resolution: %s x %s",
+                    hres == HorizontalRes::RES_256 ? "256" :
+                    hres == HorizontalRes::RES_320 ? "320" :
+                    hres == HorizontalRes::RES_512 ? "512" : "640",
+                    vres == VerticalRes::RES_240 ? "240" : "480");
+        ImGui::Text("Draw Area: (%d, %d) - (%d, %d)",
+                    drawArea.topLeft.x, drawArea.topLeft.y,
+                    drawArea.botRight.x, drawArea.botRight.y);
+        ImGui::Text("Draw Offset: (%d, %d)",
+                    drawOffset.x, drawOffset.y);
     }
     ImGui::End();
 }
