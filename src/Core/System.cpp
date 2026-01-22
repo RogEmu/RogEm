@@ -16,8 +16,8 @@
 #include "Debugger/Debugger.hpp"
 
 System::System() :
-    m_bus(std::make_unique<Bus>()),
-    m_cpu(std::make_unique<CPU>(m_bus.get())),
+    m_bus(nullptr),
+    m_cpu(nullptr),
     m_debugger(nullptr),
     m_state(SystemState::RUNNING),
     m_executablePath("")
