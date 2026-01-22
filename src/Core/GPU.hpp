@@ -206,6 +206,15 @@ class GPU : public PsxDevice
 
         const uint8_t *getVram() const;
 
+        const GPUStat& getGpuStat() const { return m_gpuStat; }
+        uint32_t getGpuStatRaw() const { return gpuStat(); }
+        const VramDisplayArea& getDisplayArea() const { return m_displayArea; }
+        const VramDrawArea& getDrawArea() const { return m_drawArea; }
+        const Vec2i& getDrawOffset() const { return m_drawOffset; }
+        HorizontalRes getHorizontalRes() const { return m_gpuStat.hRes1; };
+        VerticalRes getVerticalRes() const { return m_gpuStat.vRes; };
+        VideoMode getVideoMode() const { return m_gpuStat.videoMode; };
+
     private:
         uint32_t gpuStat() const;
         void readInternalRegister(uint8_t reg);
