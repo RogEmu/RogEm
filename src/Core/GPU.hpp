@@ -13,9 +13,9 @@
 #include "PsxDevice.hpp"
 #include "GPUCommand.hpp"
 
-#define GPU_VRAM_WIDTH 2048 // 2048 bytes (1024 pixels)
+#define GPU_VRAM_WIDTH 1024 // 1024 pixels (2048 bytes)
 #define GPU_VRAM_HEIGHT 512 // 512 lines
-#define GPU_VRAM_1MB_SIZE (GPU_VRAM_WIDTH * GPU_VRAM_HEIGHT) // 512 lines of 1024 pixels
+#define GPU_VRAM_1MB_SIZE (GPU_VRAM_WIDTH * 2 * GPU_VRAM_HEIGHT) // 512 lines of 1024 pixels
 
 struct TexturePageBase
 {
