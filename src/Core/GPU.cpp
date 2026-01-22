@@ -678,8 +678,8 @@ void GPU::rasterizePoly3(const Vertex *verts, const ColorRGBA &color)
     if (area == 0)
         return;
 
-    for (int y = minY; y <= maxY; y++) {
-        for (int x = minX; x <= maxX; x++) {
+    for (int y = minY; y < maxY; y++) {
+        for (int x = minX; x < maxX; x++) {
             Vec2i p = {x, y};
             int w0 = edgeFunction(verts[1].pos, verts[2].pos, p);
             int w1 = edgeFunction(verts[2].pos, verts[0].pos, p);
