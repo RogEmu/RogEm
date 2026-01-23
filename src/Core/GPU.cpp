@@ -692,9 +692,9 @@ void GPU::rasterizePoly3(const Vertex *verts, const ColorRGBA &color)
                 argbColor = interpolateColor(verts[0].color, verts[1].color, verts[2].color, alpha, beta, gamma).toABGR1555();
             }
 
-            int pos = (w0 | w1 | w2) >= 0;
-            int neg = (w0 & w1 & w2) < 0;
-            if (pos | neg) {
+            int pos = (w0 >= 0) && (w1 >= 0) && (w2 >= 0);
+            int neg = (w0 <= 0) && (w1 <= 0) && (w2 <= 0);
+            if (pos || neg) {
                 setPixel(p, argbColor);
             }
         }
