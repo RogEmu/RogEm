@@ -180,7 +180,7 @@ void MainMenuBar::drawFileDialog()
                             if (m_isLoadingBios) {
                                 m_application->getSystem().loadBios(m_filenameBuffer);
                             } else {
-                                m_application->getSystem().loadExecutable(m_filenameBuffer);
+                                m_application->getSystem().setExecutablePath(m_filenameBuffer);
                             }
                             ImGui::CloseCurrentPopup();
                             m_showFileDialog = false;
@@ -207,7 +207,7 @@ void MainMenuBar::drawFileDialog()
                 if (m_isLoadingBios) {
                     m_application->getSystem().loadBios(m_filenameBuffer);
                 } else {
-                    m_application->getSystem().loadExecutable(m_filenameBuffer);
+                    m_application->getSystem().setExecutablePath(m_filenameBuffer);
                 }
                 m_showFileDialog = false;
             }
