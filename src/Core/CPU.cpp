@@ -388,6 +388,10 @@ void CPU::setReg(CpuReg reg, uint32_t val)
     default:
         m_gpr[static_cast<uint8_t>(reg)] = val;
         m_gpr[0] = 0;
+
+        if (m_loadDelaySlots[0].reg == reg) {
+            m_loadDelaySlots[0].pending = false;
+        }
     }
 }
 
