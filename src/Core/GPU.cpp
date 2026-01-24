@@ -350,6 +350,10 @@ void GPU::executeMiscCommand(uint32_t cmd)
         case 0x01:
             // Clear Cache
             break;
+        case 0x02:
+            m_currentCmd.set(cmd);
+            m_currentState = GpuState::ReceivingParameters;
+            break;
         default:
             spdlog::error("GPU: Unknown GP0 misc command 0x{:08X}", cmd);
             break;
