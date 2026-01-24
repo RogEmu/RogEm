@@ -206,11 +206,6 @@ void Application::render()
 void Application::drawScreen()
 {
     if (ImGui::Begin("Screen")) {
-        ImDrawList* drawList = ImGui::GetWindowDrawList();
-        drawList->AddRectFilled(ImGui::GetCursorScreenPos(),
-                                ImVec2(ImGui::GetCursorScreenPos().x + ImGui::GetContentRegionAvail().x,
-                                       ImGui::GetCursorScreenPos().y + ImGui::GetContentRegionAvail().y),
-                                IM_COL32(255, 0, 0, 255));
         GPU *gpu = m_system.getBus()->getDevice<GPU>();
         const uint8_t *vram = gpu->getVram();
         glBindTexture(GL_TEXTURE_2D, m_vramTexture);
