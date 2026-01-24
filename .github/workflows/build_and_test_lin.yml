@@ -53,24 +53,25 @@ jobs:
                                 xorg-dev\
                                 libglu1-mesa-dev
 
-    - name: Cache .git
-      id: git-cache
-      uses: actions/cache@v4
-      with:
-        path: .git/
-        key: ${{ runner.os }}-git
-
-    - name: Cache Dependencies
-      id: deps-cache
-      uses: actions/cache@v4
-      with:
-        path: vcpkg/
-        key: ${{ runner.os }}-vcpkg
-
     - name: Init Submodules
-      # if: steps.deps-cache.outputs.cache-hit != 'true'
+      run: git submodule update --init
+
+    - name: Cache vcpkg binary cache
+      id: vcpkg-cache
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/vcpkg
+          build/vcpkg_installed
+        key: ${{ runner.os }}-vcpkg-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}-${{ matrix.build_type }}
+        restore-keys: |
+          ${{ runner.os }}-vcpkg-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}-
+          ${{ runner.os }}-vcpkg-
+
+    - name: Setup vcpkg binary caching
       run: |
-        git submodule update --init
+        mkdir -p ~/.cache/vcpkg
+        echo "VCPKG_DEFAULT_BINARY_CACHE=$HOME/.cache/vcpkg" >> $GITHUB_ENV
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
@@ -85,8 +86,7 @@ jobs:
 
     - name: Output Logs On Failure
       if: failure()
-      run: |
-        cat ${{ github.workspace }}/build/vcpkg-bootstrap.log
+      run: cat ${{ github.workspace }}/build/vcpkg-bootstrap.log
 
     - name: Build
       # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
