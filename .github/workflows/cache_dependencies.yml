@@ -1,0 +1,98 @@
+name: Cache Dependencies
+
+on:
+  push:
+    branches: [ "dev" ]
+    paths:
+      - 'vcpkg.json'
+      - 'vcpkg-configuration.json'
+      - '.github/workflows/cache_dependencies.yml'
+
+jobs:
+  cache-deps:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        build_type: [Release, Debug]
+        include:
+          - os: ubuntu-latest
+            c_compiler: gcc
+            cpp_compiler: g++
+          - os: windows-latest
+            c_compiler: cl
+            cpp_compiler: cl
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Linux Dependencies
+      if: runner.os == 'Linux'
+      run: sudo apt-get update && sudo apt-get install -y build-essential cmake ninja-build curl zip unzip tar pkg-config libxinerama-dev libxcursor-dev xorg-dev libglu1-mesa-dev
+
+    - name: Cache vcpkg binary cache (Linux)
+      if: runner.os == 'Linux'
+      id: vcpkg-cache-linux
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/vcpkg
+          build/vcpkg_installed
+        key: ${{ runner.os }}-vcpkg-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}-${{ matrix.build_type }}
+        restore-keys: |
+          ${{ runner.os }}-vcpkg-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}-
+          ${{ runner.os }}-vcpkg-
+
+    - name: Cache vcpkg binary cache (Windows)
+      if: runner.os == 'Windows'
+      id: vcpkg-cache-windows
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~\AppData\Local\vcpkg\archives
+          build\vcpkg_installed
+        key: ${{ runner.os }}-vcpkg-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}-${{ matrix.build_type }}
+        restore-keys: |
+          ${{ runner.os }}-vcpkg-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}-
+          ${{ runner.os }}-vcpkg-
+
+    - name: Init Submodules
+      run: git submodule update --init
+
+    - name: Setup vcpkg binary caching (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        mkdir -p ~/.cache/vcpkg
+        echo "VCPKG_DEFAULT_BINARY_CACHE=$HOME/.cache/vcpkg" >> $GITHUB_ENV
+
+    - name: Setup vcpkg binary caching (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        New-Item -ItemType Directory -Force -Path ~\AppData\Local\vcpkg\archives
+        echo "VCPKG_DEFAULT_BINARY_CACHE=$env:LOCALAPPDATA\vcpkg\archives" >> $env:GITHUB_ENV
+      shell: pwsh
+
+    - name: Configure CMake (Linux)
+      if: runner.os == 'Linux'
+      run: >
+        cmake -B ${{ github.workspace }}/build
+        -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
+        -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
+        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        -S ${{ github.workspace }}
+        -G Ninja
+
+    - name: Configure CMake (Windows)
+      if: runner.os == 'Windows'
+      run: >
+        cmake -B ${{ github.workspace }}/build
+        -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
+        -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
+        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        -S ${{ github.workspace }}
+
+    - name: Output Logs On Failure
+      if: failure()
+      run: cat ${{ github.workspace }}/build/vcpkg-bootstrap.log
