@@ -3,33 +3,18 @@
 
 #include <cstdint>
 
-enum class CommandType : uint8_t
-{
-    None = 0,
-    DrawPolygon = 1,
-    DrawLine,
-    DrawRectangle,
-    VramVramCopy,
-    CpuVramCopy,
-    VramCpuCopy,
-    QuickRectFill = 0x10
-};
-
-class ParameterArray
+class GPUParamArray
 {
     public:
-        ParameterArray()
-        {
+        GPUParamArray() {
             m_headPtr = 0;
         }
 
-        uint8_t size() const
-        {
+        uint8_t size() const {
             return m_headPtr;
         }
 
-        void addParam(uint32_t param)
-        {
+        void addParam(uint32_t param) {
             if (m_headPtr >= 32) {
                 return;
             }
@@ -37,13 +22,11 @@ class ParameterArray
             m_headPtr++;
         }
 
-        const uint32_t *data() const
-        {
+        const uint32_t *data() const {
             return m_data;
         }
 
-        void clear()
-        {
+        void clear() {
             m_headPtr = 0;
         }
 
@@ -52,25 +35,77 @@ class ParameterArray
         uint8_t m_headPtr;
 };
 
+enum class GPUCommandType
+{
+    None = -1,
+    NOP,
+    DrawPolygon,
+    DrawLine,
+    DrawRectangle,
+    VramVramCopy,
+    CpuVramCopy,
+    VramCpuCopy,
+    Env,
+    // Misc commands
+    ClearCache,
+    QuickRectFill
+};
+
+enum class GPURectSize : uint8_t
+{
+    Variable = 0,
+    Size_1x1,
+    Size_8x8,
+    Size_16x16
+};
+
+struct GPUCommandFlags
+{
+    bool shaded;
+    bool textured;
+    uint8_t nbVertices;
+    bool semiTransparent;
+    bool rawTexture;
+    bool polyline;
+    GPURectSize rectFlag;
+    struct RectSize {
+        uint8_t width;
+        uint8_t height;
+    } rectSize;
+    struct DestCoords {
+        uint16_t x;
+        uint16_t y;
+    } destCoords;
+    struct SourceCoords {
+        uint16_t x;
+        uint16_t y;
+    } sourceCoords;
+};
+
 class GPUCommand
 {
     public:
         GPUCommand();
         ~GPUCommand();
 
-        void setCommand(uint32_t cmd);
-        CommandType command() const;
+        void set(uint32_t cmd);
+        GPUCommandType type() const { return m_type; }
         void reset();
-        uint32_t raw() const;
 
         void addParam(uint32_t param);
-        const uint32_t *params() const;
-        uint8_t nbParams() const;
+        const GPUParamArray &params() const { return m_params; }
+        const GPUCommandFlags &flags() const { return m_flags; }
+        int expectedParams() { return m_nbExpectedParams; }
 
     private:
-        CommandType m_type;
-        uint32_t m_rawCmd;
-        ParameterArray m_params;
+        void parseRawCommand(uint32_t cmd);
+        void parseCommandType(uint32_t cmd);
+
+    private:
+        GPUCommandType m_type;
+        GPUCommandFlags m_flags;
+        GPUParamArray m_params;
+        int m_nbExpectedParams;
 };
 
 #endif /* !GPUCOMMAND_HPP_ */
