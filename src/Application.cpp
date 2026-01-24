@@ -22,7 +22,7 @@ Application::Application() :
     m_debugger(&m_system)
 {
     m_system.init();
-    m_system.attachDebugger(&m_debugger);
+    m_system.setDebuggerCallback([this]() { m_debugger.update(); });
 
     initWindows();
 }

@@ -13,12 +13,9 @@
 #include "InterruptController.hpp"
 #include "RAM.hpp"
 
-#include "Debugger/Debugger.hpp"
-
 System::System() :
     m_bus(nullptr),
     m_cpu(nullptr),
-    m_debugger(nullptr),
     m_state(SystemState::RUNNING),
     m_executablePath("")
 {
@@ -58,8 +55,8 @@ void System::tick()
     }
     m_cpu->step();
     m_bus->updateDevices(2);
-    if (m_debuggerAttached) {
-        m_debugger->update();
+    if (m_debuggerCallback) {
+        m_debuggerCallback();
     }
     if (m_cpu->getTtyOutputFlag()) {
         auto output = m_cpu->getTtyOutput();
@@ -115,10 +112,9 @@ void System::loadBios(const char *path)
     bios->loadFromFile(path);
 }
 
-void System::attachDebugger(Debugger *debugger)
+void System::setDebuggerCallback(const std::function<void()> &callback)
 {
-    m_debugger = debugger;
-    m_debuggerAttached = debugger != nullptr;
+    m_debuggerCallback = callback;
 }
 
 void System::setTtyCallback(const std::function<void(const std::string &)> &callback)
