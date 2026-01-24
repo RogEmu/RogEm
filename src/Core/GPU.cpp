@@ -67,7 +67,6 @@ void GPU::reset()
     m_gpuRead = 0;
     m_currentState = GpuState::WaitingForCommand;
     m_currentCmd.reset();
-    m_nbExpectedParams = -1;
 }
 
 void GPU::write8(uint8_t /* value */, uint32_t /* address */)
@@ -231,46 +230,27 @@ void GPU::processGP0(uint32_t data)
                 handleEnvCommand(data);
                 break;
             case 0b001: { // Draw Polygon
-                int nbVertices = ((data >> 27) & 1) == 0 ? 3 : 4;
-                m_nbExpectedParams = ((data >> 28) & 1) * (nbVertices - 1); // Nb Vertex Colors
-                m_nbExpectedParams += ((data >> 26) & 1) * nbVertices; // Nb UV coordinates
-                m_nbExpectedParams += nbVertices;
+                m_currentCmd.set(data);
                 m_currentState = GpuState::ReceivingParameters;
-                m_currentCmd.addParam(data & 0xFFFFFF);
-                m_currentCmd.setCommand(data);
-                m_nbExpectedParams += 1;
                 break;
             }
             case 0b010: { // Draw Line
-                if (((data >> 27) & 1) == 1)
-                    m_nbExpectedParams = -1;
-                else
-                    m_nbExpectedParams = ((data >> 28) & 1) == 0 ? 3 : 4;
+                m_currentCmd.set(data);
                 m_currentState = GpuState::ReceivingParameters;
-                m_currentCmd.setCommand(data);
-                m_currentCmd.addParam(data & 0xFFFFFF);
                 break;
             }
             case 0b011: { // Draw Rectangle
-                m_nbExpectedParams = 2;
-                m_nbExpectedParams += ((data >> 27) & 3) == 0; // Rectangle size parameter
-                m_nbExpectedParams += ((data >> 26) & 1); // Texture flag
-                m_currentCmd.addParam(data & 0xFFFFFF);
-                m_currentCmd.setCommand(data);
+                m_currentCmd.set(data);
                 m_currentState = GpuState::ReceivingParameters;
                 break;
             }
             case 0b100: // VRAM to VRAM copy
-                m_nbExpectedParams = 3;
                 m_currentState = GpuState::ReceivingParameters;
-                m_currentCmd.setCommand(data);
+                m_currentCmd.set(data);
                 break;
             case 0b101: // CPU to VRAM blitting
-                m_nbExpectedParams = 2;
                 m_currentState = GpuState::ReceivingParameters;
-                m_currentCmd.setCommand(data);
-                break;
-            case 0b110:
+                m_currentCmd.set(data);
                 break;
             default:
                 spdlog::warn("GPU: GP0 command 0x{:08X} unsupported", data);
@@ -357,9 +337,8 @@ void GPU::handleEnvCommand(uint32_t cmd)
         break;
     case 0x02:
         // Quick Rectangle Fill
-        m_nbExpectedParams = 2;
         m_currentState = GpuState::ReceivingParameters;
-        m_currentCmd.setCommand(cmd);
+        m_currentCmd.set(cmd);
         break;
     case 0x1F:
         // IRQ
@@ -417,25 +396,23 @@ static Vec2i getVec(uint32_t param)
 
 void GPU::drawPolygon()
 {
-    int nbVerts = ((m_currentCmd.raw() >> 27) & 1) == 0 ? 3 : 4;
-    bool shaded = (m_currentCmd.raw() >> 28) & 1;
-    bool textured = (m_currentCmd.raw() >> 26) & 1;
-    const uint32_t *params = m_currentCmd.params();
+    auto &flags = m_currentCmd.flags();
+    auto &params = m_currentCmd.params();
     ColorRGBA firstColor;
-    firstColor.fromBGR(params[0]);
+    firstColor.fromBGR(params.data()[0]);
     Vertex verts[4];
 
-    spdlog::warn("GPU: Draw Polygon with {} vertices", nbVerts);
+    spdlog::warn("GPU: Draw Polygon with {} vertices", flags.nbVertices);
 
-    int step = 1 + shaded + textured;
-    for (int i = 0; i < nbVerts; i++) {
-        if (shaded) {
-            verts[i].color.fromBGR(params[i * step]);
+    int step = 1 + flags.shaded + flags.textured;
+    for (int i = 0; i < flags.nbVertices; i++) {
+        if (flags.shaded) {
+            verts[i].color.fromBGR(params.data()[i * step]);
         }
 
-        verts[i].pos = getVec(params[i * step + 1]);
+        verts[i].pos = getVec(params.data()[i * step + 1]);
     }
-    if (nbVerts == 4) {
+    if (flags.nbVertices == 4) {
         rasterizePoly4(verts, firstColor);
     } else {
         rasterizePoly3(verts, firstColor);
@@ -446,20 +423,18 @@ void GPU::drawPolygon()
 
 void GPU::drawRectangle()
 {
-    auto params = m_currentCmd.params();
-    Vec2i topLeft{(int)(params[1] & 0xFFFF), (int)(params[1] >> 16)};
+    auto &flags = m_currentCmd.flags();
+    auto &params = m_currentCmd.params();
     ColorRGBA color;
-    color.fromBGR(params[0]);
+    color.fromBGR(params.data()[0]);
     Vec2i size{};
-    int rectSizeFlag = (m_currentCmd.raw() >> 27) & 3;
-    int textureFlag = (m_currentCmd.raw() >> 26) & 1;
+    Vec2i topLeft = getVec(params.data()[1]);
 
-    if (rectSizeFlag != 0) {
-        int scale = (rectSizeFlag - 1) * 8;
-        scale = scale ? scale : 1;
-        size = {scale, scale};
+    if (flags.rectFlag != GPURectSize::Variable) {
+        size.x = flags.rectSize.width;
+        size.y = flags.rectSize.height;
     } else {
-        size = getVec(params[2 + textureFlag]);
+        size = getVec(params.data()[2 + flags.textured]);
     }
     rasterizeRectangle({topLeft, color}, size);
     m_currentCmd.reset();
@@ -467,30 +442,29 @@ void GPU::drawRectangle()
 }
 
 void GPU::drawLine() {
-    const uint32_t *params = m_currentCmd.params();
-    bool goraud = (m_currentCmd.raw() >> 28) & 1;
-    bool polyline = (m_currentCmd.raw() >> 27) & 1;
+    auto &params = m_currentCmd.params();
+    auto &flags = m_currentCmd.flags();
     Vertex v0, v1;
-    int step = 1 + goraud;
+    int step = 1 + flags.shaded;
 
-    v0.color.fromBGR(params[0]);
-    v0.pos = getVec(params[1]);
-    v1.pos = getVec(params[2 + goraud]);
-    if (goraud)
-        v1.color.fromBGR(params[2]);
+    v0.color.fromBGR(params.data()[0]);
+    v0.pos = getVec(params.data()[1]);
+    v1.pos = getVec(params.data()[2 + flags.shaded]);
+    if (flags.shaded)
+        v1.color.fromBGR(params.data()[2]);
     else
-        v1.color.fromBGR(params[0]);
+        v1.color.fromBGR(params.data()[0]);
     rasterizeLine(v0, v1);
-    if (polyline) {
-        int iteration = m_currentCmd.nbParams() - 1;
-        int numSegments = (iteration - (3 + goraud)) / step;
+    if (flags.polyline) {
+        int iteration = params.size() - 1;
+        int numSegments = (iteration - (3 + flags.shaded)) / step;
         for (int i = 0; i < numSegments; i++) {
             v0 = v1;
-            if (goraud)
-                v1.color.fromBGR(params[(3 + goraud) + step * i]);
+            if (flags.shaded)
+                v1.color.fromBGR(params.data()[(3 + flags.shaded) + step * i]);
             else
-                v1.color.fromBGR(params[0]);
-            v1.pos = getVec(params[(3 + goraud) + step * i + goraud]);
+                v1.color.fromBGR(params.data()[0]);
+            v1.pos = getVec(params.data()[(3 + flags.shaded) + step * i + flags.shaded]);
             rasterizeLine(v0, v1);
         }
     }
@@ -500,35 +474,24 @@ void GPU::drawLine() {
 
 void GPU::startCpuToVramCopy()
 {
-    spdlog::warn("GPU: Copy data from CPU to VRAM");
-    auto params = m_currentCmd.params();
+    auto &params = m_currentCmd.params();
     m_currentState = GpuState::ReceivingDataWords;
-    m_vramCopyData.startPos = Vec2i{(int)(params[0] & 0x3FF), (int)((params[0] >> 16) & 0x1FF)};
-    m_vramCopyData.size = Vec2i{(int)((params[1] - 1) & 0x3FF) + 1, (int)(((params[1] >> 16) - 1) & 0x1FF)};
+    m_vramCopyData.startPos = Vec2i{(int)(params.data()[0] & 0x3FF), (int)((params.data()[0] >> 16) & 0x1FF)};
+    m_vramCopyData.size = Vec2i{(int)((params.data()[1] - 1) & 0x3FF) + 1, (int)(((params.data()[1] >> 16) - 1) & 0x1FF)};
     m_vramCopyData.currentPos = Vec2i{0, 0};
 }
 
 void GPU::quickRectFill()
 {
-    auto params = m_currentCmd.params();
-    uint32_t raw = m_currentCmd.raw();
-    Vec2i topLeft{(int)(params[0] & 0xFFFF), (int)(params[0] >> 16)};
-    Vec2i size{(int)(params[1] & 0xFFFF), (int)(params[1] >> 16)};
-    ColorRGBA color;
-
-    color.r = raw & 0xFF;
-    color.g = (raw >> 8) & 0xFF;
-    color.b = (raw >> 16) & 0xFF;
-    color.a = 0xFF;
-
-    uint16_t abgr = color.toABGR1555();
-    Vec2i pos;
+    auto &params = m_currentCmd.params();
+    Vec2i topLeft{(int)(params.data()[0] & 0xFFFF), (int)(params.data()[0] >> 16)};
+    Vec2i size{(int)(params.data()[1] & 0xFFFF), (int)(params.data()[1] >> 16)};
+    uint16_t abgr = params.data()[2] | 0x8000;
 
     for (int y = 0; y < size.y; y++) {
         for (int x = 0; x < size.x; x++) {
             for (int pix = 0; pix < 16; pix++) {
-                pos.x = topLeft.x + x;
-                pos.y = topLeft.y + y;
+                Vec2i pos{topLeft.x + x, topLeft.y + y};
                 setPixel(pos, abgr);
             }
         }
@@ -540,11 +503,10 @@ void GPU::quickRectFill()
 void GPU::startVramToVramCopy()
 {
     // The transfer should be affected by the Mask Bit setting
-    auto params = m_currentCmd.params();
-    Vec2i sourceCoord{(int)(params[0] & 0xFFFF), (int)(params[0] >> 16)};
-    Vec2i destCoord{(int)(params[1] & 0xFFFF), (int)(params[1] >> 16)};
-    Vec2i size{(int)(params[2] & 0xFFFF), (int)(params[2] >> 16)};
-
+    auto &params = m_currentCmd.params();
+    Vec2i sourceCoord{(int)(params.data()[0] & 0xFFFF), (int)(params.data()[0] >> 16)};
+    Vec2i destCoord{(int)(params.data()[1] & 0xFFFF), (int)(params.data()[1] >> 16)};
+    Vec2i size{(int)(params.data()[2] & 0xFFFF), (int)(params.data()[2] >> 16)};
     for (int y = 0; y < size.y; y++) {
         for (int x = 0; x < size.x; x++) {
             Vec2i currSourceCoord{sourceCoord.x + x, sourceCoord.y + y};
@@ -560,23 +522,33 @@ void GPU::startVramToVramCopy()
 void GPU::receiveParameter(uint32_t param)
 {
     m_currentCmd.addParam(param);
-    if (m_nbExpectedParams == -1 && (param & 0xF000F000) == 0x50005000) {
+
+    if (m_currentCmd.expectedParams() == -1 && (param & 0xF000F000) == 0x50005000) {
         drawLine();
     }
 
-    if (m_currentCmd.nbParams() == m_nbExpectedParams) {
-        if (m_currentCmd.command() == CommandType::DrawPolygon) {
-            drawPolygon();
-        } else if (m_currentCmd.command() == CommandType::CpuVramCopy) {
-            startCpuToVramCopy();
-        } else if (m_currentCmd.command() == CommandType::QuickRectFill) {
-            quickRectFill();
-        } else if (m_currentCmd.command() == CommandType::VramVramCopy) {
-            startVramToVramCopy();
-        } else if (m_currentCmd.command() == CommandType::DrawRectangle) {
-            drawRectangle();
-        } else if (m_currentCmd.command() == CommandType::DrawLine) {
-            drawLine();
+    if (m_currentCmd.params().size() == m_currentCmd.expectedParams()) {
+        switch (m_currentCmd.type()) {
+            case GPUCommandType::DrawPolygon:
+                drawPolygon();
+                break;
+            case GPUCommandType::DrawRectangle:
+                drawRectangle();
+                break;
+            case GPUCommandType::DrawLine:
+                drawLine();
+                break;
+            case GPUCommandType::QuickRectFill:
+                quickRectFill();
+                break;
+            case GPUCommandType::CpuVramCopy:
+                startCpuToVramCopy();
+                break;
+            case GPUCommandType::VramVramCopy:
+                startVramToVramCopy();
+                break;
+            default:
+                break;
         }
     }
 }
@@ -665,7 +637,7 @@ void GPU::rasterizeLine(const Vertex& v0, const Vertex& v1)
 void GPU::rasterizePoly3(const Vertex *verts, const ColorRGBA &color)
 {
     uint16_t argbColor = color.toABGR1555();
-    bool shaded = (m_currentCmd.raw() >> 28) & 1;
+    auto &flags = m_currentCmd.flags();
 
     int minX = std::max(0, std::min({verts[0].pos.x, verts[1].pos.x, verts[2].pos.x}));
     int maxX = std::min(GPU_VRAM_WIDTH - 1, std::max({verts[0].pos.x, verts[1].pos.x, verts[2].pos.x}));
@@ -685,7 +657,7 @@ void GPU::rasterizePoly3(const Vertex *verts, const ColorRGBA &color)
             int w1 = edgeFunction(verts[2].pos, verts[0].pos, p);
             int w2 = edgeFunction(verts[0].pos, verts[1].pos, p);
 
-            if (shaded) {
+            if (flags.shaded) {
                 float alpha = w0 * invArea;
                 float beta = w1 * invArea;
                 float gamma = w2 * invArea;
