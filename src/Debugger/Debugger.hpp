@@ -10,7 +10,6 @@
 
 #include "Disassembler.hpp"
 #include "Core/CPU.hpp"
-#include "GUI/MainMenuBar.hpp"
 
 class IWindow;
 class System;
