@@ -8,6 +8,7 @@
 
 #include "Core/System.hpp"
 #include "Debugger/Debugger.hpp"
+#include "GUI/MainMenuBar.hpp"
 
 struct EmulatorConfig
 {

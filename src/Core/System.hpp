@@ -38,16 +38,14 @@ class System
         void loadBios(const char *path);
         void loadExecutable(const char *path);
 
-        void attachDebugger(Debugger *debugger);
+        void setDebuggerCallback(const std::function<void()> &callback);
         void setTtyCallback(const std::function<void(const std::string &)> &callback);
 
     private:
         std::unique_ptr<Bus> m_bus;
         std::unique_ptr<CPU> m_cpu;
         std::function<void(const std::string &)> m_ttyCallback;
-
-        Debugger *m_debugger;
-        bool m_debuggerAttached;
+        std::function<void()> m_debuggerCallback;
 
         SystemState m_state;
         std::string m_executablePath;
