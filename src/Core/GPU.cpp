@@ -470,7 +470,7 @@ void GPU::quickRectFill()
     auto &params = m_currentCmd.params();
     Vec2i topLeft{(int)(params.data()[0] & 0xFFFF), (int)(params.data()[0] >> 16)};
     Vec2i size{(int)(params.data()[1] & 0xFFFF), (int)(params.data()[1] >> 16)};
-    uint16_t abgr = params.data()[2] | 0x8000;
+    uint16_t abgr = static_cast<uint16_t>(params.data()[2]) | 0x8000;
 
     for (int y = 0; y < size.y; y++) {
         for (int x = 0; x < size.x; x++) {
