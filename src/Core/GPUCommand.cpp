@@ -103,8 +103,13 @@ void GPUCommand::parseRawCommand(uint32_t cmd)
             m_nbExpectedParams = 3;
             m_params.addParam(cmd & 0xFFFFFF);
             break;
+        case GPUCommandType::NOP:
+        case GPUCommandType::ClearCache:
+        case GPUCommandType::Env:
+            m_nbExpectedParams = 0;
+            break;
         default:
-            spdlog::error("GPU Command: Parsing of unsupported command 0x{:08X}", cmd);
+            spdlog::error("GPU Command: Unsupported command 0x{:08X}", cmd);
             break;
     }
 }
