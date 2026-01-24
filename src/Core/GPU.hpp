@@ -223,7 +223,9 @@ class GPU : public PsxDevice
         void processGP1(uint32_t cmd);
 
         void setDisplayMode(uint8_t modeBits);
-        void handleEnvCommand(uint32_t cmd);
+        void executeEnvCommand(uint32_t cmd);
+        void executeMiscCommand(uint32_t cmd);
+
         void setDrawMode(uint32_t mode);
 
         // GP0 commands
