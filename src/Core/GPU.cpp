@@ -216,46 +216,33 @@ void GPU::readInternalRegister(uint8_t reg)
 
 void GPU::processGP0(uint32_t data)
 {
-    uint8_t top = data >> 29;
-
     if (m_currentState == GpuState::ReceivingDataWords) {
         receiveDataWord(data);
-    } else if (m_currentState == GpuState::ReceivingParameters) {
+        return;
+    }
+    if (m_currentState == GpuState::ReceivingParameters) {
         receiveParameter(data);
-    } else {
-        switch (top)
-        {
-            case 0b000:
-            case 0b111:
-                handleEnvCommand(data);
-                break;
-            case 0b001: { // Draw Polygon
-                m_currentCmd.set(data);
-                m_currentState = GpuState::ReceivingParameters;
-                break;
-            }
-            case 0b010: { // Draw Line
-                m_currentCmd.set(data);
-                m_currentState = GpuState::ReceivingParameters;
-                break;
-            }
-            case 0b011: { // Draw Rectangle
-                m_currentCmd.set(data);
-                m_currentState = GpuState::ReceivingParameters;
-                break;
-            }
-            case 0b100: // VRAM to VRAM copy
-                m_currentState = GpuState::ReceivingParameters;
-                m_currentCmd.set(data);
-                break;
-            case 0b101: // CPU to VRAM blitting
-                m_currentState = GpuState::ReceivingParameters;
-                m_currentCmd.set(data);
-                break;
-            default:
-                spdlog::warn("GPU: GP0 command 0x{:08X} unsupported", data);
-                break;
-        }
+        return;
+    }
+
+    switch (data >> 29) {
+        case 0b000: // Misc commands
+            executeMiscCommand(data);
+            break;
+        case 0b111:
+            executeEnvCommand(data);
+            break;
+        case 0b001: // Draw Polygon
+        case 0b010: // Draw Line
+        case 0b011: // Draw Rectangle
+        case 0b100: // VRAM to VRAM copy
+        case 0b101: // CPU to VRAM blitting
+            m_currentState = GpuState::ReceivingParameters;
+            m_currentCmd.set(data);
+            break;
+        default:
+            spdlog::error("GPU: Unknown GP0 command 0x{:08X}", data);
+            break;
     }
 }
 
@@ -323,56 +310,49 @@ void GPU::processGP1(uint32_t cmd)
     }
 }
 
-void GPU::handleEnvCommand(uint32_t cmd)
+void GPU::executeEnvCommand(uint32_t cmd)
 {
-    uint8_t top = cmd >> 24;
+    switch (cmd >> 24) {
+        case 0xE1:
+            setDrawMode(cmd & 0xFFFFFF);
+            break;
+        case 0xE2:
+            // Texture Window setting
+            break;
+        case 0xE3:
+            m_drawArea.topLeft.x = cmd & 0x3FF;
+            m_drawArea.topLeft.y = (cmd >> 10) & 0x3FF;
+            break;
+        case 0xE4:
+            m_drawArea.botRight.x = cmd & 0x3FF;
+            m_drawArea.botRight.y = (cmd >> 10) & 0x3FF;
+            break;
+        case 0xE5:
+            m_drawOffset.x = cmd & 0x7FF;
+            m_drawOffset.y = (cmd >> 11) & 0x7FF;
+            break;
+        case 0xE6:
+            m_gpuStat.setMaskBitWhenDrawing = cmd & 1;
+            m_gpuStat.drawPixels = (cmd >> 1) & 1;
+            break;
+        default:
+            spdlog::error("GPU: Unknown GP0 environment command 0x{:08X}", cmd);
+            break;
+        }
+}
 
-    switch (top)
-    {
-    case 0x00:
-        // NOP
-        break;
-    case 0x01:
-        // Clear Cache
-        break;
-    case 0x02:
-        // Quick Rectangle Fill
-        m_currentState = GpuState::ReceivingParameters;
-        m_currentCmd.set(cmd);
-        break;
-    case 0x1F:
-        // IRQ
-        break;
-    case 0xE1:
-        // Draw Mode setting
-        setDrawMode(cmd & 0xFFFFFF);
-        break;
-    case 0xE2:
-        // Texture Window setting
-        break;
-    case 0xE3:
-        // Set Draw Area top-left
-        m_drawArea.topLeft.x = cmd & 0x3FF;
-        m_drawArea.topLeft.y = (cmd >> 10) & 0x3FF;
-        break;
-    case 0xE4:
-        // Set Draw Area bottom-right
-        m_drawArea.botRight.x = cmd & 0x3FF;
-        m_drawArea.botRight.y = (cmd >> 10) & 0x3FF;
-        break;
-    case 0xE5:
-        // Set Drawing Offset
-        m_drawOffset.x = cmd & 0x7FF;
-        m_drawOffset.y = (cmd >> 11) & 0x7FF;
-        break;
-    case 0xE6:
-        // Mask bit setting
-        m_gpuStat.setMaskBitWhenDrawing = cmd & 1;
-        m_gpuStat.drawPixels = (cmd >> 1) & 1;
-        break;
-    default:
-        spdlog::error("GPU: Unknow GP0 command 0x{:08X}", cmd);
-        break;
+void GPU::executeMiscCommand(uint32_t cmd)
+{
+    switch (cmd >> 24) {
+        case 0x00:
+            // NOP
+            break;
+        case 0x01:
+            // Clear Cache
+            break;
+        default:
+            spdlog::error("GPU: Unknown GP0 misc command 0x{:08X}", cmd);
+            break;
     }
 }
 
