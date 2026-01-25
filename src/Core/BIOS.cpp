@@ -32,18 +32,18 @@ bool BIOS::loadFromFile(const std::string &path)
 
     if (!file.is_open())
     {
-        spdlog::error("Cannot open BIOS file \"{}\"", path);
+        spdlog::error("BIOS: Cannot open file \"{}\"", path);
         return false;
     }
     file.read(reinterpret_cast<char*>(m_data.data()), MemoryMap::BIOS_RANGE.length);
     if (file.fail())
     {
-        spdlog::error("Cannot read BIOS file \"{}\"", path);
+        spdlog::error("BIOS: Cannot read file \"{}\"", path);
         return false;
     }
     if (file.gcount() != MemoryMap::BIOS_RANGE.length)
     {
-        spdlog::error("The provided BIOS file is invalid: Expected size: {} but got {}", MemoryMap::BIOS_RANGE.length, file.gcount());
+        spdlog::error("BIOS: The provided file is invalid: Expected size: {} but got {}", MemoryMap::BIOS_RANGE.length, file.gcount());
         return false;
     }
     return true;

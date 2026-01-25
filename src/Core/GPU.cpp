@@ -386,8 +386,6 @@ void GPU::drawPolygon()
     firstColor.fromBGR(params.data()[0]);
     Vertex verts[4];
 
-    spdlog::warn("GPU: Draw Polygon with {} vertices", flags.nbVertices);
-
     int step = 1 + flags.shaded + flags.textured;
     for (int i = 0; i < flags.nbVertices; i++) {
         if (flags.shaded) {
