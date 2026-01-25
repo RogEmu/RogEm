@@ -10,8 +10,7 @@ InterruptController::InterruptController(Bus *bus) :
     PsxDevice(bus)
 {
     m_memoryRange = MemoryMap::INTERRUPT_CONTROL_RANGE;
-    m_istat = 0;
-    m_imask = 0;
+    reset();
 }
 
 InterruptController::~InterruptController()
@@ -124,10 +123,16 @@ uint32_t InterruptController::read32(uint32_t address)
     }
 }
 
+void InterruptController::reset()
+{
+    m_istat = 0;
+    m_imask = 0;
+}
+
 void InterruptController::triggerIRQ(DeviceIRQ device)
 {
     m_istat |= static_cast<uint32_t>(device);
-    setCpuIrqPending(true);
+    setCpuIrqPending(irqPending());
 }
 
 bool InterruptController::irqPending()
