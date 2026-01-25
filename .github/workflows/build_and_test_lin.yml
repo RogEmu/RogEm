@@ -48,19 +48,25 @@ jobs:
                                 xorg-dev\
                                 libglu1-mesa-dev
 
+    - name: Init Submodules
+      run: git submodule update --init
+
+    - name: Setup vcpkg binary caching
+      run: |
+        mkdir -p ~/.cache/vcpkg
+        echo "VCPKG_DEFAULT_BINARY_CACHE=$HOME/.cache/vcpkg" >> $GITHUB_ENV
+
     - name: Cache vcpkg
       id: vcpkg-cache
       uses: actions/cache@v4
       with:
         path: |
-          vcpkg
+          ~/.cache/vcpkg
+          build/vcpkg_installed
         key: ${{ runner.os }}-vcpkg-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}-${{ matrix.build_type }}
         restore-keys: |
           ${{ runner.os }}-vcpkg-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}-
           ${{ runner.os }}-vcpkg-
-
-    - name: Init Submodules
-      run: git submodule update --init
 
     - name: Configure CMake
       run: >
