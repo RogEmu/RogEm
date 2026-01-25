@@ -78,8 +78,6 @@ void System::update()
         }
         cycles += 2;
     }
-    auto irqc = m_bus->getDevice<InterruptController>();
-    irqc->triggerIRQ(DeviceIRQ::VBLANK);
 }
 
 void System::reset()
