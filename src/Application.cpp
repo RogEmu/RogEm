@@ -8,6 +8,7 @@
 #include <argparse/argparse.hpp>
 
 #include "Core/GPU.hpp"
+#include "Core/InterruptController.hpp"
 #include "GUI/RegisterWindow.hpp"
 #include "GUI/AssemblyWindow.hpp"
 #include "GUI/BreakpointWindow.hpp"
@@ -234,6 +235,13 @@ void Application::drawScreen()
                     drawArea.botRight.x, drawArea.botRight.y);
         ImGui::Text("Draw Offset: (%d, %d)",
                     drawOffset.x, drawOffset.y);
+    }
+    ImGui::End();
+
+    if (ImGui::Begin("IRQ Controller")) {
+        auto irqc = m_system.getBus()->getDevice<InterruptController>();
+        ImGui::Text("ISTAT: 0x%08X", irqc->read32(0x1F801070));
+        ImGui::Text("IMASK: 0x%08X", irqc->read32(0x1F801074));
     }
     ImGui::End();
 }
