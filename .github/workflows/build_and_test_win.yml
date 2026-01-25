@@ -24,20 +24,27 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Init Submodules
+      run: |
+        git submodule update --init
+
+    - name: Setup vcpkg binary caching
+      run: |
+        New-Item -ItemType Directory -Force -Path ~\AppData\Local\vcpkg\archives
+        echo "VCPKG_DEFAULT_BINARY_CACHE=$env:LOCALAPPDATA\vcpkg\archives" >> $env:GITHUB_ENV
+      shell: pwsh
+
     - name: Cache vcpkg binary cache
       id: vcpkg-cache
       uses: actions/cache@v4
       with:
         path: |
-          vcpkg
+          ~\AppData\Local\vcpkg\archives
+          build\vcpkg_installed
         key: ${{ runner.os }}-vcpkg-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}-${{ matrix.build_type }}
         restore-keys: |
           ${{ runner.os }}-vcpkg-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}-
           ${{ runner.os }}-vcpkg-
-
-    - name: Init Submodules
-      run: |
-        git submodule update --init
 
     - name: Configure CMake
       run: >
