@@ -31,6 +31,7 @@ class InterruptController : public PsxDevice
         InterruptController(Bus *bus);
         ~InterruptController();
 
+        void reset() override;
         void triggerIRQ(DeviceIRQ device);
 
         void write8(uint8_t value, uint32_t address) override;
