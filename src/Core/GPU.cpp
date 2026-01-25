@@ -5,6 +5,7 @@
 #include <cmath>
 
 #include "Bus.hpp"
+#include "InterruptController.hpp"
 
 Vec2i randomVertex(int width, int height)
 {
@@ -45,7 +46,8 @@ void GPU::update(int cycles)
         if (scanline >= NTSC_SCANLINES) {
             scanline = 0;
             m_gpuStat.interlaceDrawLines = false;
-            // TODO trigger VBlank interrupt
+            auto irqc = m_bus->getDevice<InterruptController>();
+            irqc->triggerIRQ(DeviceIRQ::VBLANK);
         }
     }
 }
