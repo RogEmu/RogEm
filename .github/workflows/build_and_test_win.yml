@@ -5,8 +5,6 @@ name: Windows Build and Test
 on:
   pull_request:
     branches: [ "dev" ]
-  # push:
-  #   branches: [ "dev" ]
 
 jobs:
   build:
@@ -16,12 +14,6 @@ jobs:
       # Set fail-fast to false to ensure that feedback is delivered for all matrix combinations. Consider changing this to true when your workflow is stable.
       fail-fast: false
 
-      # Set up a matrix to run the following 3 configurations:
-      # 1. <Windows, Release, latest MSVC compiler toolchain on the default runner image, default generator>
-      # 2. <Linux, Release, latest GCC compiler toolchain on the default runner image, default generator>
-      # 3. <Linux, Release, latest Clang compiler toolchain on the default runner image, default generator>
-      #
-      # To add more build types (Release, Debug, RelWithDebInfo, etc.) customize the build_type list.
       matrix:
         build_type: [Release, Debug]
         include:
@@ -37,8 +29,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: |
-          ~\AppData\Local\vcpkg\archives
-          build\vcpkg_installed
+          vcpkg
         key: ${{ runner.os }}-vcpkg-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}-${{ matrix.build_type }}
         restore-keys: |
           ${{ runner.os }}-vcpkg-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}-
@@ -48,15 +39,7 @@ jobs:
       run: |
         git submodule update --init
 
-    - name: Setup vcpkg binary caching
-      run: |
-        New-Item -ItemType Directory -Force -Path ~\AppData\Local\vcpkg\archives
-        echo "VCPKG_DEFAULT_BINARY_CACHE=$env:LOCALAPPDATA\vcpkg\archives" >> $env:GITHUB_ENV
-      shell: pwsh
-
     - name: Configure CMake
-      # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
-      # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       run: >
         cmake -B ${{ github.workspace }}/build
         -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
@@ -65,12 +48,8 @@ jobs:
         -S ${{ github.workspace }}
 
     - name: Build
-      # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
       run: cmake --build ${{ github.workspace }}/build --config ${{ matrix.build_type }}
 
     - name: Test
       working-directory: ${{ github.workspace }}/build
-      # Execute tests defined by the CMake configuration. Note that --build-config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
-      # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
-      # run: ctest --build-config ${{ matrix.build_type }} --test-dir ${{ github.workspace }}/build/tests/${{ matrix.build_type }}
       run: ${{ github.workspace }}\\build\\tests\\${{ matrix.build_type }}\\rogem_tests.exe
