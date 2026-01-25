@@ -60,7 +60,7 @@ uint32_t Bus::loadWord(uint32_t addr) const
 
     if (addr % 4 != 0)
     {
-        spdlog::error("Unaligned word load");
+        spdlog::error("Bus: Unaligned word load");
         return 0;
     }
 
@@ -79,7 +79,7 @@ void Bus::storeWord(uint32_t addr, uint32_t value)
 
     if (addr % 4 != 0)
     {
-        spdlog::error("Unaligned word store");
+        spdlog::error("Bus: Unaligned word store");
         return;
     }
 
@@ -98,7 +98,7 @@ uint16_t Bus::loadHalfWord(uint32_t addr) const
 
     if (addr % 2 != 0)
     {
-        spdlog::error("Unaligned halfword load");
+        spdlog::error("Bus: Unaligned halfword load");
         return 0;
     }
 
@@ -117,7 +117,7 @@ void Bus::storeHalfWord(uint32_t addr, uint16_t value)
 
     if (addr % 2 != 0)
     {
-        spdlog::error("Unaligned halfword store");
+        spdlog::error("Bus: Unaligned halfword store");
         return;
     }
 
@@ -146,7 +146,6 @@ uint8_t Bus::loadByte(uint32_t addr) const
 void Bus::storeByte(uint32_t addr, uint8_t value)
 {
     uint32_t pAddress = MemoryMap::mapAddress(addr);
-
 
     for (auto &[_, device] : m_devices) {
         if (device->isAddressed(pAddress)) {

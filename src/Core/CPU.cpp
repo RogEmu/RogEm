@@ -1120,7 +1120,6 @@ void CPU::triggerException(ExceptionType exception)
 
 void CPU::illegalInstruction(const Instruction &instruction)
 {
-    spdlog::error("Illegal instruction: 0x{:08X}", instruction.raw);
-
+    spdlog::error("CPU: Illegal instruction: 0x{:08X}", instruction.raw);
     triggerException(ExceptionType::RI);
 }

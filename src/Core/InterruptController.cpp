@@ -139,7 +139,7 @@ void InterruptController::setCpuIrqPending(bool pending)
 {
     CPU *cpu = m_bus->getCpu();
     if (!cpu) {
-        spdlog::error("CPU is not connected to the bus!");
+        spdlog::error("IRQ Controller: CPU is not connected to the bus!");
         return;
     }
     cpu->setInterruptPending(pending);
