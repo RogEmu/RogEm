@@ -53,10 +53,14 @@ void CPU::step()
         triggerException(ExceptionType::AddressErrorLoad);
         m_jumpToUnaligned = false;
     }
-    if (interruptPending() && shouldExecuteInterrupt()) {
+
+    if (interruptPending() && interruptsEnabled()) {
         triggerException(ExceptionType::Interrupt);
+        m_pc = m_nextPc;
+        m_inBranchDelay = false;
         return;
     }
+
     executeInstruction(instruction);
     handleLoadDelay();
     checkTtyOutput();
@@ -241,7 +245,7 @@ void CPU::handleLoadDelay()
     }
 }
 
-bool CPU::shouldExecuteInterrupt()
+bool CPU::interruptsEnabled()
 {
     return (m_cop0.mfc(12) & 0x401) == 0x401;
 }
@@ -418,8 +422,7 @@ void CPU::setInterruptPending(bool pending)
 
 bool CPU::interruptPending()
 {
-    bool pending = m_cop0.mfc(13) & 0x400;
-    return pending;
+    return m_cop0.mfc(13) & 0x400;
 }
 
 void CPU::loadUpperImmediate(const Instruction &instruction)
