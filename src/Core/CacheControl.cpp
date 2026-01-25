@@ -25,7 +25,7 @@ void CacheControl::write16(uint16_t value, uint32_t address)
     if (address == 0xFFFE0130) {
         m_cacheControl = (m_cacheControl & 0xFFFF0000) | value;
     } else {
-        spdlog::warn("Cache Control: write halfword to unknown address 0x{:08X}", address);
+        spdlog::error("Cache Control: write halfword to unknown address 0x{:08X}", address);
     }
 }
 
@@ -35,7 +35,7 @@ void CacheControl::write32(uint32_t value, uint32_t address)
     if (address == 0xFFFE0130) {
         m_cacheControl = value;
     } else {
-        spdlog::warn("Cache Control: Write word to unknown address 0x{:08X}", address);
+        spdlog::error("Cache Control: Write word to unknown address 0x{:08X}", address);
     }
 }
 
@@ -51,7 +51,7 @@ uint16_t CacheControl::read16(uint32_t address)
     if (address == 0xFFFE0130) {
         return static_cast<uint16_t>(m_cacheControl & 0xFFFF);
     } else {
-        spdlog::warn("Cache Control: read halfword from unknown address 0x{:08X}", address);
+        spdlog::error("Cache Control: read halfword from unknown address 0x{:08X}", address);
         return 0;
     }
 }
@@ -62,7 +62,7 @@ uint32_t CacheControl::read32(uint32_t address)
     if (address == 0xFFFE0130) {
         return m_cacheControl;
     } else {
-        spdlog::warn("Cache Control: read word from unknown address 0x{:08X}", address);
+        spdlog::error("Cache Control: read word from unknown address 0x{:08X}", address);
         return 0;
     }
 }

@@ -140,7 +140,7 @@ void DMA::executeDmaTransfer(uint8_t channel)
         executeDmaGpu();
         break;
     default:
-        spdlog::warn("Currently unsupported DMA transfer to channel {}", channel);
+        spdlog::error("DMA: Unsupported transfer to channel {}", channel);
         break;
     }
 }

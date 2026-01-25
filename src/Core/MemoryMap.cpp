@@ -23,7 +23,7 @@ uint32_t MemoryMap::mapAddress(uint32_t addr)
         case MemorySegments::KSEG2:
             return addr;
         default:
-            spdlog::error("Unsupported address space: {:08X}", addr);
+            spdlog::error("Memory Map: Unsupported address space: {:08X}", addr);
             break;
     }
     return 0;

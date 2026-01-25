@@ -49,7 +49,7 @@ Disassembler::Disassembler()
     auto mode = static_cast<cs_mode>(CS_MODE_MIPS32 + CS_MODE_BIG_ENDIAN);
     auto status = cs_open(CS_ARCH_MIPS, mode, &m_csHandle);
     if (status != CS_ERR_OK) {
-        spdlog::error("Error initializing capstone engine: {}", cs_strerror(status));
+        spdlog::error("Disassembler: Error initializing capstone engine: {}", cs_strerror(status));
     }
 }
 

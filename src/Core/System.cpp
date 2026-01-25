@@ -100,9 +100,9 @@ void System::loadExecutable(const char *path)
         m_cpu->setReg(CpuReg::SP, exe.initialSpBase);
         m_cpu->setReg(CpuReg::FP, exe.initialSpBase);
         ram->loadExecutable(exe.ramDestination, exe.exeData);
-        spdlog::info("Loaded PSX-EXE file successfuly");
+        spdlog::info("System: Loaded PSX-EXE file successfuly");
     } else {
-        spdlog::error("Error while loading PSX-EXE file");
+        spdlog::error("System: Error while loading PSX-EXE file");
     }
 }
 

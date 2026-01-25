@@ -35,7 +35,7 @@ void GTE::reset() {
  */
 uint32_t GTE::mfc(uint8_t reg) {
     if (reg >= 32) {
-        spdlog::error("mfc error: Register index out of range");
+        spdlog::error("GTE: mfc error: Register index out of range");
         return 0;
     }
     return static_cast<uint32_t>(m_dataReg[reg]);
@@ -49,7 +49,7 @@ uint32_t GTE::mfc(uint8_t reg) {
  */
 uint32_t GTE::cfc(uint8_t reg) {
     if (reg >= 32) {
-        spdlog::error("cfc error: Register index out of range");
+        spdlog::error("GTE: cfc error: Register index out of range");
         return 0;
     }
     return static_cast<uint32_t>(m_ctrlReg[reg]);
@@ -63,7 +63,7 @@ uint32_t GTE::cfc(uint8_t reg) {
  */
 void GTE::mtc(uint8_t reg, uint32_t value) {
     if (reg >= 32) {
-        spdlog::error("mtc error: Register index out of range");
+        spdlog::error("GTE: mtc error: Register index out of range");
         return;
     }
     m_dataReg[reg] = static_cast<int32_t>(value);
@@ -77,7 +77,7 @@ void GTE::mtc(uint8_t reg, uint32_t value) {
  */
 void GTE::ctc(uint8_t reg, uint32_t value) {
     if (reg >= 32) {
-        spdlog::error("ctc error: Register index out of range");
+        spdlog::error("GTE: ctc error: Register index out of range");
         return;
     }
     m_ctrlReg[reg] = static_cast<int32_t>(value);
@@ -188,7 +188,7 @@ void GTE::decodeAndExecute(uint32_t opcode) {
             break;
         }
         default:
-            spdlog::error("[GTE] Unimplemented or unknown instruction function: 0x{:02X}", opcode & 0x3F);
+            spdlog::error("GTE: Unimplemented or unknown instruction function: 0x{:02X}", opcode & 0x3F);
             break;
     }
 }
