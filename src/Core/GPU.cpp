@@ -797,7 +797,8 @@ uint16_t GPU::sampleTexture(uint8_t u, uint8_t v, const TextureInfo& texInfo)
             uint16_t texelX = texPageBaseX + (u / 2);  // 2 texels per 16-bit word
             uint16_t texelY = texPageBaseY + v;
             uint16_t texData = getPixel({static_cast<int>(texelX), static_cast<int>(texelY)});
-            return texData;
+            uint8_t index = (texData >> ((u % 2) * 8)) & 0xFF;
+            return getPixel({texInfo.clutX + index, texInfo.clutY});
         }
 
         case TexturePageColors::COL_15Bit: {
