@@ -206,21 +206,19 @@ void Application::render()
 
 void Application::drawScreen()
 {
+    GPU *gpu = m_system.getBus()->getDevice<GPU>();
+    uint8_t *vram = gpu->getVram();
+
     if (ImGui::Begin("Screen")) {
-        GPU *gpu = m_system.getBus()->getDevice<GPU>();
-        const uint8_t *vram = gpu->getVram();
         glBindTexture(GL_TEXTURE_2D, m_vramTexture);
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 1024, 512, GL_RGBA, GL_UNSIGNED_SHORT_1_5_5_5_REV, vram);
         ImGui::Image((ImTextureID)(intptr_t)m_vramTexture, ImGui::GetContentRegionAvail());
     }
     ImGui::End();
 
-    GPU *gpu = m_system.getBus()->getDevice<GPU>();
-    uint8_t *vram = gpu->getVram();
     m_vramEditor.DrawWindow("VRAM Editor", vram, GPU_VRAM_1MB_SIZE);
 
     if (ImGui::Begin("GPU Debug")) {
-        auto gpu = m_system.getBus()->getDevice<GPU>();
         auto gpuStat = gpu->getGpuStat();
         auto drawArea = gpu->getDrawArea();
         auto drawOffset = gpu->getDrawOffset();
