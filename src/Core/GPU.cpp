@@ -404,6 +404,8 @@ void GPU::drawPolygon()
 
         // Parse position
         verts[i].pos = getVec(params.data()[paramIndex + 1]);
+        verts[i].pos.x += m_drawOffset.x;
+        verts[i].pos.y += m_drawOffset.y;
 
         // Parse texture coordinates (if textured)
         if (flags.textured) {
@@ -448,6 +450,8 @@ void GPU::drawRectangle()
     Vec2i size{};
     Vec2i topLeft = getVec(params.data()[1]);
     TextureInfo texInfo{};
+    topLeft.x += m_drawOffset.x;
+    topLeft.y += m_drawOffset.y;
     Vertex vert{topLeft, color, 0, 0};
 
     if (flags.textured) {
