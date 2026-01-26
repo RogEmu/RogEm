@@ -687,7 +687,7 @@ void GPU::rasterizePoly3(const Vertex *verts, const ColorRGBA &color, const Text
     if (area == 0)
         return;
 
-    ColorRGBA finalColor = color;
+    ColorRGBA finalColor;
     for (int y = minY; y < maxY; y++) {
         for (int x = minX; x < maxX; x++) {
             Vec2i p = {x, y};
@@ -703,6 +703,7 @@ void GPU::rasterizePoly3(const Vertex *verts, const ColorRGBA &color, const Text
                 float beta = w1 * invArea;
                 float gamma = w2 * invArea;
 
+                finalColor = color;
                 if (flags.shaded) {
                     finalColor = interpolateColor(verts[0].color, verts[1].color, verts[2].color, alpha, beta, gamma);
                 }
@@ -717,13 +718,13 @@ void GPU::rasterizePoly3(const Vertex *verts, const ColorRGBA &color, const Text
                     }
 
                     if (!flags.rawTexture) {
-                        uint8_t texR = (texColor & 0x1F) << 3;
-                        uint8_t texG = ((texColor >> 5) & 0x1F) << 3;
-                        uint8_t texB = ((texColor >> 10) & 0x1F) << 3;
+                        uint16_t texR = (texColor & 0x1F) << 3;
+                        uint16_t texG = ((texColor >> 5) & 0x1F) << 3;
+                        uint16_t texB = ((texColor >> 10) & 0x1F) << 3;
 
-                        texR = (texR * finalColor.r) / 128;
-                        texG = (texG * finalColor.g) / 128;
-                        texB = (texB * finalColor.b) / 128;
+                        finalColor.r = (texR * finalColor.r) / 128;
+                        finalColor.g = (texG * finalColor.g) / 128;
+                        finalColor.b = (texB * finalColor.b) / 128;
                     } else {
                         finalColor.r = (texColor & 0x1F) << 3;
                         finalColor.g = ((texColor >> 5) & 0x1F) << 3;
