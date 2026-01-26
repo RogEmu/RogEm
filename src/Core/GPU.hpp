@@ -212,7 +212,7 @@ class GPU : public PsxDevice
         uint16_t read16(uint32_t address) override;
         uint32_t read32(uint32_t address) override;
 
-        const uint8_t *getVram() const;
+        uint8_t *getVram();
 
         const GPUStat& getGpuStat() const { return m_gpuStat; }
         uint32_t getGpuStatRaw() const { return gpuStat(); }

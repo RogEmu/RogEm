@@ -124,7 +124,7 @@ uint32_t GPU::read32(uint32_t address)
     return result;
 }
 
-const uint8_t *GPU::getVram() const
+uint8_t *GPU::getVram()
 {
     return m_vram.data();
 }
