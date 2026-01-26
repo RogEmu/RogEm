@@ -22,8 +22,8 @@ jobs:
             c_compiler: gcc
             cpp_compiler: g++
           - os: windows-latest
-            c_compiler: cl
-            cpp_compiler: cl
+            c_compiler: clang-cl
+            cpp_compiler: clang-cl
 
     steps:
     - uses: actions/checkout@v4
