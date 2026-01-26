@@ -433,9 +433,9 @@ void GPU::drawPolygon()
     }
 
     if (flags.nbVertices == 4) {
-        rasterizePoly4(verts, firstColor, flags.textured, texInfo, flags.rawTexture);
+        rasterizePoly4(verts, firstColor, texInfo);
     } else {
-        rasterizePoly3(verts, firstColor, flags.textured, texInfo, flags.rawTexture);
+        rasterizePoly3(verts, firstColor, texInfo);
     }
     m_currentCmd.reset();
     m_currentState = GpuState::WaitingForCommand;
@@ -474,7 +474,7 @@ void GPU::drawRectangle()
         size = getVec(params.data()[2 + flags.textured]);
     }
 
-    rasterizeRectangle(vert, size, flags.textured, texInfo, flags.rawTexture);
+    rasterizeRectangle(vert, size, texInfo);
     m_currentCmd.reset();
     m_currentState = GpuState::WaitingForCommand;
 }
@@ -672,7 +672,7 @@ void GPU::rasterizeLine(const Vertex& v0, const Vertex& v1)
     }
 }
 
-void GPU::rasterizePoly3(const Vertex *verts, const ColorRGBA &color, bool textured, const TextureInfo& texInfo, bool rawTexture)
+void GPU::rasterizePoly3(const Vertex *verts, const ColorRGBA &color, const TextureInfo& texInfo)
 {
     auto &flags = m_currentCmd.flags();
 
@@ -706,7 +706,7 @@ void GPU::rasterizePoly3(const Vertex *verts, const ColorRGBA &color, bool textu
                 if (flags.shaded) {
                     finalColor = interpolateColor(verts[0].color, verts[1].color, verts[2].color, alpha, beta, gamma);
                 }
-                if (textured) {
+                if (flags.textured) {
                     float u = alpha * verts[0].u + beta * verts[1].u + gamma * verts[2].u;
                     float v = alpha * verts[0].v + beta * verts[1].v + gamma * verts[2].v;
 
@@ -716,7 +716,7 @@ void GPU::rasterizePoly3(const Vertex *verts, const ColorRGBA &color, bool textu
                         continue;
                     }
 
-                    if (!rawTexture) {
+                    if (!flags.rawTexture) {
                         uint8_t texR = (texColor & 0x1F) << 3;
                         uint8_t texG = ((texColor >> 5) & 0x1F) << 3;
                         uint8_t texB = ((texColor >> 10) & 0x1F) << 3;
@@ -736,21 +736,23 @@ void GPU::rasterizePoly3(const Vertex *verts, const ColorRGBA &color, bool textu
     }
 }
 
-void GPU::rasterizePoly4(const Vertex *verts, const ColorRGBA &color, bool textured, const TextureInfo& texInfo, bool rawTexture)
+void GPU::rasterizePoly4(const Vertex *verts, const ColorRGBA &color, const TextureInfo& texInfo)
 {
-    rasterizePoly3(verts, color, textured, texInfo, rawTexture);
-    rasterizePoly3(verts + 1, color, textured, texInfo, rawTexture);
+    rasterizePoly3(verts, color, texInfo);
+    rasterizePoly3(verts + 1, color, texInfo);
 }
 
-void GPU::rasterizeRectangle(const Vertex &vert, const Vec2i &size, bool textured, const TextureInfo& texInfo, bool rawTexture)
+void GPU::rasterizeRectangle(const Vertex &vert, const Vec2i &size, const TextureInfo& texInfo)
 {
+    auto &flags = m_currentCmd.flags();
     uint16_t color = vert.color.toABGR1555();
+
     for (uint16_t y = 0; y < size.y; y++) {
         for (uint16_t x = 0; x < size.x; x++) {
             Vec2i pos{vert.pos.x + x, vert.pos.y + y};
             uint16_t pixelColor = color;
 
-            if (textured) {
+            if (flags.textured) {
                 uint8_t u = static_cast<uint8_t>(vert.u + x);
                 uint8_t v = static_cast<uint8_t>(vert.v + y);
 
@@ -760,7 +762,7 @@ void GPU::rasterizeRectangle(const Vertex &vert, const Vec2i &size, bool texture
                     continue;
                 }
 
-                if (!rawTexture) {
+                if (!flags.rawTexture) {
                     uint8_t texR = (pixelColor & 0x1F) << 3;
                     uint8_t texG = ((pixelColor >> 5) & 0x1F) << 3;
                     uint8_t texB = ((pixelColor >> 10) & 0x1F) << 3;
@@ -772,7 +774,6 @@ void GPU::rasterizeRectangle(const Vertex &vert, const Vec2i &size, bool texture
                     pixelColor = 0x8000 | ((texB >> 3) << 10) | ((texG >> 3) << 5) | (texR >> 3);
                 }
             }
-
             setPixel(pos, pixelColor);
         }
     }
