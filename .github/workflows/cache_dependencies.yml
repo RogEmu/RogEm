@@ -32,6 +32,10 @@ jobs:
       if: runner.os == 'Linux'
       run: sudo apt-get update && sudo apt-get install -y build-essential cmake ninja-build curl zip unzip tar pkg-config libxinerama-dev libxcursor-dev xorg-dev libglu1-mesa-dev
 
+    - name: Install Windows Dependencies
+      if: runner.os == 'Windows'
+      run: choco install ninja -y
+
     - name: Cache vcpkg binary cache (Linux)
       id: vcpkg-cache
       uses: actions/cache@v4
@@ -64,6 +68,7 @@ jobs:
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
         -S ${{ github.workspace }}
+        -G Ninja
 
     - name: Output Logs On Failure
       if: failure()
