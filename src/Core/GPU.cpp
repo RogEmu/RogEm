@@ -460,6 +460,7 @@ void GPU::drawRectangle()
         texInfo.clutY = (clutInfo >> 6) & 0x1FF;
         texInfo.texPageX = m_gpuStat.texPageBase.x;
         texInfo.texPageY = m_gpuStat.texPageBase.y;
+        texInfo.colorMode = m_gpuStat.texPageColors;
     }
 
     if (flags.rectFlag != GPURectSize::Variable) {
