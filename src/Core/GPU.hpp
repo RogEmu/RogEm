@@ -159,12 +159,23 @@ struct Vertex
 {
     Vec2i pos;
     ColorRGBA color;
+    uint8_t u;
+    uint8_t v;
 };
 
 struct TextureRectFlip
 {
     bool x;
     bool y;
+};
+
+struct TextureInfo
+{
+    uint16_t clutX;
+    uint16_t clutY;
+    uint8_t texPageX;
+    uint8_t texPageY;
+    TexturePageColors colorMode;
 };
 
 struct TextureWindow
@@ -249,12 +260,15 @@ class GPU : public PsxDevice
 
         // Rasterization methods
         void rasterizeLine(const Vertex& v0, const Vertex& v1);
-        void rasterizePoly3(const Vertex *verts, const ColorRGBA& color);
-        void rasterizePoly4(const Vertex *verts, const ColorRGBA& color);
+        void rasterizePoly3(const Vertex *verts, const ColorRGBA& color, bool textured, const TextureInfo& texInfo, bool rawTexture);
+        void rasterizePoly4(const Vertex *verts, const ColorRGBA& color, bool textured, const TextureInfo& texInfo, bool rawTexture);
         void rasterizeRectangle(const Vertex &vert, const Vec2i &size);
 
         void setPixel(const Vec2i &pos, uint16_t color);
         uint16_t getPixel(const Vec2i &pos);
+
+        // Texture sampling methods
+        uint16_t sampleTexture(uint8_t u, uint8_t v, const TextureInfo& texInfo);
 
     private:
         GPUStat m_gpuStat;
