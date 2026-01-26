@@ -544,7 +544,7 @@ void GPU::receiveParameter(uint32_t param)
 void GPU::receiveDataWord(uint32_t data)
 {
     for (int i = 0; i < 2; i++) {
-        uint16_t pix = ((data >> (16 * i)) & 0xFFFF) | 0x8000;
+        uint16_t pix = ((data >> (16 * i)) & 0xFFFF);
         Vec2i pos{
             m_vramCopyData.currentPos.x + m_vramCopyData.startPos.x,
             m_vramCopyData.currentPos.y + m_vramCopyData.startPos.y
