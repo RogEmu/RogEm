@@ -447,6 +447,20 @@ void GPU::drawRectangle()
     color.fromBGR(params.data()[0]);
     Vec2i size{};
     Vec2i topLeft = getVec(params.data()[1]);
+    TextureInfo texInfo{};
+    Vertex vert{topLeft, color, 0, 0};
+
+    if (flags.textured) {
+        uint32_t texData = params.data()[2];
+        vert.u = texData & 0xFF;
+        vert.v = (texData >> 8) & 0xFF;
+
+        uint16_t clutInfo = (texData >> 16);
+        texInfo.clutX = (clutInfo & 0x3F) * 16;
+        texInfo.clutY = (clutInfo >> 6) & 0x1FF;
+        texInfo.texPageX = m_gpuStat.texPageBase.x;
+        texInfo.texPageY = m_gpuStat.texPageBase.y;
+    }
 
     if (flags.rectFlag != GPURectSize::Variable) {
         size.x = flags.rectSize.width;
@@ -454,8 +468,8 @@ void GPU::drawRectangle()
     } else {
         size = getVec(params.data()[2 + flags.textured]);
     }
-    Vertex vert{topLeft, color, 0, 0};
-    rasterizeRectangle(vert, size);
+
+    rasterizeRectangle(vert, size, flags.textured, texInfo, flags.rawTexture);
     m_currentCmd.reset();
     m_currentState = GpuState::WaitingForCommand;
 }
@@ -712,13 +726,38 @@ void GPU::rasterizePoly4(const Vertex *verts, const ColorRGBA &color, bool textu
     rasterizePoly3(verts + 1, color, textured, texInfo, rawTexture);
 }
 
-void GPU::rasterizeRectangle(const Vertex &vert, const Vec2i &size)
+void GPU::rasterizeRectangle(const Vertex &vert, const Vec2i &size, bool textured, const TextureInfo& texInfo, bool rawTexture)
 {
     uint16_t color = vert.color.toABGR1555();
-    for (int y = 0; y < size.y; y++) {
-        for (int x = 0; x < size.x; x++) {
+    for (uint16_t y = 0; y < size.y; y++) {
+        for (uint16_t x = 0; x < size.x; x++) {
             Vec2i pos{vert.pos.x + x, vert.pos.y + y};
-            setPixel(pos, color);
+            uint16_t pixelColor = color;
+
+            if (textured) {
+                uint8_t u = static_cast<uint8_t>(vert.u + x);
+                uint8_t v = static_cast<uint8_t>(vert.v + y);
+
+                pixelColor = sampleTexture(u, v, texInfo);
+
+                if (!pixelColor) {
+                    continue;
+                }
+
+                if (!rawTexture) {
+                    uint8_t texR = (pixelColor & 0x1F) << 3;
+                    uint8_t texG = ((pixelColor >> 5) & 0x1F) << 3;
+                    uint8_t texB = ((pixelColor >> 10) & 0x1F) << 3;
+
+                    texR = (texR * vert.color.r) >> 7;
+                    texG = (texG * vert.color.g) >> 7;
+                    texB = (texB * vert.color.b) >> 7;
+
+                    pixelColor = 0x8000 | ((texB >> 3) << 10) | ((texG >> 3) << 5) | (texR >> 3);
+                }
+            }
+
+            setPixel(pos, pixelColor);
         }
     }
 }
