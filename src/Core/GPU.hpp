@@ -262,7 +262,7 @@ class GPU : public PsxDevice
         void rasterizeLine(const Vertex& v0, const Vertex& v1);
         void rasterizePoly3(const Vertex *verts, const ColorRGBA& color, bool textured, const TextureInfo& texInfo, bool rawTexture);
         void rasterizePoly4(const Vertex *verts, const ColorRGBA& color, bool textured, const TextureInfo& texInfo, bool rawTexture);
-        void rasterizeRectangle(const Vertex &vert, const Vec2i &size);
+        void rasterizeRectangle(const Vertex &vert, const Vec2i &size, bool textured, const TextureInfo& texInfo, bool rawTexture);
 
         void setPixel(const Vec2i &pos, uint16_t color);
         uint16_t getPixel(const Vec2i &pos);
