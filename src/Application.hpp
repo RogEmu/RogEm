@@ -9,6 +9,7 @@
 #include "Core/System.hpp"
 #include "Debugger/Debugger.hpp"
 #include "GUI/MainMenuBar.hpp"
+#include "imgui/imgui_memory_editor.h"
 
 struct EmulatorConfig
 {
@@ -50,6 +51,7 @@ class Application
 
         std::unique_ptr<MainMenuBar> m_mainMenuBar;
         std::list<std::shared_ptr<IWindow>> m_windows;
+        MemoryEditor m_vramEditor;
         GLFWwindow* m_window;
         GLuint m_vramTexture;
 };
