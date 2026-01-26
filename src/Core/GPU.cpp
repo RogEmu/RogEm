@@ -722,9 +722,9 @@ void GPU::rasterizePoly3(const Vertex *verts, const ColorRGBA &color, const Text
                         uint16_t texG = ((texColor >> 5) & 0x1F) << 3;
                         uint16_t texB = ((texColor >> 10) & 0x1F) << 3;
 
-                        finalColor.r = (texR * finalColor.r) / 128;
-                        finalColor.g = (texG * finalColor.g) / 128;
-                        finalColor.b = (texB * finalColor.b) / 128;
+                        finalColor.r = static_cast<uint8_t>((texR * finalColor.r) / 128);
+                        finalColor.g = static_cast<uint8_t>((texG * finalColor.g) / 128);
+                        finalColor.b = static_cast<uint8_t>((texB * finalColor.b) / 128);
                     } else {
                         finalColor.r = (texColor & 0x1F) << 3;
                         finalColor.g = ((texColor >> 5) & 0x1F) << 3;
