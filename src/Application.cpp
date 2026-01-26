@@ -215,6 +215,10 @@ void Application::drawScreen()
     }
     ImGui::End();
 
+    GPU *gpu = m_system.getBus()->getDevice<GPU>();
+    uint8_t *vram = gpu->getVram();
+    m_vramEditor.DrawWindow("VRAM Editor", vram, GPU_VRAM_1MB_SIZE);
+
     if (ImGui::Begin("GPU Debug")) {
         auto gpu = m_system.getBus()->getDevice<GPU>();
         auto gpuStat = gpu->getGpuStat();
@@ -235,6 +239,11 @@ void Application::drawScreen()
                     drawArea.botRight.x, drawArea.botRight.y);
         ImGui::Text("Draw Offset: (%d, %d)",
                     drawOffset.x, drawOffset.y);
+        ImGui::Text("Texture Page Base: (%d, %d)",
+                    gpuStat.texPageBase.x * 64, gpuStat.texPageBase.y * 256);
+        ImGui::Text("Texture page colors: %s", gpuStat.texPageColors == TexturePageColors::COL_4Bit ? "4bit" :
+                                            gpuStat.texPageColors == TexturePageColors::COL_8Bit ? "8bit" :
+                                            gpuStat.texPageColors == TexturePageColors::COL_15Bit ? "15bit" : "Reserved");
     }
     ImGui::End();
 
