@@ -391,19 +391,49 @@ void GPU::drawPolygon()
     ColorRGBA firstColor;
     firstColor.fromBGR(params.data()[0]);
     Vertex verts[4];
+    TextureInfo texInfo;
 
     int step = 1 + flags.shaded + flags.textured;
     for (int i = 0; i < flags.nbVertices; i++) {
+        int paramIndex = i * step;
+
+        // Parse color (if shaded)
         if (flags.shaded) {
-            verts[i].color.fromBGR(params.data()[i * step]);
+            verts[i].color.fromBGR(params.data()[paramIndex]);
         }
 
-        verts[i].pos = getVec(params.data()[i * step + 1]);
+        // Parse position
+        verts[i].pos = getVec(params.data()[paramIndex + 1]);
+
+        // Parse texture coordinates (if textured)
+        if (flags.textured) {
+            uint32_t texData = params.data()[paramIndex + 2];
+            verts[i].u = texData & 0xFF;          // U coordinate (bits 0-7)
+            verts[i].v = (texData >> 8) & 0xFF;   // V coordinate (bits 8-15)
+
+            // First vertex: extract CLUT position (upper 16 bits)
+            if (i == 0) {
+                uint16_t clutInfo = (texData >> 16) & 0xFFFF;
+                texInfo.clutX = (clutInfo & 0x3F) * 16;        // Bits 0-5: X in 16-pixel units
+                texInfo.clutY = (clutInfo >> 6) & 0x1FF;       // Bits 6-14: Y (0-511)
+            }
+            // Second vertex: extract texture page info (upper 16 bits)
+            else if (i == 1) {
+                uint16_t texPageInfo = (texData >> 16) & 0xFFFF;
+                texInfo.texPageX = texPageInfo & 0xF;           // Bits 0-3: X in 64-pixel units
+                texInfo.texPageY = (texPageInfo >> 4) & 0x1;    // Bit 4: Y in 256-pixel units
+                texInfo.colorMode = static_cast<TexturePageColors>((texPageInfo >> 7) & 0x3); // Bits 7-8: color mode
+
+                // Note: Bits 5-6 contain semi-transparency mode (already in GPU status)
+                // Bit 9 contains texture disable bit (for rectangles)
+            }
+        }
     }
+
     if (flags.nbVertices == 4) {
-        rasterizePoly4(verts, firstColor);
+        rasterizePoly4(verts, firstColor, flags.textured, texInfo, flags.rawTexture);
     } else {
-        rasterizePoly3(verts, firstColor);
+        rasterizePoly3(verts, firstColor, flags.textured, texInfo, flags.rawTexture);
     }
     m_currentCmd.reset();
     m_currentState = GpuState::WaitingForCommand;
@@ -424,7 +454,8 @@ void GPU::drawRectangle()
     } else {
         size = getVec(params.data()[2 + flags.textured]);
     }
-    rasterizeRectangle({topLeft, color}, size);
+    Vertex vert{topLeft, color, 0, 0};
+    rasterizeRectangle(vert, size);
     m_currentCmd.reset();
     m_currentState = GpuState::WaitingForCommand;
 }
@@ -622,7 +653,7 @@ void GPU::rasterizeLine(const Vertex& v0, const Vertex& v1)
     }
 }
 
-void GPU::rasterizePoly3(const Vertex *verts, const ColorRGBA &color)
+void GPU::rasterizePoly3(const Vertex *verts, const ColorRGBA &color, bool textured, const TextureInfo& texInfo, bool /* rawTexture */)
 {
     uint16_t argbColor = color.toABGR1555();
     auto &flags = m_currentCmd.flags();
@@ -645,26 +676,40 @@ void GPU::rasterizePoly3(const Vertex *verts, const ColorRGBA &color)
             int w1 = edgeFunction(verts[2].pos, verts[0].pos, p);
             int w2 = edgeFunction(verts[0].pos, verts[1].pos, p);
 
-            if (flags.shaded) {
+            int pos = (w0 >= 0) && (w1 >= 0) && (w2 >= 0);
+            int neg = (w0 <= 0) && (w1 <= 0) && (w2 <= 0);
+
+            if (pos || neg) {
                 float alpha = w0 * invArea;
                 float beta = w1 * invArea;
                 float gamma = w2 * invArea;
-                argbColor = interpolateColor(verts[0].color, verts[1].color, verts[2].color, alpha, beta, gamma).toABGR1555();
-            }
 
-            int pos = (w0 >= 0) && (w1 >= 0) && (w2 >= 0);
-            int neg = (w0 <= 0) && (w1 <= 0) && (w2 <= 0);
-            if (pos || neg) {
+                if (flags.shaded) {
+                    argbColor = interpolateColor(verts[0].color, verts[1].color, verts[2].color, alpha, beta, gamma).toABGR1555();
+                }
+                if (textured) {
+                    // Interpolate UV coordinates
+                    float u = alpha * verts[0].u + beta * verts[1].u + gamma * verts[2].u;
+                    float v = alpha * verts[0].v + beta * verts[1].v + gamma * verts[2].v;
+
+                    // Sample texture
+                    argbColor = sampleTexture(static_cast<uint8_t>(u), static_cast<uint8_t>(v), texInfo);
+
+                    if (!argbColor) {
+                        continue; // Transparent pixel
+                    }
+                }
+
                 setPixel(p, argbColor);
             }
         }
     }
 }
 
-void GPU::rasterizePoly4(const Vertex *verts, const ColorRGBA &color)
+void GPU::rasterizePoly4(const Vertex *verts, const ColorRGBA &color, bool textured, const TextureInfo& texInfo, bool rawTexture)
 {
-    rasterizePoly3(verts, color);
-    rasterizePoly3(verts + 1, color);
+    rasterizePoly3(verts, color, textured, texInfo, rawTexture);
+    rasterizePoly3(verts + 1, color, textured, texInfo, rawTexture);
 }
 
 void GPU::rasterizeRectangle(const Vertex &vert, const Vec2i &size)
@@ -692,4 +737,35 @@ uint16_t GPU::getPixel(const Vec2i &pos)
     color = m_vram[index];
     color |= m_vram[index + 1] << 8;
     return color;
+}
+
+uint16_t GPU::sampleTexture(uint8_t u, uint8_t v, const TextureInfo& texInfo)
+{
+    uint16_t texPageBaseY = texInfo.texPageY * 256;
+    uint16_t texPageBaseX = texInfo.texPageX * 64;  // Base in VRAM 16-bit words
+
+    switch (texInfo.colorMode) {
+        case TexturePageColors::COL_4Bit: {
+            uint16_t texelX = texPageBaseX + (u / 4);  // 4 texels per 16-bit word
+            uint16_t texelY = texPageBaseY + v;
+            uint16_t texData = getPixel({static_cast<int>(texelX), static_cast<int>(texelY)});
+            uint8_t index = (texData >> ((u % 4) * 4)) & 0xF;
+            return getPixel({texInfo.clutX + index, texInfo.clutY});
+        }
+
+        case TexturePageColors::COL_8Bit: {
+            uint16_t texelX = texPageBaseX + (u / 2);  // 2 texels per 16-bit word
+            uint16_t texelY = texPageBaseY + v;
+            uint16_t texData = getPixel({static_cast<int>(texelX), static_cast<int>(texelY)});
+            return texData;
+        }
+
+        case TexturePageColors::COL_15Bit: {
+            uint16_t texelX = texPageBaseX + u;
+            uint16_t texelY = texPageBaseY + v;
+            return getPixel({static_cast<int>(texelX), static_cast<int>(texelY)});
+        }
+        default:
+            return 0x8000; // Transparent
+    }
 }
