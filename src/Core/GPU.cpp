@@ -672,9 +672,8 @@ void GPU::rasterizeLine(const Vertex& v0, const Vertex& v1)
     }
 }
 
-void GPU::rasterizePoly3(const Vertex *verts, const ColorRGBA &color, bool textured, const TextureInfo& texInfo, bool /* rawTexture */)
+void GPU::rasterizePoly3(const Vertex *verts, const ColorRGBA &color, bool textured, const TextureInfo& texInfo, bool rawTexture)
 {
-    uint16_t argbColor = color.toABGR1555();
     auto &flags = m_currentCmd.flags();
 
     int minX = std::max(0, std::min({verts[0].pos.x, verts[1].pos.x, verts[2].pos.x}));
@@ -688,6 +687,7 @@ void GPU::rasterizePoly3(const Vertex *verts, const ColorRGBA &color, bool textu
     if (area == 0)
         return;
 
+    ColorRGBA finalColor = color;
     for (int y = minY; y < maxY; y++) {
         for (int x = minX; x < maxX; x++) {
             Vec2i p = {x, y};
@@ -704,22 +704,33 @@ void GPU::rasterizePoly3(const Vertex *verts, const ColorRGBA &color, bool textu
                 float gamma = w2 * invArea;
 
                 if (flags.shaded) {
-                    argbColor = interpolateColor(verts[0].color, verts[1].color, verts[2].color, alpha, beta, gamma).toABGR1555();
+                    finalColor = interpolateColor(verts[0].color, verts[1].color, verts[2].color, alpha, beta, gamma);
                 }
                 if (textured) {
-                    // Interpolate UV coordinates
                     float u = alpha * verts[0].u + beta * verts[1].u + gamma * verts[2].u;
                     float v = alpha * verts[0].v + beta * verts[1].v + gamma * verts[2].v;
 
-                    // Sample texture
-                    argbColor = sampleTexture(static_cast<uint8_t>(u), static_cast<uint8_t>(v), texInfo);
+                    uint16_t texColor = sampleTexture(static_cast<uint8_t>(u), static_cast<uint8_t>(v), texInfo);
 
-                    if (!argbColor) {
-                        continue; // Transparent pixel
+                    if (!texColor) {
+                        continue;
+                    }
+
+                    if (!rawTexture) {
+                        uint8_t texR = (texColor & 0x1F) << 3;
+                        uint8_t texG = ((texColor >> 5) & 0x1F) << 3;
+                        uint8_t texB = ((texColor >> 10) & 0x1F) << 3;
+
+                        texR = (texR * finalColor.r) / 128;
+                        texG = (texG * finalColor.g) / 128;
+                        texB = (texB * finalColor.b) / 128;
+                    } else {
+                        finalColor.r = (texColor & 0x1F) << 3;
+                        finalColor.g = ((texColor >> 5) & 0x1F) << 3;
+                        finalColor.b = ((texColor >> 10) & 0x1F) << 3;
                     }
                 }
-
-                setPixel(p, argbColor);
+                setPixel(p, finalColor.toABGR1555());
             }
         }
     }
