@@ -167,6 +167,14 @@ struct TextureRectFlip
     bool y;
 };
 
+struct TextureWindow
+{
+    uint8_t maskX;
+    uint8_t maskY;
+    uint8_t offsetX;
+    uint8_t offsetY;          // Texture window Y offset (8-pixel units)
+};
+
 struct VramDrawArea
 {
     Vec2i topLeft;
@@ -255,6 +263,7 @@ class GPU : public PsxDevice
         VramDisplayRange m_hDisplayRange;
         VramDisplayRange m_vDisplayRange;
         TextureRectFlip m_textureRectFlip;
+        TextureWindow m_textureWindow;
         VramDrawArea m_drawArea;
         Vec2i m_drawOffset;
 

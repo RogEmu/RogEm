@@ -318,9 +318,13 @@ void GPU::executeEnvCommand(uint32_t cmd)
         case 0xE1:
             setDrawMode(cmd & 0xFFFFFF);
             break;
-        case 0xE2:
-            // Texture Window setting
+        case 0xE2: {
+            m_textureWindow.offsetX = cmd & 0x1F;
+            m_textureWindow.offsetY = (cmd >> 5) & 0x1F;
+            m_textureWindow.maskX = (cmd >> 10) & 0x1F;
+            m_textureWindow.maskY = (cmd >> 15) & 0x1F;
             break;
+        }
         case 0xE3:
             m_drawArea.topLeft.x = cmd & 0x3FF;
             m_drawArea.topLeft.y = (cmd >> 10) & 0x3FF;
