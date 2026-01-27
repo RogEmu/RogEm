@@ -59,6 +59,7 @@ constexpr MemRange CACHE_CONTROL_RANGE =     {0xFFFE0000, 512};
 
 // I/O ports mappings within I/O ports range
 constexpr MemRange MEMORY_CONTROL_1_RANGE =  {0x1F801000, 36};
+constexpr MemRange SERIAL_PORT_RANGE =       {0x1F801040, 0x20};
 constexpr MemRange MEMORY_CONTROL_2_RANGE =  {0x1F801060, 4};
 constexpr MemRange INTERRUPT_CONTROL_RANGE = {0x1F801070, 0x8};
 constexpr MemRange DMA_REGISTERS_RANGE =     {0x1F801080, 0x80};
