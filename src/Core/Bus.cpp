@@ -18,6 +18,7 @@
 #include "GPU.hpp"
 #include "DMA.hpp"
 #include "SPU.hpp"
+#include "SerialInterface.hpp"
 #include "Timers.hpp"
 #include "InterruptController.hpp"
 #include "MemoryControl1.hpp"
@@ -35,6 +36,7 @@ Bus::Bus() :
     addDevice(std::make_unique<DMA>(this));
     addDevice(std::make_unique<GPU>(this));
     addDevice(std::make_unique<SPU>(this));
+    addDevice(std::make_unique<SerialInterface>(this));
     addDevice(std::make_unique<Timers>(this));
     addDevice(std::make_unique<InterruptController>(this));
     addDevice(std::make_unique<MemoryControl1>(this));
