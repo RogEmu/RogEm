@@ -12,6 +12,7 @@
 #include "GPU.hpp"
 #include "InterruptController.hpp"
 #include "RAM.hpp"
+#include "SerialInterface.hpp"
 
 System::System() :
     m_bus(nullptr),
@@ -102,6 +103,11 @@ void System::loadExecutable(const char *path)
     } else {
         spdlog::error("System: Error while loading PSX-EXE file");
     }
+}
+
+void System::updatePadInputs(uint16_t buttonsPort)
+{
+    m_bus->getDevice<SerialInterface>()->getPad(0).updateButtons(buttonsPort);
 }
 
 void System::loadBios(const char *path)

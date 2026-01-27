@@ -37,6 +37,7 @@ class System
 
         void loadBios(const char *path);
         void loadExecutable(const char *path);
+        void updatePadInputs(uint16_t buttonsPort);
 
         void setDebuggerCallback(const std::function<void()> &callback);
         void setTtyCallback(const std::function<void(const std::string &)> &callback);

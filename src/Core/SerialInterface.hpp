@@ -20,6 +20,7 @@ class SerialInterface : public PsxDevice
 
         void update(int cycles) override;
         void reset() override;
+        DigitalPad &getPad(int index) { return m_sio0.getPad(index); }
 
         void write8(uint8_t value, uint32_t address) override;
         void write16(uint16_t value, uint32_t address) override;

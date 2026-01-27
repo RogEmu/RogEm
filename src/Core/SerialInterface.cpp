@@ -40,7 +40,6 @@ void SerialInterface::reset()
 
 void SerialInterface::write8(uint8_t value, uint32_t address)
 {
-    spdlog::debug("SerialInterface: Write byte 0x{:02X} to 0x{:04X}", value, address);
     write16(static_cast<uint16_t>(value), address);
 }
 
@@ -59,13 +58,11 @@ void SerialInterface::write16(uint16_t value, uint32_t address)
 
 void SerialInterface::write32(uint32_t value, uint32_t address)
 {
-    spdlog::debug("SerialInterface: Write word 0x{:08X} to 0x{:04X}", value, address);
     write16(static_cast<uint16_t>(value & 0xFFFF), address);
 }
 
 uint8_t SerialInterface::read8(uint32_t address)
 {
-    spdlog::debug("SerialInterface: Read byte at 0x{:04X}", address);
     return static_cast<uint8_t>(read16(address));
 }
 
@@ -83,7 +80,6 @@ uint16_t SerialInterface::read16(uint32_t address)
 
 uint32_t SerialInterface::read32(uint32_t address)
 {
-    spdlog::debug("SerialInterface: Read word at 0x{:04X}", address);
     return static_cast<uint32_t>(read16(address));
 }
 
