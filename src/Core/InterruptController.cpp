@@ -19,7 +19,7 @@ InterruptController::~InterruptController()
 
 void InterruptController::write8(uint8_t value, uint32_t address)
 {
-    spdlog::debug("IRQ Controller: Write byte 0x{:02X} to 0x{:08X}", value, address);
+    spdlog::trace("IRQ Controller: Write byte 0x{:02X} to 0x{:08X}", value, address);
     uint8_t offset = address & 0x7;
 
     switch (offset)
@@ -41,7 +41,7 @@ void InterruptController::write8(uint8_t value, uint32_t address)
 
 void InterruptController::write16(uint16_t value, uint32_t address)
 {
-    spdlog::debug("IRQ Controller: Write halfword 0x{:04X} to 0x{:08X}", value, address);
+    spdlog::trace("IRQ Controller: Write halfword 0x{:04X} to 0x{:08X}", value, address);
     uint8_t offset = address & 0x7;
 
     switch (offset)
@@ -59,7 +59,7 @@ void InterruptController::write16(uint16_t value, uint32_t address)
 
 void InterruptController::write32(uint32_t value, uint32_t address)
 {
-    spdlog::debug("IRQ Controller: Write word 0x{:08X} to 0x{:08X}", value, address);
+    spdlog::trace("IRQ Controller: Write word 0x{:08X} to 0x{:08X}", value, address);
     uint8_t offset = address & 0x7;
 
     switch (offset)
@@ -75,7 +75,7 @@ void InterruptController::write32(uint32_t value, uint32_t address)
 
 uint8_t InterruptController::read8(uint32_t address)
 {
-    spdlog::debug("IRQ Controller: Read byte at 0x{:08X}", address);
+    spdlog::trace("IRQ Controller: Read byte at 0x{:08X}", address);
     uint8_t offset = address & 0x7;
     switch (offset)
     {
@@ -95,7 +95,7 @@ uint8_t InterruptController::read8(uint32_t address)
 
 uint16_t InterruptController::read16(uint32_t address)
 {
-    spdlog::debug("IRQ Controller: Read halfword at 0x{:08X}", address);
+    spdlog::trace("IRQ Controller: Read halfword at 0x{:08X}", address);
     uint8_t offset = address & 0x7;
     switch (offset)
     {
@@ -111,7 +111,7 @@ uint16_t InterruptController::read16(uint32_t address)
 
 uint32_t InterruptController::read32(uint32_t address)
 {
-    spdlog::debug("IRQ Controller: Read word at 0x{:08X}", address);
+    spdlog::trace("IRQ Controller: Read word at 0x{:08X}", address);
     uint8_t offset = address & 0x7;
 
     switch (offset)

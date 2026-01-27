@@ -26,7 +26,7 @@ void MemoryControl1::write16(uint16_t /* value */, uint32_t /* address */)
 
 void MemoryControl1::write32(uint32_t value, uint32_t address)
 {
-    spdlog::debug("Memory Control 1: write word 0x{:08X} at 0x{:08X}", value, address);
+    spdlog::trace("Memory Control 1: Write word 0x{:08X} at 0x{:08X}", value, address);
     uint32_t offset = m_memoryRange.remap(address);
 
     if (offset < m_memoryRange.length / 4) {
@@ -48,7 +48,7 @@ uint16_t MemoryControl1::read16(uint32_t /* address */)
 
 uint32_t MemoryControl1::read32(uint32_t address)
 {
-    spdlog::debug("Memory Control 1: read word at 0x{:08X}", address);
+    spdlog::trace("Memory Control 1: Read word at 0x{:08X}", address);
     uint32_t offset = m_memoryRange.remap(address);
 
     if (offset < m_memoryRange.length / 4) {
