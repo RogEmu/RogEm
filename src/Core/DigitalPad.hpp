@@ -32,6 +32,7 @@ class DigitalPad
     private:
         PadSequenceState m_state;
         uint16_t m_buttons;
+        uint8_t m_tx;
 };
 
 #endif /* !DIGITALPAD_HPP_ */
