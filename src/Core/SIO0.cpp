@@ -2,10 +2,11 @@
 
 #include <spdlog/spdlog.h>
 
-static constexpr int IRQ_TIMER = 1000;
+static constexpr int IRQ_TIMER = 100;
 
 SIO0::SIO0()
 {
+    reset();
 }
 
 SIO0::~SIO0()
@@ -15,9 +16,12 @@ SIO0::~SIO0()
 void SIO0::write(SIORegister reg, uint16_t value)
 {
     switch (reg) {
-        case SIORegister::TX_DATA:
+        case SIORegister::TX_DATA: {
+            auto port = (m_ctrl >> 13) & 1;
+            m_pad[port].tx(value);
             m_baudTimer = IRQ_TIMER;
             break;
+        }
         case SIORegister::MODE:
             m_mode = value;
             break;
@@ -36,8 +40,10 @@ void SIO0::write(SIORegister reg, uint16_t value)
 uint16_t SIO0::read(SIORegister reg)
 {
     switch (reg) {
-        case SIORegister::RX_DATA:
-            return 0;
+        case SIORegister::RX_DATA: {
+            auto port = (m_ctrl >> 13) & 1;
+            return m_pad[port].rx();
+        }
         case SIORegister::STAT:
             return 0x07;
         case SIORegister::MODE:
@@ -57,7 +63,7 @@ void SIO0::update(int cycles)
     if (m_baudTimer > 0) {
         m_baudTimer -= cycles;
         if (m_baudTimer <= 0) {
-            spdlog::debug("SIO0: IRQ triggered");
+            m_irq = true;
             m_baudTimer = 0;
         }
     }
@@ -68,4 +74,5 @@ void SIO0::reset()
     for (auto &pad : m_pad) {
         pad.reset();
     }
+    m_irq = false;
 }

@@ -25,8 +25,11 @@ class SIO0 : public SIODevice
         void update(int cycles) override;
         void reset();
 
+        bool irq() const { return m_irq; }
+
     private:
         DigitalPad m_pad[2];
+        bool m_irq;
 };
 
 #endif /* !SIO0_HPP_ */
