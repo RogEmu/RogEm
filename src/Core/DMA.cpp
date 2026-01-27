@@ -39,7 +39,7 @@ void DMA::write16(uint16_t value, uint32_t address)
 
 void DMA::write32(uint32_t value, uint32_t address)
 {
-    spdlog::debug("DMA: Write word 0x{:08X} to 0x{:08X}", value, address);
+    spdlog::trace("DMA: Write word 0x{:08X} to 0x{:08X}", value, address);
 
     uint32_t offset = m_memoryRange.remap(address);
     uint8_t channelIndex = (offset >> 4) & 0xF;
@@ -75,7 +75,7 @@ uint16_t DMA::read16(uint32_t address)
 
 uint32_t DMA::read32(uint32_t address)
 {
-    spdlog::debug("DMA: Read word at 0x{:08X}", address);
+    spdlog::trace("DMA: Read word at 0x{:08X}", address);
 
     uint32_t offset = m_memoryRange.remap(address);
     uint8_t channelIndex = (offset >> 4) & 0xF;

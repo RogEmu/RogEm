@@ -21,13 +21,13 @@ void MemoryControl2::write8(uint8_t value, uint32_t address)
 
 void MemoryControl2::write16(uint16_t value, uint32_t address)
 {
-    spdlog::debug("Memory Control 2: Write halfword 0x{:04X} to 0x{:08X}", value, address);
+    spdlog::trace("Memory Control 2: Write halfword 0x{:04X} to 0x{:08X}", value, address);
     m_memControl2 = (m_memControl2 & 0xFFFF0000) | value;
 }
 
 void MemoryControl2::write32(uint32_t value, uint32_t address)
 {
-    spdlog::debug("Memory Control 2: Write word 0x{:08X} to 0x{:08X}", value, address);
+    spdlog::trace("Memory Control 2: Write word 0x{:08X} to 0x{:08X}", value, address);
     m_memControl2 = value;
 }
 

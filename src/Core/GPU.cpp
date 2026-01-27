@@ -83,7 +83,7 @@ void GPU::write16(uint16_t /* value */, uint32_t /* address */)
 
 void GPU::write32(uint32_t value, uint32_t address)
 {
-    spdlog::debug("GPU: Write 0x{:08X} to 0x{:08X}", value, address);
+    spdlog::trace("GPU: Write 0x{:08X} to 0x{:08X}", value, address);
     switch (address)
     {
     case 0x1F801810:
@@ -120,7 +120,7 @@ uint32_t GPU::read32(uint32_t address)
     } else if (address == 0x1F801810) {
         result = m_gpuRead;
     }
-    spdlog::debug("GPU: Read from 0x{:08X} = 0x{:08X}", address, result);
+    spdlog::trace("GPU: Read from 0x{:08X} = 0x{:08X}", address, result);
     return result;
 }
 
