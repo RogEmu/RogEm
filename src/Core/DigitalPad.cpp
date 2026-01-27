@@ -12,7 +12,8 @@
 DigitalPad::DigitalPad() :
     m_state(PadSequenceState::HighZ),
     m_buttons(0xCFFF),
-    m_tx(0)
+    m_tx(0),
+    m_connected(false)
 {
 }
 
@@ -29,6 +30,10 @@ void DigitalPad::tx(uint16_t value)
 uint16_t DigitalPad::rx()
 {
     uint16_t rxVal = 0xFFFF;
+
+    if (!m_connected) {
+        return rxVal;
+    }
 
     switch (m_state) {
         case PadSequenceState::HighZ:
