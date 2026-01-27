@@ -23,7 +23,6 @@ DigitalPad::~DigitalPad()
 
 void DigitalPad::tx(uint16_t value)
 {
-    spdlog::debug("Digital Pad: TX value 0x{:04X}", value);
     m_tx = static_cast<uint8_t>(value);
 }
 
@@ -63,7 +62,6 @@ uint16_t DigitalPad::rx()
         default:
             break;
     }
-    spdlog::debug("Digital Pad: RX value 0x{:04X}", rxVal);
     return rxVal;
 }
 

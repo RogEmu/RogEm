@@ -27,6 +27,8 @@ class SIO0 : public SIODevice
 
         bool irq() const { return m_irq; }
 
+        DigitalPad &getPad(int index) { return m_pad[index]; }
+
     private:
         DigitalPad m_pad[2];
         bool m_irq;
