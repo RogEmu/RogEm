@@ -18,6 +18,7 @@ set(CORE_SRC_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/DMAChannel.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/GPU.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/SPU.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/SerialInterface.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Timers.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/InterruptController.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/SystemControlCop.cpp
