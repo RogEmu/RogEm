@@ -11,6 +11,7 @@
 
 #include "MemoryMap.hpp"
 #include "Bus.hpp"
+#include "InterruptController.hpp"
 
 SerialInterface::SerialInterface(Bus *bus) :
     PsxDevice(bus)
@@ -22,32 +23,38 @@ SerialInterface::~SerialInterface()
 {
 }
 
+void SerialInterface::update(int cycles)
+{
+    m_sio0.update(cycles);
+
+    if (m_sio0.irq()) {
+        auto irqc = m_bus->getDevice<InterruptController>();
+        irqc->triggerIRQ(DeviceIRQ::CONTROLLER_MEMCARD);
+    }
+}
+
+void SerialInterface::reset()
+{
+    m_sio0.reset();
+}
+
 void SerialInterface::write8(uint8_t value, uint32_t address)
 {
     spdlog::debug("SerialInterface: Write byte 0x{:02X} to 0x{:04X}", value, address);
+    write16(static_cast<uint16_t>(value), address);
 }
 
 void SerialInterface::write16(uint16_t value, uint32_t address)
 {
-    uint32_t offset = mapAddress(address) & 0xF;
+    uint32_t mappedAddr = mapAddress(address);
+    uint8_t channel = (mappedAddr >> 4) & 1;
+    uint8_t offset = mappedAddr & 0xF;
 
-    switch (static_cast<SIORegister>(offset)) {
-        case SIORegister::TX_DATA:
-            spdlog::debug("SerialInterface: Write TX_DATA = 0x{:04X} at 0x{:04X}", value, address);
-            break;
-        case SIORegister::MODE:
-            spdlog::debug("SerialInterface: Write MODE = 0x{:04X} at 0x{:04X}", value, address);
-            break;
-        case SIORegister::CTRL:
-            spdlog::debug("SerialInterface: Write CTRL = 0x{:04X} at 0x{:04X}", value, address);
-            break;
-        case SIORegister::BAUD:
-            spdlog::debug("SerialInterface: Write BAUD = 0x{:04X} at 0x{:04X}", value, address);
-            break;
-        default:
-            spdlog::debug("SerialInterface: Write halfword 0x{:04X} to 0x{:04X}", value, address);
-            break;
+    if (channel) {
+        writeSIO1(value, address);
+        return;
     }
+    m_sio0.write(static_cast<SIORegister>(offset), value);
 }
 
 void SerialInterface::write32(uint32_t value, uint32_t address)
@@ -59,37 +66,35 @@ void SerialInterface::write32(uint32_t value, uint32_t address)
 uint8_t SerialInterface::read8(uint32_t address)
 {
     spdlog::debug("SerialInterface: Read byte at 0x{:04X}", address);
-    return 0;
+    return static_cast<uint8_t>(read16(address));
 }
 
 uint16_t SerialInterface::read16(uint32_t address)
 {
-    uint32_t offset = mapAddress(address) & 0xF;
+    uint32_t mappedAddr = mapAddress(address);
+    uint8_t channel = (mappedAddr >> 4) & 1;
+    uint8_t offset = mappedAddr & 0xF;
 
-    switch (static_cast<SIORegister>(offset)) {
-        case SIORegister::TX_DATA:
-            spdlog::debug("SerialInterface: Read TX_DATA 0x{:04X}", address);
-            return 0;
-        case SIORegister::STAT:
-            spdlog::debug("SerialInterface: Read STAT 0x{:04X}", address);
-            return 0x07;
-        case SIORegister::MODE:
-            spdlog::debug("SerialInterface: Read MODE 0x{:04X}", address);
-            return 0;
-        case SIORegister::CTRL:
-            spdlog::debug("SerialInterface: Read CTRL 0x{:04X}", address);
-            return 0;
-        case SIORegister::BAUD:
-            spdlog::debug("SerialInterface: Read BAUD 0x{:04X}", address);
-            return 0;
-        default:
-            spdlog::debug("SerialInterface: Read halfword at offset 0x{:02X}", offset);
-            return 0;
+    if (channel) {
+        return readSIO1(address);
     }
+    return m_sio0.read(static_cast<SIORegister>(offset));
 }
 
 uint32_t SerialInterface::read32(uint32_t address)
 {
     spdlog::debug("SerialInterface: Read word at 0x{:04X}", address);
-    return 0;
+    return static_cast<uint32_t>(read16(address));
 }
+
+void SerialInterface::writeSIO1(uint16_t /* value */, uint32_t address)
+{
+    spdlog::error("SerialInterface: Write to unsupported SIO1 at 0x{:04X}", address);
+}
+
+uint16_t SerialInterface::readSIO1(uint32_t address)
+{
+    spdlog::error("SerialInterface: Read from unsupported SIO1 at 0x{:04X}", address);
+    return 0x7;
+}
+
