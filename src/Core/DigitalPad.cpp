@@ -11,7 +11,8 @@
 
 DigitalPad::DigitalPad() :
     m_state(PadSequenceState::HighZ),
-    m_buttons(0xFFFF)
+    m_buttons(0xCFFF),
+    m_tx(0)
 {
 }
 
@@ -22,34 +23,48 @@ DigitalPad::~DigitalPad()
 void DigitalPad::tx(uint16_t value)
 {
     spdlog::debug("Digital Pad: TX value 0x{:04X}", value);
+    m_tx = static_cast<uint8_t>(value);
 }
 
 uint16_t DigitalPad::rx()
 {
+    uint16_t rxVal = 0xFFFF;
+
     switch (m_state) {
         case PadSequenceState::HighZ:
-            m_state = PadSequenceState::IDLO;
-            return 0xFF;
+            if (m_tx == 0x01) {
+                m_state = PadSequenceState::IDLO;
+                rxVal = 0xFF;
+            }
+            break;
         case PadSequenceState::IDLO:
-            m_state = PadSequenceState::IDHI;
-            return 0x41;
+            if (m_tx == 0x42) {
+                m_state = PadSequenceState::IDHI;
+                rxVal = 0x41;
+            }
+            break;
         case PadSequenceState::IDHI:
             m_state = PadSequenceState::MOT0;
-            return 0x5A;
+            rxVal = 0x5A;
+            break;
         case PadSequenceState::MOT0:
             m_state = PadSequenceState::MOT1;
-            return m_buttons & 0xFF;
+            rxVal = m_buttons & 0xFF;
+            break;
         case PadSequenceState::MOT1:
             m_state = PadSequenceState::HighZ;
-            return (m_buttons >> 8) & 0xFF;
+            rxVal = (m_buttons >> 8) & 0xFF;
+            break;
         default:
             break;
     }
-    return 0xFFFF;
+    spdlog::debug("Digital Pad: RX value 0x{:04X}", rxVal);
+    return rxVal;
 }
 
 void DigitalPad::reset()
 {
-    m_buttons = 0xFFFF;
+    m_buttons = 0xCFFF;
     m_state = PadSequenceState::HighZ;
+    m_tx = 0;
 }
