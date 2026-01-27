@@ -28,11 +28,15 @@ class DigitalPad
         uint16_t rx();
 
         void reset();
+        bool isConnected() const { return m_connected; }
+        void connect() { m_connected = true; }
+        void disconnect() { m_connected = false; }
 
     private:
         PadSequenceState m_state;
         uint16_t m_buttons;
         uint8_t m_tx;
+        bool m_connected;
 };
 
 #endif /* !DIGITALPAD_HPP_ */
