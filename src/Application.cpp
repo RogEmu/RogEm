@@ -9,6 +9,7 @@
 
 #include "Core/GPU.hpp"
 #include "Core/InterruptController.hpp"
+#include "Core/DigitalPad.hpp"
 #include "GUI/RegisterWindow.hpp"
 #include "GUI/AssemblyWindow.hpp"
 #include "GUI/BreakpointWindow.hpp"
@@ -42,6 +43,48 @@ static void glfw_error_callback(int error_code, const char* description)
     spdlog::error("GLFW Error {}: {}", error_code, description);
 }
 
+static PadButton mapKeyToPadButton(int key)
+{
+    switch (key) {
+        case GLFW_KEY_UP: return PadButton::PAD_JOYUP;
+        case GLFW_KEY_DOWN: return PadButton::PAD_JOYDOWN;
+        case GLFW_KEY_LEFT: return PadButton::PAD_JOYLEFT;
+        case GLFW_KEY_RIGHT: return PadButton::PAD_JOYRIGHT;
+        case GLFW_KEY_S: return PadButton::PAD_CROSS;
+        case GLFW_KEY_D: return PadButton::PAD_CIRCLE;
+        case GLFW_KEY_A: return PadButton::PAD_SQUARE;
+        case GLFW_KEY_W: return PadButton::PAD_TRIANGLE;
+        case GLFW_KEY_Q: return PadButton::PAD_L1;
+        case GLFW_KEY_E: return PadButton::PAD_R1;
+        case GLFW_KEY_1: return PadButton::PAD_L2;
+        case GLFW_KEY_3: return PadButton::PAD_R2;
+        case GLFW_KEY_ENTER: return PadButton::PAD_START;
+        case GLFW_KEY_F: return PadButton::PAD_SELECT;
+        default: return PadButton::PAD_UNKOWN;
+    }
+}
+
+static void appKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    (void)scancode;
+    (void)mods;
+    System* system = static_cast<System*>(glfwGetWindowUserPointer(window));
+    if (!system) {
+        return;
+    }
+    PadButton padButton = mapKeyToPadButton(key);
+    if (padButton == PadButton::PAD_UNKOWN) {
+        return;
+    }
+    static uint16_t buttonsPort = 0xFFFF;
+    if (action == GLFW_PRESS) {
+        buttonsPort &= ~static_cast<uint16_t>(padButton);
+    } else if (action == GLFW_RELEASE) {
+        buttonsPort |= static_cast<uint16_t>(padButton);
+    }
+    system->updatePadInputs(buttonsPort);
+}
+
 int Application::initGlfw()
 {
     glfwSetErrorCallback(glfw_error_callback);
@@ -59,11 +102,13 @@ int Application::initGlfw()
     }
     glfwMakeContextCurrent(m_window);
     glfwSwapInterval(0); // VSync Off
+    glfwSetKeyCallback(m_window, appKeyCallback);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         spdlog::error("Failed to initialize GLAD");
         return -1;
     }
+    glfwSetWindowUserPointer(m_window, &m_system);
     return 0;
 }
 
