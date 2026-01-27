@@ -7,7 +7,6 @@ static constexpr int IRQ_TIMER = 100;
 SIO0::SIO0()
 {
     reset();
-    m_pad[0].connect();
 }
 
 SIO0::~SIO0()
@@ -76,4 +75,5 @@ void SIO0::reset()
         pad.reset();
     }
     m_irq = false;
+    m_pad[0].connect();
 }

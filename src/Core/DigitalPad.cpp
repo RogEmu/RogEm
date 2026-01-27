@@ -9,12 +9,9 @@
 
 #include <spdlog/spdlog.h>
 
-DigitalPad::DigitalPad() :
-    m_state(PadSequenceState::HighZ),
-    m_buttons(0xCFFF),
-    m_tx(0),
-    m_connected(false)
+DigitalPad::DigitalPad()
 {
+    reset();
 }
 
 DigitalPad::~DigitalPad()
@@ -67,7 +64,8 @@ uint16_t DigitalPad::rx()
 
 void DigitalPad::reset()
 {
-    m_buttons = 0xCFFF;
+    m_buttons = 0xFFFF;
     m_state = PadSequenceState::HighZ;
     m_tx = 0;
+    m_connected = false;
 }
