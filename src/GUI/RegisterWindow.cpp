@@ -1,60 +1,45 @@
 #include "RegisterWindow.hpp"
 
 #include <fmt/format.h>
+#include <spdlog/spdlog.h>
 
 #include "imgui.h"
+#include "imgui_stdlib.h"
 #include "Debugger/Debugger.hpp"
 #include "Core/CPU.hpp"
 
 RegisterWindow::RegisterWindow(Debugger *debugger) :
-    m_debugger(debugger),
-    m_editorOpen(false),
-    m_registerNameToChange("")
+    m_debugger(debugger)
 {
     setTitle("Registers");
-    is_highlighted.resize(NB_GPR, false);
-}
-
-void RegisterWindow::addEditButton(const char* regName, int regIndex)
-{
-    ImGui::SameLine();
-    std::string label = fmt::format("Edit##{}", regName);
-    if (ImGui::SmallButton(label.c_str())) {
-        m_editorOpen = true;
-        m_registerNameToChange = regName;
-        m_registerIndex = regIndex;
-    }
+    isHighlighted.resize(NB_GPR, false);
 }
 
 RegisterWindow::~RegisterWindow()
 {
 }
 
-void RegisterWindow::displayPopup()
+void RegisterWindow::editRegisterPopup(const std::string &regName, int regIndex)
 {
-    ImGui::OpenPopup("Edit Registers");
-    if(ImGui::BeginPopupModal("Edit Registers", NULL, ImGuiWindowFlags_AlwaysAutoResize))
-    {
-        ImGui::Text("Edit Registers of %s", m_registerNameToChange.c_str());
-        static char label[9] = "\0";
-        if(ImGui::InputText("Value", label, 9, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_EnterReturnsTrue))
-        {
-            printf("%i\n", m_registerIndex);
-            char* end;
-            uint32_t value = std::strtoul(label, &end, 16);
-            if (!*end) {
-                if (m_registerIndex < NB_GPR)
-                    m_debugger->setCpuReg(static_cast<CpuReg>(m_registerIndex), value);
+    auto label = fmt::format("Edit##{}", regName);
+    auto popupTitle = fmt::format("Edit Register##{}", regName);
+
+    if (ImGui::SmallButton(label.c_str())) {
+        ImGui::OpenPopup(popupTitle.c_str());
+        spdlog::error("Opened popup to edit register {}", regName);
+    }
+    if (ImGui::BeginPopupModal(popupTitle.c_str(), NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::Text("Edit Register %s", regName.c_str());
+        char label[9]{0};
+        if (ImGui::InputText("Value", label, sizeof(label), ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_EnterReturnsTrue)) {
+            uint32_t value = std::stoul(label, nullptr, 16);
+            if (regIndex < NB_GPR) {
+                m_debugger->setCpuReg(static_cast<CpuReg>(regIndex), value);
             }
-            m_editorOpen = false;
             ImGui::CloseCurrentPopup();
-            label[0] = '\0';
         }
-        if (ImGui::Button("Cancel"))
-        {
+        if (ImGui::Button("Cancel")) {
             ImGui::CloseCurrentPopup();
-            m_editorOpen = false;
-            label[0] = '\0';
         }
         ImGui::EndPopup();
     }
@@ -66,17 +51,14 @@ void RegisterWindow::drawGpr()
                     | ImGuiTableFlags_RowBg
                     | ImGuiTableFlags_ScrollY;
 
-    if (ImGui::BeginTabItem("GPR"))
-    {
-        if(ImGui::BeginTable("Registers", 2, tableFlags))
-        {
+    if (ImGui::BeginTabItem("GPR")) {
+        if(ImGui::BeginTable("Registers", 2, tableFlags)) {
             ImGui::TableSetupScrollFreeze(0, 1);
             ImGui::TableSetupColumn("Register", ImGuiTableColumnFlags_NoResize | ImGuiTableColumnFlags_WidthFixed);
             ImGui::TableSetupColumn("Value");
             ImGui::TableHeadersRow();
 
-            for (uint8_t i = 0; i < NB_GPR; i++)
-            {
+            for (uint8_t i = 0; i < NB_GPR; i++) {
                 ImGui::TableNextRow();
                 ImGui::TableNextColumn();
                 drawRegister(i);
@@ -152,21 +134,16 @@ bool isGPREqual(uint32_t* current, uint32_t* previous)
 
 void RegisterWindow::updateRegisterChanges()
 {
-    for (uint8_t i = 0; i < NB_GPR; i++)
-    {
+    for (uint8_t i = 0; i < NB_GPR; i++) {
         m_currentGPR[i] = m_debugger->getCpuReg(static_cast<CpuReg>(i));
     }
-    if (isGPREqual(m_currentGPR, m_prevGPR) == false)
-    {
-        for (uint8_t i = 0; i < NB_GPR; i++)
-        {
-            if (m_currentGPR[i] != m_prevGPR[i])
-            {
-                is_highlighted[i] = true;
+    if (isGPREqual(m_currentGPR, m_prevGPR) == false) {
+        for (uint8_t i = 0; i < NB_GPR; i++) {
+            if (m_currentGPR[i] != m_prevGPR[i]) {
+                isHighlighted[i] = true;
             }
-            else
-            {
-                is_highlighted[i] = false;
+            else {
+                isHighlighted[i] = false;
             }
         }
         std::copy(std::begin(m_currentGPR), std::end(m_currentGPR), std::begin(m_prevGPR));
@@ -182,29 +159,25 @@ void RegisterWindow::drawRegister(uint8_t index)
 
     if (value == 0)
         textColor = ImGui::GetColorU32(ImGuiCol_TextDisabled);
-    if (is_highlighted[index]) {
+    if (isHighlighted[index]) {
         textColor = ImColor(255, 209, 25);
     }
     ImGui::Text("%s", name);
     ImGui::TableNextColumn();
     ImGui::TextColored(textColor, "%08X", m_debugger->getCpuReg(static_cast<CpuReg>(index)));
-    addEditButton(name, index);
+    ImGui::SameLine();
+    editRegisterPopup(name, index);
 }
 
 void RegisterWindow::update()
 {
     if (ImGui::Begin("Registers")) {
-
         if (ImGui::BeginTabBar("##CPURegistersBar"))
         {
             updateRegisterChanges();
             drawGpr();
             drawCop0Regs();
             ImGui::EndTabBar();
-        }
-        if (m_editorOpen == true)
-        {
-            displayPopup();
         }
     }
     ImGui::End();
