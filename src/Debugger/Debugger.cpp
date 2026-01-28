@@ -51,11 +51,6 @@ void Debugger::setCop0Reg(uint8_t reg, uint32_t val)
     m_system->getCPU()->setCop0Reg(reg, val);
 }
 
-void Debugger::CPUReset()
-{
-    m_system->getCPU()->reset();
-}
-
 uint8_t Debugger::readByte(uint32_t addr) const
 {
     return m_system->getBus()->loadByte(addr);
@@ -80,18 +75,6 @@ std::vector<uint8_t> *Debugger::memoryRange(uint32_t addr)
 Disassembler &Debugger::getDisassembler()
 {
     return m_disassembler;
-}
-
-void Debugger::loadBios(const char *path)
-{
-    m_system->loadBios(path);
-    CPUReset();
-}
-
-void Debugger::loadExecutable(const char *path)
-{
-    m_system->loadExecutable(path);
-    CPUReset();
 }
 
 //The following functions are required for nlohmann-json to work, but are called automatically upon conversion
