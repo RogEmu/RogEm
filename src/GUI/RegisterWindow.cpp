@@ -30,9 +30,9 @@ void RegisterWindow::editRegisterPopup(const std::string &regName, int regIndex)
     }
     if (ImGui::BeginPopupModal(popupTitle.c_str(), NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
         ImGui::Text("Edit Register %s", regName.c_str());
-        char label[9]{0};
-        if (ImGui::InputText("Value", label, sizeof(label), ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_EnterReturnsTrue)) {
-            uint32_t value = std::stoul(label, nullptr, 16);
+        char regValueStr[9]{0};
+        if (ImGui::InputText("Value", regValueStr, sizeof(regValueStr), ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_EnterReturnsTrue)) {
+            uint32_t value = std::stoul(regValueStr, nullptr, 16);
             if (regIndex < NB_GPR) {
                 m_debugger->setCpuReg(static_cast<CpuReg>(regIndex), value);
             }
