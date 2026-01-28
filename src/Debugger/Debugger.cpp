@@ -104,8 +104,9 @@ void Debugger::addBreakpoint(uint32_t addr, BreakpointType type, const std::stri
 
 long Debugger::getBreakpointIndex(uint32_t addr)
 {
+    addr = addr & 0x1FFFFFFF;
     for (int i = 0; i < static_cast<int>(m_breakpoints.size()); i++) {
-        if (m_breakpoints[i].addr == addr) {
+        if ((m_breakpoints[i].addr & 0x1FFFFFFF) == addr) {
             return i;
         }
     }
@@ -164,13 +165,13 @@ std::vector<Breakpoint> &Debugger::getBreakpoints()
 
 void Debugger::update()
 {
-    uint32_t pc = getCpuReg(CpuReg::PC);
+    uint32_t pc = getCpuReg(CpuReg::PC) & 0x1FFFFFFF;
 
     for (auto bp : m_breakpoints) {
         if (!bp.enabled) {
             continue;
         }
-        if (bp.addr == pc) {
+        if ((bp.addr & 0x1FFFFFFF) == pc) {
             if (bp.instructionType == BreakpointType::EXEC) {
                 m_system->setState(SystemState::PAUSED);
                 if (bp.isRunTo == true) {
