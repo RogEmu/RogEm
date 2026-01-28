@@ -226,7 +226,7 @@ uint32_t AssemblyWindow::getAddressFromLine(int line)
 
     if (MemoryMap::RAM_RANGE.contains(currentAddr))
     {
-        return currentAddr;
+        return currentAddr | MemoryMap::RAM_BASE_KSEG0;
     }
     else
     {
