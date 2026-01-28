@@ -51,6 +51,9 @@ void MainMenuBar::drawFileMenu()
             m_showFileDialog = true;
             m_filenameBuffer[0] = '\0';
         }
+        if (ImGui::MenuItem("Remove Executable", "Ctrl+Shift+R")) {
+            m_application->getSystem().setExecutablePath("");
+        }
         ImGui::EndMenu();
     }
 }
