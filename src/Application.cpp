@@ -259,7 +259,7 @@ void Application::drawScreen()
     }
     ImGui::End();
 
-    m_vramEditor.DrawWindow("VRAM Editor", vram, GPU_VRAM_1MB_SIZE);
+    m_vramEditor.DrawWindow("VRAM", vram, GPU_VRAM_1MB_SIZE);
 
     if (ImGui::Begin("GPU Debug")) {
         auto gpuStat = gpu->getGpuStat();
