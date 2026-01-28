@@ -13,7 +13,6 @@
 #include "GUI/RegisterWindow.hpp"
 #include "GUI/AssemblyWindow.hpp"
 #include "GUI/BreakpointWindow.hpp"
-#include "GUI/SettingsWindow.hpp"
 #include "GUI/LogWindow.hpp"
 #include "GUI/MemoryWindow.hpp"
 #include "GUI/MainMenuBar.hpp"
@@ -141,7 +140,6 @@ void Application::initWindows()
     m_windows.emplace_back(std::make_unique<RegisterWindow>(&m_debugger));
     m_windows.emplace_back(std::make_unique<AssemblyWindow>(this, &m_debugger));
     m_windows.emplace_back(std::make_unique<BreakpointWindow>(&m_debugger));
-    m_windows.emplace_back(std::make_unique<SettingsWindow>(&m_debugger));
     auto logWindow = std::make_unique<LogWindow>(&m_debugger);
     m_system.setTtyCallback([window = logWindow.get()](const std::string &log) {
         window->addLog(log);
