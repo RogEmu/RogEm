@@ -13,7 +13,7 @@ class IWindow
         void setTitle(const std::string &title) { m_title = title; }
         std::string getTitleString() const { return m_title; }
         const char* getTitleChar() const { return m_title.c_str(); }
-        
+
         void setVisible(bool visible) { m_isVisible = visible; }
         bool isVisible() const { return m_isVisible; }
         void toggleVisibility() { m_isVisible = !m_isVisible; }
