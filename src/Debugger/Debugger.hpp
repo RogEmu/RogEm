@@ -47,7 +47,6 @@ class Debugger
         void setCpuReg(CpuReg reg, uint32_t value);
         uint32_t getCop0Reg(uint8_t reg) const;
         void setCop0Reg(uint8_t reg, uint32_t val);
-        void CPUReset();
 
         // Memory Controls
         uint8_t readByte(uint32_t addr) const;
@@ -67,10 +66,6 @@ class Debugger
         std::vector<uint8_t> *memoryRange(uint32_t addr);
 
         Disassembler &getDisassembler();
-
-        // File loading
-        void loadBios(const char *path);
-        void loadExecutable(const char *path);
 
     private:
         System *m_system;
