@@ -229,7 +229,46 @@ void Application::update()
     if (glfwWindowShouldClose(m_window)) {
         m_isRunning = false;
     }
+    pollGamepad();
     m_system.update();
+}
+
+void Application::pollGamepad()
+{
+    uint16_t gamepadButtons = 0xFFFF;
+    if (!glfwJoystickPresent(GLFW_JOYSTICK_1) || !glfwJoystickIsGamepad(GLFW_JOYSTICK_1))
+        return;
+    GLFWgamepadstate state;
+    if (!glfwGetGamepadState(GLFW_JOYSTICK_1, &state))
+        return;
+
+    struct { int glfwButton; PadButton padButton; } buttonMap[] = {
+        { GLFW_GAMEPAD_BUTTON_A,            PadButton::PAD_CROSS },
+        { GLFW_GAMEPAD_BUTTON_B,            PadButton::PAD_CIRCLE },
+        { GLFW_GAMEPAD_BUTTON_X,            PadButton::PAD_SQUARE },
+        { GLFW_GAMEPAD_BUTTON_Y,            PadButton::PAD_TRIANGLE },
+        { GLFW_GAMEPAD_BUTTON_LEFT_BUMPER,  PadButton::PAD_L1 },
+        { GLFW_GAMEPAD_BUTTON_RIGHT_BUMPER, PadButton::PAD_R1 },
+        { GLFW_GAMEPAD_BUTTON_BACK,         PadButton::PAD_SELECT },
+        { GLFW_GAMEPAD_BUTTON_START,        PadButton::PAD_START },
+        { GLFW_GAMEPAD_BUTTON_DPAD_UP,      PadButton::PAD_JOYUP },
+        { GLFW_GAMEPAD_BUTTON_DPAD_DOWN,    PadButton::PAD_JOYDOWN },
+        { GLFW_GAMEPAD_BUTTON_DPAD_LEFT,    PadButton::PAD_JOYLEFT },
+        { GLFW_GAMEPAD_BUTTON_DPAD_RIGHT,   PadButton::PAD_JOYRIGHT },
+    };
+
+    for (const auto& mapping : buttonMap) {
+        if (state.buttons[mapping.glfwButton] == GLFW_PRESS) {
+            gamepadButtons &= ~static_cast<uint16_t>(mapping.padButton);
+        }
+    }
+
+    if (state.axes[GLFW_GAMEPAD_AXIS_LEFT_TRIGGER] > -0.5f)
+        gamepadButtons &= ~static_cast<uint16_t>(PadButton::PAD_L2);
+    if (state.axes[GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER] > -0.5f)
+        gamepadButtons &= ~static_cast<uint16_t>(PadButton::PAD_R2);
+
+    m_system.updatePadInputs(gamepadButtons);
 }
 
 void Application::render()
