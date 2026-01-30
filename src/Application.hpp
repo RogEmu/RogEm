@@ -54,6 +54,7 @@ class Application
         MemoryEditor m_vramEditor;
         GLFWwindow* m_window;
         GLuint m_vramTexture;
+        bool m_showDisplayArea = true;
 };
 
 #endif /* !APPLICATION_HPP_ */
