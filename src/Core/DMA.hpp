@@ -53,6 +53,7 @@ class DMA : public PsxDevice
         void executeDmaGpu();
         void executeDmaGpuLinkedList();
         void executeDmaGpuRequest();
+        void executeDmaCdrom();
 
     private:
         DMAChannel m_channels[7];

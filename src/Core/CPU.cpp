@@ -78,6 +78,7 @@ void CPU::reset()
     std::memset(m_loadDelaySlots, 0, sizeof(m_loadDelaySlots));
     std::memset(m_gpr, 0, NB_GPR * sizeof(m_gpr[0]));
     m_cop0.reset();
+    m_gte.reset();
     m_isTtyOutput = false;
 }
 
@@ -1024,26 +1025,164 @@ void CPU::branchOnGreaterThanOrEqualToZeroAndLink(const Instruction &instruction
 
 void CPU::executeCoprocessor(const Instruction &instruction)
 {
-    // Obsolete, need to be redone to match specific processors
-    auto code = static_cast<CoprocessorOpcode>(instruction.r.rs);
+    uint8_t opcode = instruction.r.opcode;
 
-    switch (code)
-    {
-    case CoprocessorOpcode::MTC:
-        mtc0(instruction);
+    switch (opcode) {
+    case 0x10: // COP0
+        executeCOP0(instruction);
         break;
-    case CoprocessorOpcode::MFC:
-        mfc0(instruction);
+    case 0x12: // COP2 (GTE)
+        executeCOP2(instruction);
+        break;
+    case 0x30: // LWC0
+        lwc0(instruction);
+        break;
+    case 0x32: // LWC2
+        lwc2(instruction);
+        break;
+    case 0x38: // SWC0
+        swc0(instruction);
+        break;
+    case 0x3A: // SWC2
+        swc2(instruction);
         break;
     default:
-        if (instruction.r.rs == 0x10 && instruction.r.funct == 0x10)
-        {
+        triggerException(ExceptionType::COP_Unusable);
+        break;
+    }
+}
+
+void CPU::executeCOP0(const Instruction &instruction)
+{
+    uint8_t rs = instruction.r.rs;
+
+    switch (rs) {
+    case 0x00: // MFC0
+        mfc0(instruction);
+        break;
+    case 0x04: // MTC0
+        mtc0(instruction);
+        break;
+    case 0x10: // CO
+        if (instruction.r.funct == 0x10) {
             returnFromException(instruction);
-            break;
+        } else {
+            illegalInstruction(instruction);
         }
+        break;
+    default:
         illegalInstruction(instruction);
         break;
     }
+}
+
+void CPU::executeCOP2(const Instruction &instruction)
+{
+    uint8_t rs = instruction.r.rs;
+
+    if (rs & 0x10) {
+        // GTE command (bit 25 set)
+        m_gte.execute(instruction.raw);
+        return;
+    }
+
+    switch (rs) {
+    case 0x00: // MFC2
+        mfc2(instruction);
+        break;
+    case 0x02: // CFC2
+        cfc2(instruction);
+        break;
+    case 0x04: // MTC2
+        mtc2(instruction);
+        break;
+    case 0x06: // CTC2
+        ctc2(instruction);
+        break;
+    default:
+        illegalInstruction(instruction);
+        break;
+    }
+}
+
+void CPU::mtc2(const Instruction &instruction)
+{
+    uint32_t data = getReg(static_cast<CpuReg>(instruction.r.rt));
+    m_gte.mtc(instruction.r.rd, data);
+}
+
+void CPU::mfc2(const Instruction &instruction)
+{
+    uint32_t data = m_gte.mfc(instruction.r.rd);
+    loadWithDelay(static_cast<CpuReg>(instruction.r.rt), data);
+}
+
+void CPU::ctc2(const Instruction &instruction)
+{
+    uint32_t data = getReg(static_cast<CpuReg>(instruction.r.rt));
+    m_gte.ctc(instruction.r.rd, data);
+}
+
+void CPU::cfc2(const Instruction &instruction)
+{
+    uint32_t data = m_gte.cfc(instruction.r.rd);
+    loadWithDelay(static_cast<CpuReg>(instruction.r.rt), data);
+}
+
+void CPU::lwc0(const Instruction &instruction)
+{
+    int32_t imm = static_cast<int16_t>(instruction.i.immediate);
+    uint32_t address = getReg(static_cast<CpuReg>(instruction.i.rs)) + imm;
+
+    if (address % 4 != 0) {
+        triggerException(ExceptionType::AddressErrorLoad);
+        return;
+    }
+
+    uint32_t value = m_bus->loadWord(address);
+    setCop0Reg(instruction.i.rt, value);
+}
+
+void CPU::swc0(const Instruction &instruction)
+{
+    int32_t imm = static_cast<int16_t>(instruction.i.immediate);
+    uint32_t address = getReg(static_cast<CpuReg>(instruction.i.rs)) + imm;
+
+    if (address % 4 != 0) {
+        triggerException(ExceptionType::AddressErrorStore);
+        return;
+    }
+
+    uint32_t value = getCop0Reg(instruction.i.rt);
+    m_bus->storeWord(address, value);
+}
+
+void CPU::lwc2(const Instruction &instruction)
+{
+    int32_t imm = static_cast<int16_t>(instruction.i.immediate);
+    uint32_t address = getReg(static_cast<CpuReg>(instruction.i.rs)) + imm;
+
+    if (address % 4 != 0) {
+        triggerException(ExceptionType::AddressErrorLoad);
+        return;
+    }
+
+    uint32_t value = m_bus->loadWord(address);
+    m_gte.mtc(instruction.i.rt, value);
+}
+
+void CPU::swc2(const Instruction &instruction)
+{
+    int32_t imm = static_cast<int16_t>(instruction.i.immediate);
+    uint32_t address = getReg(static_cast<CpuReg>(instruction.i.rs)) + imm;
+
+    if (address % 4 != 0) {
+        triggerException(ExceptionType::AddressErrorStore);
+        return;
+    }
+
+    uint32_t value = m_gte.mfc(instruction.i.rt);
+    m_bus->storeWord(address, value);
 }
 
 void CPU::mtc0(const Instruction &instruction)

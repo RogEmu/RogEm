@@ -118,6 +118,8 @@ uint32_t GPU::read32(uint32_t address)
     if (address == 0x1F801814) {
         result = gpuStat();
     } else if (address == 0x1F801810) {
+        if (m_currentState == GpuState::SendingDataWords)
+            m_gpuRead = readDataWord();
         result = m_gpuRead;
     }
     spdlog::trace("GPU: Read from 0x{:08X} = 0x{:08X}", address, result);
@@ -218,6 +220,9 @@ void GPU::readInternalRegister(uint8_t reg)
 
 void GPU::processGP0(uint32_t data)
 {
+    if (m_currentState == GpuState::SendingDataWords) {
+        return;
+    }
     if (m_currentState == GpuState::ReceivingDataWords) {
         receiveDataWord(data);
         return;
@@ -239,6 +244,7 @@ void GPU::processGP0(uint32_t data)
         case 0b011: // Draw Rectangle
         case 0b100: // VRAM to VRAM copy
         case 0b101: // CPU to VRAM blitting
+        case 0b110: // VRAM to CPU copy
             m_currentState = GpuState::ReceivingParameters;
             m_currentCmd.set(data);
             break;
@@ -559,6 +565,51 @@ void GPU::startVramToVramCopy()
     m_currentCmd.reset();
 }
 
+void GPU::startVramToCpuCopy()
+{
+    auto &params = m_currentCmd.params();
+    m_vramCopyData.startPos = Vec2i{
+        static_cast<int>(params.data()[0] & 0x3FF),
+        static_cast<int>((params.data()[0] >> 16) & 0x1FF)
+    };
+    m_vramCopyData.size = Vec2i{
+        static_cast<int>(((params.data()[1] - 1) & 0x3FF) + 1),
+        static_cast<int>((((params.data()[1] >> 16) - 1) & 0x1FF) + 1)
+    };
+    m_vramCopyData.currentPos = Vec2i{0, 0};
+    m_currentState = GpuState::SendingDataWords;
+    m_gpuStat.rdSendVram = true;
+    m_gpuStat.rdReceiveCmd = false;
+    m_gpuStat.rdReceiveDmaBlock = false;
+}
+
+uint32_t GPU::readDataWord()
+{
+    uint32_t word = 0;
+    for (int i = 0; i < 2; i++) {
+        Vec2i pos{
+            (m_vramCopyData.currentPos.x + m_vramCopyData.startPos.x) & 0x3FF,
+            (m_vramCopyData.currentPos.y + m_vramCopyData.startPos.y) & 0x1FF
+        };
+        uint16_t pixel = getPixel(pos);
+        word |= static_cast<uint32_t>(pixel) << (16 * i);
+        m_vramCopyData.currentPos.x++;
+        if (m_vramCopyData.currentPos.x >= m_vramCopyData.size.x) {
+            m_vramCopyData.currentPos.x = 0;
+            m_vramCopyData.currentPos.y++;
+        }
+        if (m_vramCopyData.currentPos.y >= m_vramCopyData.size.y) {
+            m_currentState = GpuState::WaitingForCommand;
+            m_gpuStat.rdSendVram = true;
+            m_gpuStat.rdReceiveCmd = true;
+            m_gpuStat.rdReceiveDmaBlock = true;
+            m_currentCmd.reset();
+            break;
+        }
+    }
+    return word;
+}
+
 void GPU::receiveParameter(uint32_t param)
 {
     m_currentCmd.addParam(param);
@@ -586,6 +637,9 @@ void GPU::receiveParameter(uint32_t param)
                 break;
             case GPUCommandType::VramVramCopy:
                 startVramToVramCopy();
+                break;
+            case GPUCommandType::VramCpuCopy:
+                startVramToCpuCopy();
                 break;
             default:
                 break;

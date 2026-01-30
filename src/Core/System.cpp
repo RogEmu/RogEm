@@ -13,6 +13,8 @@
 #include "InterruptController.hpp"
 #include "RAM.hpp"
 #include "SerialInterface.hpp"
+#include "CDROM.hpp"
+#include "Disc.hpp"
 
 System::System() :
     m_bus(nullptr),
@@ -114,6 +116,19 @@ void System::loadBios(const char *path)
 {
     BIOS *bios = m_bus->getDevice<BIOS>();
     bios->loadFromFile(path);
+}
+
+void System::loadDisc(const std::string& path)
+{
+    if (path.empty())
+        return;
+    auto disc = std::make_unique<Disc>();
+    if (disc->open(path)) {
+        m_bus->getDevice<CDROM>()->loadDisc(std::move(disc));
+        spdlog::info("System: Loaded disc image: {}", path);
+    } else {
+        spdlog::error("System: Failed to open disc image: {}", path);
+    }
 }
 
 void System::setDebuggerCallback(const std::function<void()> &callback)

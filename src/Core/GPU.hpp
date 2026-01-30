@@ -197,6 +197,7 @@ enum class GpuState
     WaitingForCommand,
     ReceivingParameters,
     ReceivingDataWords,
+    SendingDataWords,
 };
 
 struct VramCopyData
@@ -254,9 +255,11 @@ class GPU : public PsxDevice
         void drawLine();
         void startVramToVramCopy();
         void startCpuToVramCopy();
+        void startVramToCpuCopy();
 
         void receiveParameter(uint32_t param);
         void receiveDataWord(uint32_t data);
+        uint32_t readDataWord();
 
         // Rasterization methods
         void rasterizeLine(const Vertex& v0, const Vertex& v1);

@@ -15,6 +15,7 @@ struct EmulatorConfig
 {
     std::string biosFilePath;
     std::string exeFilePath;
+    std::string discFilePath;
 };
 
 class Application

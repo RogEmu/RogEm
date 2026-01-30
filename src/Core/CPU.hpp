@@ -14,6 +14,7 @@
 #include "Instruction.h"
 #include "Bus.hpp"
 #include "SystemControlCop.hpp"
+#include "GTE.hpp"
 
 #define RESET_VECTOR (uint32_t)0xBFC00000
 #define NB_GPR 32
@@ -194,9 +195,21 @@ class CPU {
 
         //COP Instructions
         void executeCoprocessor(const Instruction &instruction);
+        void executeCOP0(const Instruction &instruction);
+        void executeCOP2(const Instruction &instruction);
         void mtc0(const Instruction &instruction);
         void mfc0(const Instruction &instruction);
+        void mtc2(const Instruction &instruction);
+        void mfc2(const Instruction &instruction);
+        void ctc2(const Instruction &instruction);
+        void cfc2(const Instruction &instruction);
         void returnFromException(const Instruction &instruction);
+
+        // Coprocessor Load/Store
+        void lwc0(const Instruction &instruction);
+        void swc0(const Instruction &instruction);
+        void lwc2(const Instruction &instruction);
+        void swc2(const Instruction &instruction);
 
         // Exception Instructions
         void triggerException(ExceptionType exception);
@@ -216,6 +229,7 @@ class CPU {
         uint32_t m_lo;
 
         SystemControlCop m_cop0;
+        GTE m_gte;
 
         uint32_t m_nextPc;
 

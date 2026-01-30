@@ -28,6 +28,7 @@ enum class PrimaryOpCode
     XORI = 0x0E,
     LUI = 0x0F,
     COP0 = 0x10,
+    COP2 = 0x12,
     LB = 0x20,
     LH = 0x21,
     LWL = 0x22,
@@ -40,6 +41,10 @@ enum class PrimaryOpCode
     SWL = 0x2A,
     SW = 0x2B,
     SWR = 0x2E,
+    LWC0 = 0x30,
+    LWC2 = 0x32,
+    SWC0 = 0x38,
+    SWC2 = 0x3A,
     SLTI = 0x0A,
     SLTIU = 0x0B,
 };
@@ -88,10 +93,11 @@ enum class BranchOnConditionZero
 
 enum class CoprocessorOpcode
 {
-    MFC = 0b0,
-    CFC = 0b01,
-    MTC = 0b100,
-    BC = 0b1000,
+    MFC = 0b00000,
+    CFC = 0b00010,
+    MTC = 0b00100,
+    CTC = 0b00110,
+    BC  = 0b01000,
     IMM25 = 0b10000
 };
 

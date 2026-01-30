@@ -4,6 +4,7 @@
 
 #include "MemoryMap.hpp"
 #include "Bus.hpp"
+#include "CDROM.hpp"
 
 #define GPU_GP0_ADDR 0x1F801810
 #define GPU_GP1_ADDR 0x1F801814
@@ -139,6 +140,9 @@ void DMA::executeDmaTransfer(uint8_t channel)
     case DMAChannelName::GPU:
         executeDmaGpu();
         break;
+    case DMAChannelName::CDROM:
+        executeDmaCdrom();
+        break;
     default:
         spdlog::error("DMA: Unsupported transfer to channel {}", channel);
         break;
@@ -242,7 +246,38 @@ void DMA::executeDmaGpuRequest()
             channel.setRegister(DMAChannelReg::MemoryAddress, startAddr);
         }
     } else {
-        spdlog::error("DMA: GPU to RAM Request transfer mode not supported");
+        for (uint32_t i = 0; i < transferSize; i++) {
+            uint32_t word = m_bus->loadWord(GPU_GPUREAD_ADDR);
+            m_bus->storeWord(startAddr, word);
+            startAddr += step;
+            channel.setRegister(DMAChannelReg::MemoryAddress, startAddr);
+        }
+    }
+    channelControl.transferStatus = DMATransferStatus::Stopped;
+    channelControl.forceTransferStart = false;
+}
+
+void DMA::executeDmaCdrom()
+{
+    if (!m_bus) {
+        spdlog::error("DMA: No bus reference!");
+        return;
+    }
+
+    auto &channel = getChannel(DMAChannelName::CDROM);
+    auto &blockControl = channel.blockControl();
+    auto &channelControl = channel.channelControl();
+
+    uint32_t transferSize = blockControl.block.size * blockControl.blockAmount;
+    uint32_t startAddr = channel.getRegister(DMAChannelReg::MemoryAddress) & OT_END_TAG;
+    int step = channelControl.step == DMAStep::Increment ? 4 : -4;
+
+    auto cdrom = m_bus->getDevice<CDROM>();
+    for (uint32_t i = 0; i < transferSize; i++) {
+        uint32_t word = cdrom->readDataWord();
+        m_bus->storeWord(startAddr, word);
+        startAddr += step;
+        channel.setRegister(DMAChannelReg::MemoryAddress, startAddr);
     }
     channelControl.transferStatus = DMATransferStatus::Stopped;
     channelControl.forceTransferStart = false;

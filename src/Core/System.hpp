@@ -36,6 +36,7 @@ class System
         void setExecutablePath(const std::string &path);
 
         void loadBios(const char *path);
+        void loadDisc(const std::string& path);
         void loadExecutable(const char *path);
         void updatePadInputs(uint16_t buttonsPort);
 

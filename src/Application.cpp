@@ -168,6 +168,7 @@ int Application::run()
     m_isRunning = true;
     m_system.loadBios(m_config.biosFilePath.c_str());
     m_system.setExecutablePath(m_config.exeFilePath);
+    m_system.loadDisc(m_config.discFilePath);
 
     m_debugger.pause(false);
     while (m_isRunning) {
@@ -206,6 +207,7 @@ int Application::loadConfig(int ac, char **av)
     args.add_description("A PSX emulator written in C++ with love");
     args.add_argument("bios").help("The BIOS file to boot the console with").required();
     args.add_argument("exe").help("a PSX-EXE executable file to run after the BIOS boots").default_value("");
+    args.add_argument("--disc", "-d").help("A .bin disc image to load").default_value("");
 
     try {
         args.parse_args(ac, av);
@@ -216,6 +218,7 @@ int Application::loadConfig(int ac, char **av)
     }
     m_config.biosFilePath = args.get("bios");
     m_config.exeFilePath = args.get("exe");
+    m_config.discFilePath = args.get("--disc");
     return 0;
 }
 
