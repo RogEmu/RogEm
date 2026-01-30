@@ -255,7 +255,29 @@ void Application::drawScreen()
     if (ImGui::Begin("Screen")) {
         glBindTexture(GL_TEXTURE_2D, m_vramTexture);
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 1024, 512, GL_RGBA, GL_UNSIGNED_SHORT_1_5_5_5_REV, vram);
-        ImGui::Image((ImTextureID)(intptr_t)m_vramTexture, ImGui::GetContentRegionAvail());
+        ImGui::Checkbox("Display Area", &m_showDisplayArea);
+        ImVec2 uv0(0.0f, 0.0f);
+        ImVec2 uv1(1.0f, 1.0f);
+        if (m_showDisplayArea) {
+            auto displayArea = gpu->getDisplayArea();
+            int width = 0;
+            if (gpu->getGpuStat().hRes2) {
+                width = 368;
+            } else {
+                switch (gpu->getHorizontalRes()) {
+                    case HorizontalRes::RES_256: width = 256; break;
+                    case HorizontalRes::RES_320: width = 320; break;
+                    case HorizontalRes::RES_512: width = 512; break;
+                    case HorizontalRes::RES_640: width = 640; break;
+                }
+            }
+            int height = (gpu->getVerticalRes() == VerticalRes::RES_240) ? 240 : 480;
+            uv0.x = displayArea.halfwordAddress / 1024.0f;
+            uv0.y = displayArea.scanlineAddress / 512.0f;
+            uv1.x = (displayArea.halfwordAddress + width) / 1024.0f;
+            uv1.y = (displayArea.scanlineAddress + height) / 512.0f;
+        }
+        ImGui::Image((ImTextureID)(intptr_t)m_vramTexture, ImGui::GetContentRegionAvail(), uv0, uv1);
     }
     ImGui::End();
 
