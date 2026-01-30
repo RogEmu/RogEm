@@ -41,6 +41,7 @@ class Application
         void render();
 
         void drawScreen();
+        void pollGamepad();
 
     private:
         bool m_isRunning;
