@@ -183,6 +183,22 @@ void Application::quit()
     m_isRunning = false;
 }
 
+void Application::setFullscreen(bool fullscreen)
+{
+    if (fullscreen == m_fullscreen)
+        return;
+    m_fullscreen = fullscreen;
+    if (fullscreen) {
+        glfwGetWindowPos(m_window, &m_windowedX, &m_windowedY);
+        glfwGetWindowSize(m_window, &m_windowedWidth, &m_windowedHeight);
+        GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+        const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+        glfwSetWindowMonitor(m_window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
+    } else {
+        glfwSetWindowMonitor(m_window, nullptr, m_windowedX, m_windowedY, m_windowedWidth, m_windowedHeight, 0);
+    }
+}
+
 int Application::loadConfig(int ac, char **av)
 {
     argparse::ArgumentParser args("RogEm");
@@ -228,6 +244,11 @@ void Application::update()
     if (glfwWindowShouldClose(m_window)) {
         m_isRunning = false;
     }
+    static bool f11WasPressed = false;
+    bool f11Pressed = glfwGetKey(m_window, GLFW_KEY_F11) == GLFW_PRESS;
+    if (f11Pressed && !f11WasPressed)
+        setFullscreen(!m_fullscreen);
+    f11WasPressed = f11Pressed;
     pollGamepad();
     m_system.update();
 }
@@ -273,11 +294,13 @@ void Application::pollGamepad()
 void Application::render()
 {
     imguiNewFrame();
-    ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport());
-    m_mainMenuBar->draw();
-    for (auto &window : m_windows) {
-        if (window->isVisible()) {
-            window->update();
+    if (!m_fullscreen) {
+        ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport());
+        m_mainMenuBar->draw();
+        for (auto &window : m_windows) {
+            if (window->isVisible()) {
+                window->update();
+            }
         }
     }
     drawScreen();
@@ -290,68 +313,83 @@ void Application::drawScreen()
     GPU *gpu = m_system.getBus()->getDevice<GPU>();
     uint8_t *vram = gpu->getVram();
 
-    if (ImGui::Begin("Screen")) {
-        glBindTexture(GL_TEXTURE_2D, m_vramTexture);
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 1024, 512, GL_RGBA, GL_UNSIGNED_SHORT_1_5_5_5_REV, vram);
-        ImGui::Checkbox("Display Area", &m_showDisplayArea);
-        ImVec2 uv0(0.0f, 0.0f);
-        ImVec2 uv1(1.0f, 1.0f);
-        if (m_showDisplayArea) {
-            auto displayArea = gpu->getDisplayArea();
-            int width = 0;
-            if (gpu->getGpuStat().hRes2) {
-                width = 368;
-            } else {
-                switch (gpu->getHorizontalRes()) {
-                    case HorizontalRes::RES_256: width = 256; break;
-                    case HorizontalRes::RES_320: width = 320; break;
-                    case HorizontalRes::RES_512: width = 512; break;
-                    case HorizontalRes::RES_640: width = 640; break;
-                }
+    glBindTexture(GL_TEXTURE_2D, m_vramTexture);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 1024, 512, GL_RGBA, GL_UNSIGNED_SHORT_1_5_5_5_REV, vram);
+
+    ImVec2 uv0(0.0f, 0.0f);
+    ImVec2 uv1(1.0f, 1.0f);
+    if (m_showDisplayArea) {
+        auto displayArea = gpu->getDisplayArea();
+        int width = 0;
+        if (gpu->getGpuStat().hRes2) {
+            width = 368;
+        } else {
+            switch (gpu->getHorizontalRes()) {
+                case HorizontalRes::RES_256: width = 256; break;
+                case HorizontalRes::RES_320: width = 320; break;
+                case HorizontalRes::RES_512: width = 512; break;
+                case HorizontalRes::RES_640: width = 640; break;
             }
-            int height = (gpu->getVerticalRes() == VerticalRes::RES_240) ? 240 : 480;
-            uv0.x = displayArea.halfwordAddress / 1024.0f;
-            uv0.y = displayArea.scanlineAddress / 512.0f;
-            uv1.x = (displayArea.halfwordAddress + width) / 1024.0f;
-            uv1.y = (displayArea.scanlineAddress + height) / 512.0f;
         }
+        int height = (gpu->getVerticalRes() == VerticalRes::RES_240) ? 240 : 480;
+        uv0.x = displayArea.halfwordAddress / 1024.0f;
+        uv0.y = displayArea.scanlineAddress / 512.0f;
+        uv1.x = (displayArea.halfwordAddress + width) / 1024.0f;
+        uv1.y = (displayArea.scanlineAddress + height) / 512.0f;
+    }
+
+    if (m_fullscreen) {
+        const ImGuiViewport* viewport = ImGui::GetMainViewport();
+        ImGui::SetNextWindowPos(viewport->Pos);
+        ImGui::SetNextWindowSize(viewport->Size);
+        ImGui::Begin("##FullscreenScreen", nullptr,
+            ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
+            | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoDocking);
         ImGui::Image((ImTextureID)(intptr_t)m_vramTexture, ImGui::GetContentRegionAvail(), uv0, uv1);
+        ImGui::End();
+    } else {
+        if (ImGui::Begin("Screen")) {
+            ImGui::Checkbox("Display Area", &m_showDisplayArea);
+            ImGui::Image((ImTextureID)(intptr_t)m_vramTexture, ImGui::GetContentRegionAvail(), uv0, uv1);
+        }
+        ImGui::End();
     }
-    ImGui::End();
 
-    m_vramEditor.DrawWindow("VRAM", vram, GPU_VRAM_1MB_SIZE);
+    if (!m_fullscreen) {
+        m_vramEditor.DrawWindow("VRAM", vram, GPU_VRAM_1MB_SIZE);
 
-    if (ImGui::Begin("GPU Debug")) {
-        auto gpuStat = gpu->getGpuStat();
-        auto drawArea = gpu->getDrawArea();
-        auto drawOffset = gpu->getDrawOffset();
-        auto hres = gpu->getHorizontalRes();
-        auto vres = gpu->getVerticalRes();
-        ImGui::Text("GPUStat: 0x%08X", gpu->getGpuStatRaw());
-        ImGui::Text("Vertical Interlace: %s", gpuStat.vInterlace ? "Yes" : "No");
-        ImGui::Text("Video Mode: %s",  gpuStat.videoMode == VideoMode::NTSC ? "NTSC" : "PAL");
-        ImGui::Text("Resolution: %s x %s",
-                    hres == HorizontalRes::RES_256 ? "256" :
-                    hres == HorizontalRes::RES_320 ? "320" :
-                    hres == HorizontalRes::RES_512 ? "512" : "640",
-                    vres == VerticalRes::RES_240 ? "240" : "480");
-        ImGui::Text("Draw Area: (%d, %d) - (%d, %d)",
-                    drawArea.topLeft.x, drawArea.topLeft.y,
-                    drawArea.botRight.x, drawArea.botRight.y);
-        ImGui::Text("Draw Offset: (%d, %d)",
-                    drawOffset.x, drawOffset.y);
-        ImGui::Text("Texture Page Base: (%d, %d)",
-                    gpuStat.texPageBase.x * 64, gpuStat.texPageBase.y * 256);
-        ImGui::Text("Texture page colors: %s", gpuStat.texPageColors == TexturePageColors::COL_4Bit ? "4bit" :
-                                            gpuStat.texPageColors == TexturePageColors::COL_8Bit ? "8bit" :
-                                            gpuStat.texPageColors == TexturePageColors::COL_15Bit ? "15bit" : "Reserved");
+        if (ImGui::Begin("GPU Debug")) {
+            auto gpuStat = gpu->getGpuStat();
+            auto drawArea = gpu->getDrawArea();
+            auto drawOffset = gpu->getDrawOffset();
+            auto hres = gpu->getHorizontalRes();
+            auto vres = gpu->getVerticalRes();
+            ImGui::Text("GPUStat: 0x%08X", gpu->getGpuStatRaw());
+            ImGui::Text("Vertical Interlace: %s", gpuStat.vInterlace ? "Yes" : "No");
+            ImGui::Text("Video Mode: %s",  gpuStat.videoMode == VideoMode::NTSC ? "NTSC" : "PAL");
+            ImGui::Text("Resolution: %s x %s",
+                        hres == HorizontalRes::RES_256 ? "256" :
+                        hres == HorizontalRes::RES_320 ? "320" :
+                        hres == HorizontalRes::RES_512 ? "512" : "640",
+                        vres == VerticalRes::RES_240 ? "240" : "480");
+            ImGui::Text("Draw Area: (%d, %d) - (%d, %d)",
+                        drawArea.topLeft.x, drawArea.topLeft.y,
+                        drawArea.botRight.x, drawArea.botRight.y);
+            ImGui::Text("Draw Offset: (%d, %d)",
+                        drawOffset.x, drawOffset.y);
+            ImGui::Text("Texture Page Base: (%d, %d)",
+                        gpuStat.texPageBase.x * 64, gpuStat.texPageBase.y * 256);
+            ImGui::Text("Texture page colors: %s", gpuStat.texPageColors == TexturePageColors::COL_4Bit ? "4bit" :
+                                                gpuStat.texPageColors == TexturePageColors::COL_8Bit ? "8bit" :
+                                                gpuStat.texPageColors == TexturePageColors::COL_15Bit ? "15bit" : "Reserved");
+        }
+        ImGui::End();
+
+        if (ImGui::Begin("IRQ Controller")) {
+            auto irqc = m_system.getBus()->getDevice<InterruptController>();
+            ImGui::Text("ISTAT: 0x%08X", irqc->read32(0x1F801070));
+            ImGui::Text("IMASK: 0x%08X", irqc->read32(0x1F801074));
+        }
+        ImGui::End();
     }
-    ImGui::End();
-
-    if (ImGui::Begin("IRQ Controller")) {
-        auto irqc = m_system.getBus()->getDevice<InterruptController>();
-        ImGui::Text("ISTAT: 0x%08X", irqc->read32(0x1F801070));
-        ImGui::Text("IMASK: 0x%08X", irqc->read32(0x1F801074));
-    }
-    ImGui::End();
 }

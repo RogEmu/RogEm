@@ -31,6 +31,9 @@ class Application
         System &getSystem() { return m_system; }
         Debugger &getDebugger() { return m_debugger; }
 
+        bool isFullscreen() const { return m_fullscreen; }
+        void setFullscreen(bool fullscreen);
+
     private:
         int initGlfw();
         int initImgui();
@@ -56,6 +59,11 @@ class Application
         GLFWwindow* m_window;
         GLuint m_vramTexture;
         bool m_showDisplayArea = true;
+        bool m_fullscreen = false;
+        int m_windowedX = 0;
+        int m_windowedY = 0;
+        int m_windowedWidth = 1280;
+        int m_windowedHeight = 720;
 };
 
 #endif /* !APPLICATION_HPP_ */

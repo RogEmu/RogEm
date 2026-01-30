@@ -129,6 +129,11 @@ void MainMenuBar::drawWindowsMenu()
                 window->setVisible(false);
             }
         }
+        ImGui::Separator();
+        bool fullscreen = m_application->isFullscreen();
+        if (ImGui::MenuItem("Fullscreen", "F11", fullscreen)) {
+            m_application->setFullscreen(!fullscreen);
+        }
         ImGui::EndMenu();
     }
 }
