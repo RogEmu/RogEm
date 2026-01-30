@@ -1226,7 +1226,8 @@ void CPU::returnFromException(const Instruction &instruction)
 void CPU::triggerException(ExceptionType exception)
 {
     // Set cause register with exception type and branch delay
-    uint32_t cause = 0;
+    // Preserve IP field (bits 15-8) — hardware IRQ pending bits are read-only on real R3000A
+    uint32_t cause = getCop0Reg(static_cast<uint8_t>(CP0Reg::CAUSE)) & 0x0000FF00;
 
     cause |= ((uint32_t)m_inBranchDelay) << 31;
     cause |= static_cast<uint32_t>(exception) << 2;

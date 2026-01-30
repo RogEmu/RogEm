@@ -313,10 +313,8 @@ void CDROM::update(int cycles)
             break;
 
         case CDROMState::WaitingSecondResponse:
-            if (m_interruptFlag != 0)
-                return;  // Wait for software to acknowledge first interrupt
             m_delayCounter -= cycles;
-            if (m_delayCounter <= 0)
+            if (m_delayCounter <= 0 && m_interruptFlag == 0)
                 deliverSecondResponse();
             break;
 
@@ -344,6 +342,7 @@ void CDROM::startCommand(uint8_t cmd)
     m_currentCommand = cmd;
     m_state = CDROMState::WaitingFirstResponse;
     m_delayCounter = 50000;  // ~1.5ms
+    m_hasSecondResponse = false;
 }
 
 void CDROM::executeCommand()
@@ -538,7 +537,7 @@ void CDROM::cmdInit()
     m_mode = 0x00;
     m_stat &= ~(0x20 | 0x40 | 0x80);  // Clear Read/Seek/Play bits
     m_stat |= 0x02;                    // Ensure motor on
-    setSecondResponse(CDROMInterrupt::Complete, {m_stat}, 1000000);
+    setSecondResponse(CDROMInterrupt::Complete, {m_stat}, 30000);
     pushResponse(CDROMInterrupt::Acknowledge, {m_stat});
 }
 
