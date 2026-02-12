@@ -33,6 +33,7 @@ add_executable(${TEST_BINARY_NAME}
     RAM_tests.cpp
     SPU_tests.cpp
     PsxExecutable_tests.cpp
+    MemoryControl1_tests.cpp
 )
 
 target_include_directories(${TEST_BINARY_NAME}
