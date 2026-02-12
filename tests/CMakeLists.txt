@@ -29,6 +29,7 @@ add_executable(${TEST_BINARY_NAME}
     BIOS_tests.cpp
     DMA_tests.cpp
     COP0_tests.cpp
+    Expansion2_tests.cpp
 )
 
 target_include_directories(${TEST_BINARY_NAME}
