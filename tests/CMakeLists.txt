@@ -28,6 +28,7 @@ add_executable(${TEST_BINARY_NAME}
     GPU_register_basic_tests.cpp
     BIOS_tests.cpp
     DMA_tests.cpp
+    COP0_tests.cpp
 )
 
 target_include_directories(${TEST_BINARY_NAME}
