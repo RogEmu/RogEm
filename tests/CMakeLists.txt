@@ -31,6 +31,7 @@ add_executable(${TEST_BINARY_NAME}
     COP0_tests.cpp
     Expansion2_tests.cpp
     RAM_tests.cpp
+    SPU_tests.cpp
 )
 
 target_include_directories(${TEST_BINARY_NAME}
