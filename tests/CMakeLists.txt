@@ -28,12 +28,6 @@ add_executable(${TEST_BINARY_NAME}
     GPU_register_basic_tests.cpp
 )
 
-if (${ENABLE_COVERAGE})
-    target_compile_options(${TEST_BINARY_NAME} PRIVATE --coverage -g)
-    target_link_options(${TEST_BINARY_NAME} PRIVATE --coverage)
-    target_link_libraries(${TEST_BINARY_NAME} PRIVATE gcov)
-endif()
-
 target_include_directories(${TEST_BINARY_NAME}
     PRIVATE ${CMAKE_SOURCE_DIR}/src/
 )
