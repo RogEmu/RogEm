@@ -27,6 +27,7 @@ add_executable(${TEST_BINARY_NAME}
     GTE_calculation_tests_two.cpp
     GPU_register_basic_tests.cpp
     BIOS_tests.cpp
+    DMA_tests.cpp
 )
 
 target_include_directories(${TEST_BINARY_NAME}
