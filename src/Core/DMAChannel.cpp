@@ -98,7 +98,7 @@ void DMAChannel::setChannelControl(uint32_t value)
 
 void DMAChannel::setMemoryAddress(uint32_t address)
 {
-    m_memoryAddress = address & 0x1FFFFFFF;
+    m_memoryAddress = address & 0xFFFFFF;
 }
 
 void DMAChannel::setBlockControl(uint32_t value)
