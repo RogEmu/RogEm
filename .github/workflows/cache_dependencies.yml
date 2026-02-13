@@ -22,8 +22,8 @@ jobs:
             c_compiler: gcc
             cpp_compiler: g++
           - os: windows-latest
-            c_compiler: cl
-            cpp_compiler: cl
+            c_compiler: clang-cl
+            cpp_compiler: clang-cl
 
     steps:
     - uses: actions/checkout@v4
@@ -31,6 +31,10 @@ jobs:
     - name: Install Linux Dependencies
       if: runner.os == 'Linux'
       run: sudo apt-get update && sudo apt-get install -y build-essential cmake ninja-build curl zip unzip tar pkg-config libxinerama-dev libxcursor-dev xorg-dev libglu1-mesa-dev
+
+    - name: Install Windows Dependencies
+      if: runner.os == 'Windows'
+      run: choco install ninja -y
 
     - name: Cache vcpkg binary cache (Linux)
       id: vcpkg-cache
@@ -60,10 +64,9 @@ jobs:
       if: runner.os == 'Windows'
       run: >
         cmake -B ${{ github.workspace }}/build
-        -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
-        -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
         -S ${{ github.workspace }}
+        -G Ninja
 
     - name: Output Logs On Failure
       if: failure()

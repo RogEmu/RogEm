@@ -18,11 +18,14 @@ jobs:
         build_type: [Release, Debug]
         include:
           - os: windows-latest
-            c_compiler: cl
-            cpp_compiler: cl
+            c_compiler: clang-cl
+            cpp_compiler: clang-cl
 
     steps:
     - uses: actions/checkout@v4
+
+    - name: Install Windows Dependencies
+      run: choco install ninja -y
 
     - name: Init Submodules
       run: |
@@ -53,6 +56,7 @@ jobs:
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
         -S ${{ github.workspace }}
+        -G Ninja
 
     - name: Build
       run: cmake --build ${{ github.workspace }}/build --config ${{ matrix.build_type }}
