@@ -321,7 +321,7 @@ TEST_F(InterruptControllerTest, PartialAcknowledgement)
     irqController->triggerIRQ(DeviceIRQ::CDROM);
 
     // Acknowledge only VBLANK
-    irqController->write32(~0x001, ISTAT_ADDR);
+    irqController->write32(static_cast<uint32_t>(~0x001), ISTAT_ADDR);
 
     // ISTAT should still have GPU and CDROM
     uint32_t istat = irqController->read32(ISTAT_ADDR);
