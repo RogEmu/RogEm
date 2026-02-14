@@ -32,11 +32,11 @@ TEST_F(GteColorTest, NCS_BasicLighting) {
 }
 
 TEST_F(GteColorTest, NCT_MultipleVectorsLighting) {
-    for (int i = 0; i < 3; ++i) {
+    for (uint8_t i = 0; i < 3; ++i) {
         gte.ctc(i, 0x00010001);
         gte.ctc(i + 3, 0x00010001);
     }
-    for (int i = 6; i < 9; ++i)
+    for (uint8_t i = 6; i < 9; ++i)
         gte.ctc(i, 0x00010001);
 
     // V0 = (1, 2, 3), V1 = (4, 5, 6), V2 = (7, 8, 9)
@@ -84,7 +84,7 @@ TEST_F(GteColorTest, NCS_MACClamping) {
 }
 
 TEST_F(GteColorTest, NCT_AllColorsUnique) {
-    for (int i = 0; i < 9; ++i)
+    for (uint8_t i = 0; i < 9; ++i)
         gte.ctc(i, 0x00010001);
 
     gte.mtc(0, (2 << 16) | 1); // V0
@@ -270,9 +270,9 @@ TEST_F(GteColorTest, NCDT_HandlesZeroIR0Gracefully) {
 }
 
 TEST_F(GteColorTest, NCDS_SaturatesNegativeMACs) {
-    gte.mtc(9, -0x00004000);
-    gte.mtc(10, -0x00008000);
-    gte.mtc(11, -0x0000C000);
+    gte.mtc(9, static_cast<uint32_t>(-0x00004000));
+    gte.mtc(10, static_cast<uint32_t>(-0x00008000));
+    gte.mtc(11, static_cast<uint32_t>(-0x0000C000));
 
     gte.mtc(0, 0x00010001);
     gte.mtc(1, 0x00000001);
