@@ -27,6 +27,7 @@ add_executable(${TEST_BINARY_NAME}
     GTE_calculation_tests.cpp
     GTE_calculation_tests_two.cpp
     GPU_register_basic_tests.cpp
+    GPUCommand_tests.cpp
     BIOS_tests.cpp
     DMA_tests.cpp
     DMAChannel_tests.cpp
