@@ -29,6 +29,7 @@ add_executable(${TEST_BINARY_NAME}
     GPU_register_basic_tests.cpp
     BIOS_tests.cpp
     DMA_tests.cpp
+    DMAChannel_tests.cpp
     COP0_tests.cpp
     Expansion2_tests.cpp
     RAM_tests.cpp
