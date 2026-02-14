@@ -3,6 +3,8 @@ set(CORE_LIB_NAME "rgmcore")
 find_package(fmt CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 
+option(ENABLE_COVERAGE "Enable Code Coverage With GCOVR" ON)
+
 set(CORE_SRC_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/BIOS.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RAM.cpp
