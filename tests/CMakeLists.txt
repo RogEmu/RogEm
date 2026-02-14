@@ -42,6 +42,7 @@ add_executable(${TEST_BINARY_NAME}
     MemoryControl2_tests.cpp
     DigitalPad_tests.cpp
     Timers_tests.cpp
+    DMA_transfer_tests.cpp
 )
 
 target_include_directories(${TEST_BINARY_NAME}
