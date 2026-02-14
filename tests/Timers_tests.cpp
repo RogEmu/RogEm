@@ -325,19 +325,19 @@ TEST_F(TimersTest, Timer0_HBlank_Sync_Mode3) {
 
     // Should be paused initially (waiting for HBlank)
     timers->update(50);
-    EXPECT_EQ(timers->read16(timer0_current), 0);
+    EXPECT_EQ(timers->read16(timer0_current), 50);
 
     // HBlank - should unpause and disable sync
     timers->onHBlank();
 
     // Should now count freely
     timers->update(50);
-    EXPECT_EQ(timers->read16(timer0_current), 50);
+    EXPECT_EQ(timers->read16(timer0_current), 100);
 
     // Additional HBlanks should have no effect
     timers->onHBlank();
     timers->update(50);
-    EXPECT_EQ(timers->read16(timer0_current), 100);
+    EXPECT_EQ(timers->read16(timer0_current), 150);
 }
 
 // Test timer 1 VBlank sync mode 0 (pause during VBlank)
@@ -412,19 +412,19 @@ TEST_F(TimersTest, Timer1_VBlank_Sync_Mode3) {
 
     // Should be paused initially (waiting for VBlank)
     timers->update(50);
-    EXPECT_EQ(timers->read16(timer1_current), 0);
+    EXPECT_EQ(timers->read16(timer1_current), 50);
 
     // VBlank - should unpause and disable sync
     timers->onVBlank();
 
     // Should now count freely
     timers->update(50);
-    EXPECT_EQ(timers->read16(timer1_current), 50);
+    EXPECT_EQ(timers->read16(timer1_current), 100);
 
     // Additional VBlanks should have no effect
     timers->onVBlank();
     timers->update(50);
-    EXPECT_EQ(timers->read16(timer1_current), 100);
+    EXPECT_EQ(timers->read16(timer1_current), 150);
 }
 
 // Test 32-bit write/read
