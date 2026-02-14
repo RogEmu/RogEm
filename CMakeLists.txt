@@ -18,7 +18,6 @@ endif()
 add_subdirectory(src)
 
 option(ENABLE_TESTING "Compile Unit Tests" ON)
-option(ENABLE_COVERAGE "Enable Code Coverage With GCOVR" OFF)
 
 if(${ENABLE_TESTING})
     # For Windows: Prevent overriding the parent project's compiler/linker settings

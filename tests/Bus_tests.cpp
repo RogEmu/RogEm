@@ -3,6 +3,7 @@
 #include "Core/MemoryMap.hpp"
 #include "Core/Bus.hpp"
 #include "Core/BIOS.hpp"
+#include "Core/CPU.hpp"
 
 TEST(BusTests, BusMapAddress_KUSEG_Lower_Bound)
 {
@@ -82,4 +83,83 @@ TEST(BusTests, BusMapAddress_KSEG2_Upper_Bound)
     uint32_t mappedAddr = MemoryMap::mapAddress(address);
 
     EXPECT_EQ(address, mappedAddr);
+}
+
+TEST(BusTests, ResetBus)
+{
+    Bus bus;
+    bus.reset();
+}
+
+TEST(BusTests, UpdateDevices)
+{
+    Bus bus;
+    bus.updateDevices(2);
+}
+
+TEST(BusTests, CpuConnection)
+{
+    Bus bus;
+    EXPECT_EQ(bus.getCpu(), nullptr);
+    CPU cpu(&bus);
+    bus.connectCpu(&cpu);
+    EXPECT_EQ(bus.getCpu(), &cpu);
+}
+
+TEST(BusTests, UnalignedLoads)
+{
+    Bus bus;
+
+    EXPECT_EQ(bus.loadHalfWord(0xBFC00001), 0);
+    EXPECT_EQ(bus.loadHalfWord(0xBFC00003), 0);
+
+    EXPECT_EQ(bus.loadWord(0xBFC00001), 0);
+    EXPECT_EQ(bus.loadWord(0xBFC00002), 0);
+    EXPECT_EQ(bus.loadWord(0xBFC00003), 0);
+}
+
+TEST(BusTests, addressNotSupportedLoads)
+{
+    Bus bus;
+
+    EXPECT_EQ(bus.loadByte(0x1FA00000), 0);
+    EXPECT_EQ(bus.loadHalfWord(0x1FA00000), 0);
+    EXPECT_EQ(bus.loadWord(0x1FA00000), 0);
+}
+
+TEST(BusTests, UnalignedStores)
+{
+    Bus bus;
+
+    bus.storeHalfWord(0xBFC00001, 0xBEEF);
+    bus.storeHalfWord(0xBFC00003, 0xBEEF);
+
+    bus.storeWord(0xBFC00001, 0xDEADBEEF);
+    bus.storeWord(0xBFC00002, 0xDEADBEEF);
+    bus.storeWord(0xBFC00003, 0xDEADBEEF);
+}
+
+TEST(BusTests, addressNotSupportedStores)
+{
+    Bus bus;
+
+    bus.storeByte(0x1FA00000, 0xAB);
+    bus.storeHalfWord(0x1FA00000, 0xABCD);
+    bus.storeWord(0x1FA00000, 0xABCD1234);
+}
+
+TEST(BusTest, getDeviceFail)
+{
+    Bus bus;
+
+    auto device = bus.getDevice<Bus>();
+    EXPECT_EQ(device, nullptr);
+}
+
+TEST(BusTest, getDeviceSuccess)
+{
+    Bus bus;
+
+    auto device = bus.getDevice<BIOS>();
+    EXPECT_NE(device, nullptr);
 }

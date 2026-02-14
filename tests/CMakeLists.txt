@@ -5,6 +5,7 @@ find_package(fmt CONFIG REQUIRED)
 
 add_executable(${TEST_BINARY_NAME}
     Bus_tests.cpp
+    CacheControl_tests.cpp
     CPU_arithmetic_tests.cpp
     CPU_branch_tests.cpp
     CPU_comparison_tests.cpp
@@ -17,6 +18,8 @@ add_executable(${TEST_BINARY_NAME}
     CPU_shift_tests.cpp
     CPU_store_tests.cpp
     GTE_coordinate_tests.cpp
+    GTE_color_tests.cpp
+    GTE_CC_CDP_tests.cpp
     GTE_general_tests.cpp
     GTE_instructions_tests.cpp
     GTE_projections_tests.cpp
@@ -26,13 +29,23 @@ add_executable(${TEST_BINARY_NAME}
     GTE_calculation_tests.cpp
     GTE_calculation_tests_two.cpp
     GPU_register_basic_tests.cpp
+    GPUCommand_tests.cpp
+    BIOS_tests.cpp
+    DMA_tests.cpp
+    DMAChannel_tests.cpp
+    COP0_tests.cpp
+    Expansion2_tests.cpp
+    InterruptController_tests.cpp
+    RAM_tests.cpp
+    SerialInterface_tests.cpp
+    SPU_tests.cpp
+    PsxExecutable_tests.cpp
+    MemoryControl1_tests.cpp
+    MemoryControl2_tests.cpp
+    DigitalPad_tests.cpp
+    Timers_tests.cpp
+    DMA_transfer_tests.cpp
 )
-
-if (${ENABLE_COVERAGE})
-    target_compile_options(${TEST_BINARY_NAME} PRIVATE --coverage -g)
-    target_link_options(${TEST_BINARY_NAME} PRIVATE --coverage)
-    target_link_libraries(${TEST_BINARY_NAME} PRIVATE gcov)
-endif()
 
 target_include_directories(${TEST_BINARY_NAME}
     PRIVATE ${CMAKE_SOURCE_DIR}/src/
