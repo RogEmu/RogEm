@@ -5,6 +5,7 @@ find_package(fmt CONFIG REQUIRED)
 
 add_executable(${TEST_BINARY_NAME}
     Bus_tests.cpp
+    CacheControl_tests.cpp
     CPU_arithmetic_tests.cpp
     CPU_branch_tests.cpp
     CPU_comparison_tests.cpp
