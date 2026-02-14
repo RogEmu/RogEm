@@ -32,6 +32,7 @@ add_executable(${TEST_BINARY_NAME}
     COP0_tests.cpp
     Expansion2_tests.cpp
     RAM_tests.cpp
+    SerialInterface_tests.cpp
     SPU_tests.cpp
     PsxExecutable_tests.cpp
     MemoryControl1_tests.cpp
