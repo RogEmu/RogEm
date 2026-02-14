@@ -349,7 +349,7 @@ TEST_F(DigitalPadTest, SquareButtonPressed) {
 TEST_F(DigitalPadTest, MultipleButtonsPressed) {
     pad->connect();
     // Press Start (bit 3) and Cross (bit 14)
-    pad->updateButtons(~(0x0008 | 0x4000));
+    pad->updateButtons(static_cast<uint16_t>(~(0x0008 | 0x4000)));
 
     // Navigate to button data
     pad->tx(0x01);
