@@ -3,6 +3,8 @@ set(CORE_LIB_NAME "rgmcore")
 find_package(fmt CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 
+option(ENABLE_COVERAGE "Enable Code Coverage With GCOVR" OFF)
+
 set(CORE_SRC_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/BIOS.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RAM.cpp
@@ -38,13 +40,12 @@ target_include_directories(${CORE_LIB_NAME} PUBLIC
     ${CMAKE_SOURCE_DIR}/src
 )
 
-target_link_libraries(${CORE_LIB_NAME} PUBLIC
+if (${ENABLE_COVERAGE})
+    target_compile_options(${CORE_LIB_NAME} PRIVATE --coverage -g)
+    target_link_libraries(${CORE_LIB_NAME} PRIVATE gcov)
+endif()
+
+target_link_libraries(${CORE_LIB_NAME} PRIVATE
     fmt::fmt
     spdlog::spdlog
 )
-
-if (${ENABLE_COVERAGE})
-    target_compile_options(${CORE_LIB_NAME} PRIVATE --coverage -g)
-    target_link_options(${CORE_LIB_NAME} PRIVATE --coverage)
-    target_link_libraries(${CORE_LIB_NAME} PRIVATE gcov)
-endif()

@@ -58,5 +58,5 @@ jobs:
       run: cmake --build ${{ github.workspace }}/build --config ${{ matrix.build_type }}
 
     - name: Test
-      working-directory: ${{ github.workspace }}/build
+      working-directory: ${{ github.workspace }}
       run: ${{ github.workspace }}\\build\\tests\\${{ matrix.build_type }}\\rogem_tests.exe

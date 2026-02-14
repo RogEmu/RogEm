@@ -7,14 +7,6 @@
 #include "Bus.hpp"
 #include "InterruptController.hpp"
 
-Vec2i randomVertex(int width, int height)
-{
-    return Vec2i{
-        rand() % width,
-        rand() % height
-    };
-}
-
 GPU::GPU(Bus *bus) :
     PsxDevice(bus)
 {
