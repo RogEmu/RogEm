@@ -70,7 +70,7 @@ uint32_t DMAChannel::memoryAddress() const
 
 uint32_t DMAChannel::blockControl() const
 {
-    uint32_t res = (m_blockControl.blockAmount << 16) & m_blockControl.block.count;
+    uint32_t res = (m_blockControl.blockAmount << 16) | m_blockControl.block.count;
     return res;
 }
 
@@ -90,10 +90,10 @@ void DMAChannel::setChannelControl(uint32_t value)
     m_channelControl.step = static_cast<DMAStep>((value >> 1) & 1);
     m_channelControl.enableChop = (value >> 8) & 1;
     m_channelControl.syncMode = static_cast<DMASyncMode>((value >> 9) & 3);
-    m_channelControl.chopDmaSize = (value >> 16) & 3;
-    m_channelControl.chopCpuSize = (value >> 20) & 3;
-    m_channelControl.transferStatus = static_cast<DMATransferStatus>((value >> 24) & 3);
-    m_channelControl.forceTransferStart = (value >> 28) & 3;
+    m_channelControl.chopDmaSize = (value >> 16) & 7;
+    m_channelControl.chopCpuSize = (value >> 20) & 7;
+    m_channelControl.transferStatus = static_cast<DMATransferStatus>((value >> 24) & 1);
+    m_channelControl.forceTransferStart = (value >> 28) & 1;
 }
 
 void DMAChannel::setMemoryAddress(uint32_t address)
