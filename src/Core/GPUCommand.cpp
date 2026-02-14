@@ -99,6 +99,9 @@ void GPUCommand::parseRawCommand(uint32_t cmd)
         case GPUCommandType::VramVramCopy:
             m_nbExpectedParams = 3;
             break;
+        case GPUCommandType::VramCpuCopy:
+            m_nbExpectedParams = 2;
+            break;
         case GPUCommandType::QuickRectFill:
             m_nbExpectedParams = 3;
             m_params.addParam(cmd & 0xFFFFFF);
