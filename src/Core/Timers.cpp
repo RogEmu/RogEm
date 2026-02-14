@@ -10,6 +10,9 @@ Timers::Timers(Bus *bus) :
     PsxDevice(bus)
 {
     m_memoryRange = MemoryMap::TIMERS_RANGE;
+    for (auto &timer : m_timers) {
+        memset(&timer, 0, sizeof(timer));
+    }
 }
 
 Timers::~Timers()
