@@ -32,6 +32,7 @@ add_executable(${TEST_BINARY_NAME}
     DMAChannel_tests.cpp
     COP0_tests.cpp
     Expansion2_tests.cpp
+    InterruptController_tests.cpp
     RAM_tests.cpp
     SerialInterface_tests.cpp
     SPU_tests.cpp
