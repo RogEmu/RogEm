@@ -5,7 +5,7 @@ TEST(PsxExecutable, loadExe)
 {
     PsxExecutable exe("tests/files/psx.exe");
 
-    exe.load();
+    ASSERT_TRUE(exe.load());
     EXPECT_EQ(exe.exeSize, 0x00051000);
     EXPECT_EQ(exe.initialGp, 0);
     EXPECT_EQ(exe.initialSpBase, 0x801FFFF0);
@@ -18,7 +18,7 @@ TEST(PsxExecutable, noExe)
 {
     PsxExecutable exe("");
 
-    exe.load();
+    ASSERT_FALSE(exe.load());
     EXPECT_EQ(exe.exeSize, 0);
     EXPECT_EQ(exe.initialGp, 0);
     EXPECT_EQ(exe.initialSpBase, 0);
@@ -31,7 +31,7 @@ TEST(PsxExecutable, notAnExeFile)
 {
     PsxExecutable exe(__FILE__);
 
-    exe.load();
+    ASSERT_FALSE(exe.load());
     EXPECT_EQ(exe.exeSize, 0);
     EXPECT_EQ(exe.initialGp, 0);
     EXPECT_EQ(exe.initialSpBase, 0);
