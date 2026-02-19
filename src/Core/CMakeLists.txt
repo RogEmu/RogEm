@@ -30,7 +30,6 @@ set(CORE_SRC_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/CacheControl.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Expansion2.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CDROM.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Disc.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/System.cpp
 )
 
@@ -49,6 +48,7 @@ target_include_directories(${CORE_LIB_NAME} PUBLIC
 target_link_libraries(${CORE_LIB_NAME} PUBLIC
     fmt::fmt
     spdlog::spdlog
+    libcuebin
 )
 
 if (${ENABLE_COVERAGE})

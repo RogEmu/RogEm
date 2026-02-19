@@ -14,7 +14,7 @@
 #include "RAM.hpp"
 #include "SerialInterface.hpp"
 #include "CDROM.hpp"
-#include "Disc.hpp"
+#include "libcuebin/disc.hpp"
 
 System::System() :
     m_bus(nullptr),
@@ -122,9 +122,10 @@ void System::loadDisc(const std::string& path)
 {
     if (path.empty())
         return;
-    auto disc = std::make_unique<Disc>();
-    if (disc->open(path)) {
-        m_bus->getDevice<CDROM>()->loadDisc(std::move(disc));
+    auto disc = cuebin::Disc::fromCue(path);
+    if (disc) {
+        auto discPtr = std::make_unique<cuebin::Disc>(std::move(disc.value()));
+        m_bus->getDevice<CDROM>()->loadDisc(discPtr);
         spdlog::info("System: Loaded disc image: {}", path);
     } else {
         spdlog::error("System: Failed to open disc image: {}", path);

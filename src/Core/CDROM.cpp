@@ -46,14 +46,14 @@ CDROM::~CDROM()
 {
 }
 
-void CDROM::loadDisc(std::unique_ptr<Disc> disc)
+void CDROM::loadDisc(std::unique_ptr<cuebin::Disc> &disc)
 {
     m_disc = std::move(disc);
 }
 
 bool CDROM::hasDisc() const
 {
-    return m_disc && m_disc->isOpen();
+    return m_disc != nullptr;
 }
 
 uint32_t CDROM::readDataWord()
@@ -68,18 +68,17 @@ uint32_t CDROM::readDataWord()
 
 void CDROM::readSector()
 {
-    uint8_t mm = Disc::fromBcd(m_readPos.minute);
-    uint8_t ss = Disc::fromBcd(m_readPos.second);
-    uint8_t ff = Disc::fromBcd(m_readPos.frame);
-    uint32_t lba = Disc::msfToLba(mm, ss, ff);
+    cuebin::MSF msf {};
 
-    if (!m_disc->readSector(lba, m_sectorBuffer.data())) {
-        spdlog::error("CDROM: Failed to read sector at LBA {}", lba);
+    auto sector = m_disc->readSector(msf);
+    if (!sector) {
+        spdlog::error("CDROM: Failed to read sector at {}:{}:{}", msf.minute, msf.second, msf.frame);
         m_responseFifo.clear();
         pushResponse(CDROMInterrupt::Error, {static_cast<uint8_t>(m_stat | 0x01), 0x40});
         return;
     }
 
+    m_sectorBuffer = sector.value().data;
     // Copy bytes 12-19 into m_lastSectorHeader (for GetLocL)
     for (int i = 0; i < 8; i++)
         m_lastSectorHeader[i] = m_sectorBuffer[12 + i];
@@ -101,29 +100,8 @@ void CDROM::readSector()
     m_responseFifo.push(m_stat);
     deliverInterrupt(CDROMInterrupt::DataReady);
 
-    advanceReadPosition();
-
     // Reset read delay based on speed
     m_readDelayCounter = (m_mode & 0x80) ? 225792 : 451584;
-}
-
-void CDROM::advanceReadPosition()
-{
-    uint8_t frame = Disc::fromBcd(m_readPos.frame) + 1;
-    uint8_t second = Disc::fromBcd(m_readPos.second);
-    uint8_t minute = Disc::fromBcd(m_readPos.minute);
-
-    if (frame >= 75) {
-        frame = 0;
-        second++;
-        if (second >= 60) {
-            second = 0;
-            minute++;
-        }
-    }
-    m_readPos.frame = Disc::toBcd(frame);
-    m_readPos.second = Disc::toBcd(second);
-    m_readPos.minute = Disc::toBcd(minute);
 }
 
 void CDROM::reset()
@@ -606,15 +584,15 @@ void CDROM::cmdGetTD()
 {
     uint8_t track = 0;
     if (!m_parameterFifo.isEmpty())
-        track = Disc::fromBcd(m_parameterFifo.pop());
+        track = fromBcd(m_parameterFifo.pop());
     if (!hasDisc()) {
         pushResponse(CDROMInterrupt::Error, {static_cast<uint8_t>(m_stat | 0x01), 0x40});
         return;
     }
     if (track == 0) {
         uint8_t mm, ss, ff;
-        Disc::lbaToMsf(m_disc->totalSectors(), mm, ss, ff);
-        pushResponse(CDROMInterrupt::Acknowledge, {m_stat, Disc::toBcd(mm), Disc::toBcd(ss)});
+        lbaToMsf(m_disc->totalSectors(), mm, ss, ff);
+        pushResponse(CDROMInterrupt::Acknowledge, {m_stat, toBcd(mm), toBcd(ss)});
     } else {
         pushResponse(CDROMInterrupt::Acknowledge, {m_stat, 0x00, 0x02});
     }
@@ -668,4 +646,28 @@ void CDROM::cmdReadTOC()
 {
     setSecondResponse(CDROMInterrupt::Complete, {m_stat}, 16000000);
     pushResponse(CDROMInterrupt::Acknowledge, {m_stat});
+}
+
+uint32_t CDROM::msfToLba(uint8_t minute, uint8_t second, uint8_t frame)
+{
+    return (minute * 60 + second) * 75 + frame - 150;
+}
+
+void CDROM::lbaToMsf(uint32_t lba, uint8_t& minute, uint8_t& second, uint8_t& frame)
+{
+    uint32_t absolute = lba + 150;
+    minute = static_cast<uint8_t>(absolute / (60 * 75));
+    absolute %= (60 * 75);
+    second = static_cast<uint8_t>(absolute / 75);
+    frame = static_cast<uint8_t>(absolute % 75);
+}
+
+uint8_t CDROM::toBcd(uint8_t value)
+{
+    return static_cast<uint8_t>((value / 10) << 4 | (value % 10));
+}
+
+uint8_t CDROM::fromBcd(uint8_t bcd)
+{
+    return static_cast<uint8_t>((bcd >> 4) * 10 + (bcd & 0x0F));
 }

@@ -15,7 +15,7 @@
 #include <memory>
 
 #include "PsxDevice.hpp"
-#include "Disc.hpp"
+#include "libcuebin/disc.hpp"
 
 template<size_t Capacity>
 struct Fifo {
@@ -85,7 +85,7 @@ class CDROM : public PsxDevice
         void reset() override;
         void update(int cycles) override;
 
-        void loadDisc(std::unique_ptr<Disc> disc);
+        void loadDisc(std::unique_ptr<cuebin::Disc> &disc);
         bool hasDisc() const;
         uint32_t readDataWord();
 
@@ -107,6 +107,10 @@ class CDROM : public PsxDevice
         void setSecondResponse(uint8_t type, std::initializer_list<uint8_t> bytes, int delay);
         static const char* commandName(uint8_t cmd);
         void logCommand(uint8_t cmd);
+        static uint8_t toBcd(uint8_t value);
+        static uint8_t fromBcd(uint8_t bcd);
+        static uint32_t msfToLba(uint8_t minute, uint8_t second, uint8_t frame);
+        static void lbaToMsf(uint32_t lba, uint8_t& minute, uint8_t& second, uint8_t& frame);
 
         // Command handlers
         void cmdGetStat();
@@ -132,7 +136,6 @@ class CDROM : public PsxDevice
         void cmdReadTOC();
 
         void readSector();
-        void advanceReadPosition();
 
         // Register state
         uint8_t m_index;
@@ -165,12 +168,12 @@ class CDROM : public PsxDevice
         uint8_t m_volumeLL;
 
         // Disc
-        std::unique_ptr<Disc> m_disc;
+        std::unique_ptr<cuebin::Disc> m_disc;
         std::array<uint8_t, 8> m_lastSectorHeader{};
 
         // Reading state
         int m_readDelayCounter;
-        std::array<uint8_t, RAW_SECTOR_SIZE> m_sectorBuffer;
+        std::array<uint8_t, cuebin::RAW_SECTOR_SIZE> m_sectorBuffer;
 };
 
 #endif /* !CDROM_HPP_ */
