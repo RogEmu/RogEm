@@ -1,3 +1,6 @@
 [submodule "vcpkg"]
 	path = vcpkg
 	url = https://github.com/microsoft/vcpkg.git
+[submodule "lib/libcuebin"]
+	path = lib/libcuebin
+	url = https://github.com/RogEmu/libcuebin.git
