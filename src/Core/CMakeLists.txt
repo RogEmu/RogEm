@@ -36,6 +36,12 @@ set(CORE_SRC_FILES
 
 add_library(${CORE_LIB_NAME} STATIC ${CORE_SRC_FILES})
 
+if (MSVC)
+    target_compile_options(${CORE_LIB_NAME} PRIVATE /W4 /WX)
+else()
+    target_compile_options(${CORE_LIB_NAME} PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
+
 target_include_directories(${CORE_LIB_NAME} PUBLIC
     ${CMAKE_SOURCE_DIR}/src
 )

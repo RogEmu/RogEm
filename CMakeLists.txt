@@ -9,12 +9,7 @@ project("RogEm")
 set(BINARY_NAME "rogem")
 set(CMAKE_COLOR_DIAGNOSTICS ON)
 
-if (MSVC)
-    add_compile_options(/W4 /WX)
-else()
-    add_compile_options(-Wall -Wextra -Wpedantic -Werror)
-endif()
-
+add_subdirectory(lib/libcuebin)
 add_subdirectory(src)
 
 option(ENABLE_TESTING "Compile Unit Tests" ON)
