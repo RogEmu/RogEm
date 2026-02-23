@@ -12,11 +12,16 @@
 
 #include "SIO0.hpp"
 
+class StateBuffer;
+
 class SerialInterface : public PsxDevice
 {
     public:
         SerialInterface(Bus *bus);
         ~SerialInterface();
+
+        void serialize(StateBuffer &buf) const override;
+        void deserialize(StateBuffer &buf) override;
 
         void update(int cycles) override;
         void reset() override;

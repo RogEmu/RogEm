@@ -1,4 +1,5 @@
 #include "ScratchPad.hpp"
+#include "StateBuffer.hpp"
 
 #include "MemoryMap.hpp"
 #include "Bus.hpp"
@@ -12,4 +13,14 @@ ScratchPad::ScratchPad(Bus *bus) :
 
 ScratchPad::~ScratchPad()
 {
+}
+
+void ScratchPad::serialize(StateBuffer &buf) const
+{
+    buf.writeVec(m_data);
+}
+
+void ScratchPad::deserialize(StateBuffer &buf)
+{
+    buf.readVec(m_data);
 }

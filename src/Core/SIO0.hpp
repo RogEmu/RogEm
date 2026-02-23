@@ -13,11 +13,16 @@
 #include "InterruptController.hpp"
 #include "DigitalPad.hpp"
 
+class StateBuffer;
+
 class SIO0 : public SIODevice
 {
     public:
         SIO0();
         ~SIO0();
+
+        void serialize(StateBuffer &buf) const override;
+        void deserialize(StateBuffer &buf) override;
 
         void write(SIORegister reg, uint16_t value) override;
         uint16_t read(SIORegister reg) override;

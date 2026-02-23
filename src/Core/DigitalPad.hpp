@@ -10,6 +10,8 @@
 
 #include "SIODevice.hpp"
 
+class StateBuffer;
+
 enum class PadSequenceState {
     HighZ,
     IDLO,
@@ -49,6 +51,10 @@ class DigitalPad
         uint16_t rx();
 
         void reset();
+
+        void serialize(StateBuffer &buf) const;
+        void deserialize(StateBuffer &buf);
+
         bool isConnected() const { return m_connected; }
         void connect() { m_connected = true; }
         void disconnect() { m_connected = false; }

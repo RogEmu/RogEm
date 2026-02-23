@@ -1,4 +1,5 @@
 #include "GPU.hpp"
+#include "StateBuffer.hpp"
 
 #include <spdlog/spdlog.h>
 #include <algorithm>
@@ -25,18 +26,15 @@ static constexpr uint32_t NTSC_HCYCLES = 3413;
 
 void GPU::update(int cycles)
 {
-    static float cycleCount = 0;
-    static uint32_t scanline = 0;
-
-    cycleCount += cycles * NTSC_CLOCK_MULTIPLIER;
-    if (cycleCount >= NTSC_HCYCLES) {
-        cycleCount = 0.0f;
+    m_cycleCount += cycles * NTSC_CLOCK_MULTIPLIER;
+    if (m_cycleCount >= NTSC_HCYCLES) {
+        m_cycleCount = 0.0f;
         if (m_gpuStat.vInterlace || m_gpuStat.interlaceField) {
             m_gpuStat.interlaceDrawLines = !m_gpuStat.interlaceDrawLines;
         }
-        scanline++;
-        if (scanline >= NTSC_SCANLINES) {
-            scanline = 0;
+        m_scanline++;
+        if (m_scanline >= NTSC_SCANLINES) {
+            m_scanline = 0;
             m_gpuStat.interlaceDrawLines = false;
             auto irqc = m_bus->getDevice<InterruptController>();
             irqc->triggerIRQ(DeviceIRQ::VBLANK);
@@ -61,6 +59,46 @@ void GPU::reset()
     m_gpuRead = 0;
     m_currentState = GpuState::WaitingForCommand;
     m_currentCmd.reset();
+    m_cycleCount = 0.0f;
+    m_scanline = 0;
+}
+
+void GPU::serialize(StateBuffer &buf) const
+{
+    buf.write(m_gpuStat);
+    buf.write(m_gpuRead);
+    buf.write(m_displayArea);
+    buf.write(m_hDisplayRange);
+    buf.write(m_vDisplayRange);
+    buf.write(m_textureRectFlip);
+    buf.write(m_textureWindow);
+    buf.write(m_drawArea);
+    buf.write(m_drawOffset);
+    buf.write(m_currentState);
+    m_currentCmd.serialize(buf);
+    buf.write(m_vramCopyData);
+    buf.write(m_cycleCount);
+    buf.write(m_scanline);
+    buf.write(m_vram.data(), m_vram.size());
+}
+
+void GPU::deserialize(StateBuffer &buf)
+{
+    buf.read(m_gpuStat);
+    buf.read(m_gpuRead);
+    buf.read(m_displayArea);
+    buf.read(m_hDisplayRange);
+    buf.read(m_vDisplayRange);
+    buf.read(m_textureRectFlip);
+    buf.read(m_textureWindow);
+    buf.read(m_drawArea);
+    buf.read(m_drawOffset);
+    buf.read(m_currentState);
+    m_currentCmd.deserialize(buf);
+    buf.read(m_vramCopyData);
+    buf.read(m_cycleCount);
+    buf.read(m_scanline);
+    buf.read(m_vram.data(), m_vram.size());
 }
 
 void GPU::write8(uint8_t /* value */, uint32_t /* address */)

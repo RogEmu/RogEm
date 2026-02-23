@@ -1,4 +1,5 @@
 #include "MemoryControl2.hpp"
+#include "StateBuffer.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -11,6 +12,16 @@ MemoryControl2::MemoryControl2(Bus *bus) :
 
 MemoryControl2::~MemoryControl2()
 {
+}
+
+void MemoryControl2::serialize(StateBuffer &buf) const
+{
+    buf.write(m_memControl2);
+}
+
+void MemoryControl2::deserialize(StateBuffer &buf)
+{
+    buf.read(m_memControl2);
 }
 
 void MemoryControl2::write8(uint8_t value, uint32_t address)

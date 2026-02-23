@@ -6,6 +6,7 @@
 */
 
 #include "SerialInterface.hpp"
+#include "StateBuffer.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -36,6 +37,16 @@ void SerialInterface::update(int cycles)
 void SerialInterface::reset()
 {
     m_sio0.reset();
+}
+
+void SerialInterface::serialize(StateBuffer &buf) const
+{
+    m_sio0.serialize(buf);
+}
+
+void SerialInterface::deserialize(StateBuffer &buf)
+{
+    m_sio0.deserialize(buf);
 }
 
 void SerialInterface::write8(uint8_t value, uint32_t address)

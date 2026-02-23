@@ -10,6 +10,8 @@
 
 #include "PsxDevice.hpp"
 
+class StateBuffer;
+
 enum class DeviceIRQ
 {
     VBLANK = 0x001,
@@ -32,6 +34,10 @@ class InterruptController : public PsxDevice
         ~InterruptController();
 
         void reset() override;
+
+        void serialize(StateBuffer &buf) const override;
+        void deserialize(StateBuffer &buf) override;
+
         void triggerIRQ(DeviceIRQ device);
 
         void write8(uint8_t value, uint32_t address) override;

@@ -1,4 +1,5 @@
 #include "CacheControl.hpp"
+#include "StateBuffer.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -11,6 +12,16 @@ CacheControl::CacheControl(Bus *bus) :
 
 CacheControl::~CacheControl()
 {
+}
+
+void CacheControl::serialize(StateBuffer &buf) const
+{
+    buf.write(m_cacheControl);
+}
+
+void CacheControl::deserialize(StateBuffer &buf)
+{
+    buf.read(m_cacheControl);
 }
 
 void CacheControl::write8(uint8_t value, uint32_t address)

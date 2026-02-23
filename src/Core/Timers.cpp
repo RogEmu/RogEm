@@ -1,4 +1,5 @@
 #include "Timers.hpp"
+#include "StateBuffer.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -17,6 +18,16 @@ Timers::Timers(Bus *bus) :
 
 Timers::~Timers()
 {
+}
+
+void Timers::serialize(StateBuffer &buf) const
+{
+    buf.write(m_timers, sizeof(m_timers));
+}
+
+void Timers::deserialize(StateBuffer &buf)
+{
+    buf.read(m_timers, sizeof(m_timers));
 }
 
 void Timers::update(int cycles)

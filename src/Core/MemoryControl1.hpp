@@ -10,11 +10,16 @@
 
 #include "PsxDevice.hpp"
 
+class StateBuffer;
+
 class MemoryControl1 : public PsxDevice
 {
     public:
         MemoryControl1(Bus *bus);
         ~MemoryControl1();
+
+        void serialize(StateBuffer &buf) const override;
+        void deserialize(StateBuffer &buf) override;
 
         void write8(uint8_t value, uint32_t address) override;
         void write16(uint16_t value, uint32_t address) override;

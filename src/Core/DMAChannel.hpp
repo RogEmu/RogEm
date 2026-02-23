@@ -10,6 +10,8 @@
 
 #include <cstdint>
 
+class StateBuffer;
+
 enum class DMASyncMode
 {
     Burst,
@@ -75,6 +77,9 @@ class DMAChannel {
 
         DMAChannelControl &channelControl();
         DMABlockControl &blockControl();
+
+        void serialize(StateBuffer &buf) const;
+        void deserialize(StateBuffer &buf);
 
     private:
         void setChannelControl(uint32_t value);

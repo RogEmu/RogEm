@@ -13,6 +13,8 @@
 #include "Instruction.h"
 #include "Coprocessor.hpp"
 
+class StateBuffer;
+
 template <typename size>
 struct  Vector3{
 	size x;
@@ -68,6 +70,9 @@ class GTE : public Coprocessor {
         GTE();
 
         void reset();
+
+        void serialize(StateBuffer &buf) const;
+        void deserialize(StateBuffer &buf);
 
         /**
          * @brief Executes a GTE instruction.

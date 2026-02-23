@@ -17,6 +17,7 @@
 #include "PsxDevice.hpp"
 
 class CPU;
+class StateBuffer;
 
 class Bus
 {
@@ -25,6 +26,9 @@ class Bus
         ~Bus();
 
         void reset();
+
+        void serialize(StateBuffer &buf) const;
+        void deserialize(StateBuffer &buf);
 
         uint32_t loadWord(uint32_t addr) const;
         void storeWord(uint32_t addr, uint32_t value);
