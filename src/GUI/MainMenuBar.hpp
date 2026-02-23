@@ -9,6 +9,13 @@
 class Debugger;
 class Application;
 
+enum class FileDialogMode {
+    LoadROM,
+    LoadBIOS,
+    SaveState,
+    LoadState
+};
+
 class MainMenuBar
 {
     public:
@@ -33,7 +40,7 @@ class MainMenuBar
 
         // File dialog state
         bool m_showFileDialog = false;
-        bool m_isLoadingBios = false;  // true for BIOS, false for ROM
+        FileDialogMode m_fileDialogMode = FileDialogMode::LoadROM;
         std::filesystem::path m_currentPath;
         std::vector<std::filesystem::directory_entry> m_directoryContents;
         char m_filenameBuffer[256] = {0};
