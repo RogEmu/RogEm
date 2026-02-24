@@ -13,6 +13,7 @@
 #include "MemoryMap.hpp"
 
 class Bus;
+class StateBuffer;
 
 class PsxDevice
 {
@@ -22,6 +23,9 @@ class PsxDevice
 
         virtual void update(int cycles) { (void)cycles; };
         virtual void reset() {};
+
+        virtual void serialize(StateBuffer &buf) const { (void)buf; }
+        virtual void deserialize(StateBuffer &buf) { (void)buf; }
 
         bool isAddressed(uint32_t address) const {
             return m_memoryRange.contains(address);

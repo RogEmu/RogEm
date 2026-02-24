@@ -1,4 +1,5 @@
 #include "RAM.hpp"
+#include "StateBuffer.hpp"
 
 #include <cstring>
 
@@ -15,6 +16,16 @@ RAM::RAM(Bus *bus) :
 void RAM::reset()
 {
     std::memset(m_data.data(), 0, m_data.size());
+}
+
+void RAM::serialize(StateBuffer &buf) const
+{
+    buf.writeVec(m_data);
+}
+
+void RAM::deserialize(StateBuffer &buf)
+{
+    buf.readVec(m_data);
 }
 
 void RAM::loadExecutable(uint32_t baseAddr, const std::vector<uint8_t> &code)

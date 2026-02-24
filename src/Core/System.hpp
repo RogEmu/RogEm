@@ -30,6 +30,9 @@ class System
         void setState(SystemState state) { m_state = state; }
         SystemState getState() const { return m_state; }
 
+        bool saveState(const std::string &path);
+        bool loadState(const std::string &path);
+
         CPU *getCPU();
         Bus *getBus();
 

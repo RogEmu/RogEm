@@ -1,4 +1,5 @@
 #include "SIO0.hpp"
+#include "StateBuffer.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -76,4 +77,20 @@ void SIO0::reset()
     }
     m_irq = false;
     m_pad[0].connect();
+}
+
+void SIO0::serialize(StateBuffer &buf) const
+{
+    SIODevice::serialize(buf);
+    m_pad[0].serialize(buf);
+    m_pad[1].serialize(buf);
+    buf.write(m_irq);
+}
+
+void SIO0::deserialize(StateBuffer &buf)
+{
+    SIODevice::deserialize(buf);
+    m_pad[0].deserialize(buf);
+    m_pad[1].deserialize(buf);
+    buf.read(m_irq);
 }

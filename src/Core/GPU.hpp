@@ -13,6 +13,8 @@
 #include "PsxDevice.hpp"
 #include "GPUCommand.hpp"
 
+class StateBuffer;
+
 #define GPU_VRAM_WIDTH 1024 // 1024 pixels (2048 bytes)
 #define GPU_VRAM_HEIGHT 512 // 512 lines
 #define GPU_VRAM_1MB_SIZE (GPU_VRAM_WIDTH * 2 * GPU_VRAM_HEIGHT) // 512 lines of 1024 pixels
@@ -215,6 +217,9 @@ class GPU : public PsxDevice
         void update(int cycles) override;
         void reset();
 
+        void serialize(StateBuffer &buf) const override;
+        void deserialize(StateBuffer &buf) override;
+
         void write8(uint8_t value, uint32_t address) override;
         void write16(uint16_t value, uint32_t address) override;
         void write32(uint32_t value, uint32_t address) override;
@@ -287,6 +292,9 @@ class GPU : public PsxDevice
         VramCopyData m_vramCopyData;
 
         std::array<uint8_t, GPU_VRAM_1MB_SIZE> m_vram;
+
+        float m_cycleCount;
+        uint32_t m_scanline;
 };
 
 #endif /* !GPU_HPP_ */

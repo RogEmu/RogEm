@@ -10,6 +10,8 @@
 
 #include <cstdint>
 
+class StateBuffer;
+
 enum class SIORegister: uint8_t
 {
     TX_DATA = 0x0,
@@ -28,6 +30,9 @@ class SIODevice
         virtual void write(SIORegister reg, uint16_t value) = 0;
         virtual uint16_t read(SIORegister reg) = 0;
         virtual void update(int cycles) { (void)cycles; };
+
+        virtual void serialize(StateBuffer &buf) const;
+        virtual void deserialize(StateBuffer &buf);
 
     protected:
         uint16_t m_stat;

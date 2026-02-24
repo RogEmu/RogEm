@@ -6,6 +6,7 @@
 */
 
 #include "DigitalPad.hpp"
+#include "StateBuffer.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -68,4 +69,20 @@ void DigitalPad::reset()
     m_state = PadSequenceState::HighZ;
     m_tx = 0;
     m_connected = false;
+}
+
+void DigitalPad::serialize(StateBuffer &buf) const
+{
+    buf.write(m_state);
+    buf.write(m_buttons);
+    buf.write(m_tx);
+    buf.write(m_connected);
+}
+
+void DigitalPad::deserialize(StateBuffer &buf)
+{
+    buf.read(m_state);
+    buf.read(m_buttons);
+    buf.read(m_tx);
+    buf.read(m_connected);
 }

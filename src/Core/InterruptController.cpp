@@ -1,4 +1,5 @@
 #include "InterruptController.hpp"
+#include "StateBuffer.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -127,6 +128,18 @@ void InterruptController::reset()
 {
     m_istat = 0;
     m_imask = 0;
+}
+
+void InterruptController::serialize(StateBuffer &buf) const
+{
+    buf.write(m_istat);
+    buf.write(m_imask);
+}
+
+void InterruptController::deserialize(StateBuffer &buf)
+{
+    buf.read(m_istat);
+    buf.read(m_imask);
 }
 
 void InterruptController::triggerIRQ(DeviceIRQ device)

@@ -1,4 +1,5 @@
 #include "DMAChannel.hpp"
+#include "StateBuffer.hpp"
 
 #include <cstring>
 
@@ -105,4 +106,18 @@ void DMAChannel::setBlockControl(uint32_t value)
 {
     m_blockControl.block.count = value & 0xFFFF;
     m_blockControl.blockAmount = (value >> 16) & 0xFFFF;
+}
+
+void DMAChannel::serialize(StateBuffer &buf) const
+{
+    buf.write(m_memoryAddress);
+    buf.write(m_blockControl);
+    buf.write(m_channelControl);
+}
+
+void DMAChannel::deserialize(StateBuffer &buf)
+{
+    buf.read(m_memoryAddress);
+    buf.read(m_blockControl);
+    buf.read(m_channelControl);
 }

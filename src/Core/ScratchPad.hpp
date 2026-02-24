@@ -10,11 +10,16 @@
 
 #include "Memory.hpp"
 
+class StateBuffer;
+
 class ScratchPad : public Memory
 {
     public:
         ScratchPad(Bus *bus);
         ~ScratchPad();
+
+        void serialize(StateBuffer &buf) const override;
+        void deserialize(StateBuffer &buf) override;
 };
 
 #endif /* !SCRATCHPAD_HPP_ */

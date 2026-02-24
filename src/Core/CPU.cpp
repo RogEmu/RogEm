@@ -6,6 +6,7 @@
 */
 
 #include "CPU.hpp"
+#include "StateBuffer.hpp"
 
 #include <iostream>
 #include <cstring>
@@ -79,6 +80,42 @@ void CPU::reset()
     std::memset(m_gpr, 0, NB_GPR * sizeof(m_gpr[0]));
     m_cop0.reset();
     m_isTtyOutput = false;
+}
+
+void CPU::serialize(StateBuffer &buf) const
+{
+    buf.write(m_gpr, sizeof(m_gpr));
+    buf.write(m_pc);
+    buf.write(m_hi);
+    buf.write(m_lo);
+    buf.write(m_nextPc);
+    buf.write(m_loadDelaySlots, sizeof(m_loadDelaySlots));
+    buf.write(m_branchSlotAddr);
+    buf.write(m_inBranchDelay);
+    buf.write(m_nextIsBranchDelay);
+    buf.write(m_isTtyOutput);
+    buf.writeString(m_ttyOutput);
+    buf.write(m_jumpToUnaligned);
+    buf.write(m_badVarAddr);
+    m_cop0.serialize(buf);
+}
+
+void CPU::deserialize(StateBuffer &buf)
+{
+    buf.read(m_gpr, sizeof(m_gpr));
+    buf.read(m_pc);
+    buf.read(m_hi);
+    buf.read(m_lo);
+    buf.read(m_nextPc);
+    buf.read(m_loadDelaySlots, sizeof(m_loadDelaySlots));
+    buf.read(m_branchSlotAddr);
+    buf.read(m_inBranchDelay);
+    buf.read(m_nextIsBranchDelay);
+    buf.read(m_isTtyOutput);
+    buf.readString(m_ttyOutput);
+    buf.read(m_jumpToUnaligned);
+    buf.read(m_badVarAddr);
+    m_cop0.deserialize(buf);
 }
 
 void CPU::setTtyOutputFlag(bool ttyOutput)

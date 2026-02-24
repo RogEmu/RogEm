@@ -12,6 +12,8 @@
 
 #include "DMAChannel.hpp"
 
+class StateBuffer;
+
 #define OT_END_TAG 0xFFFFFF
 
 enum class DMAChannelName
@@ -32,6 +34,9 @@ class DMA : public PsxDevice
         ~DMA();
 
         void reset();
+
+        void serialize(StateBuffer &buf) const override;
+        void deserialize(StateBuffer &buf) override;
 
         void write8(uint8_t value, uint32_t address) override;
         void write16(uint16_t value, uint32_t address) override;

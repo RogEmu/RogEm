@@ -10,6 +10,8 @@
 
 #include "PsxDevice.hpp"
 
+class StateBuffer;
+
 struct TimerMode
 {
     uint32_t syncEnable : 1;
@@ -43,6 +45,10 @@ class Timers : public PsxDevice
         ~Timers();
 
         void update(int cycles) override;
+
+        void serialize(StateBuffer &buf) const override;
+        void deserialize(StateBuffer &buf) override;
+
         void onHBlank();
         void onHBlankEnd();
         void onVBlank();

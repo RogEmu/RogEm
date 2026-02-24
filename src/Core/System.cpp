@@ -1,4 +1,5 @@
 #include "System.hpp"
+#include "StateBuffer.hpp"
 
 #include <iostream>
 #include <memory>
@@ -13,6 +14,9 @@
 #include "InterruptController.hpp"
 #include "RAM.hpp"
 #include "SerialInterface.hpp"
+
+static constexpr uint32_t SAVESTATE_MAGIC = 0x524F4745;
+static constexpr uint32_t SAVESTATE_VERSION = 1;
 
 System::System() :
     m_bus(nullptr),
@@ -124,4 +128,72 @@ void System::setDebuggerCallback(const std::function<void()> &callback)
 void System::setTtyCallback(const std::function<void(const std::string &)> &callback)
 {
     m_ttyCallback = callback;
+}
+
+bool System::saveState(const std::string &path)
+{
+    StateBuffer buf;
+
+    buf.write(SAVESTATE_MAGIC);
+    buf.write(SAVESTATE_VERSION);
+
+    m_cpu->serialize(buf);
+    m_bus->serialize(buf);
+
+    std::ofstream file(path, std::ios::out | std::ios::binary);
+    if (!file.is_open()) {
+        spdlog::error("System: Cannot open file \"{}\" for saving state", path);
+        return false;
+    }
+    file.write(reinterpret_cast<const char *>(buf.data().data()), buf.size());
+    if (file.fail()) {
+        spdlog::error("System: Failed to write state to \"{}\"", path);
+        return false;
+    }
+    file.close();
+    spdlog::info("System: State saved to \"{}\" ({} bytes)", path, buf.size());
+    return true;
+}
+
+bool System::loadState(const std::string &path)
+{
+    std::ifstream file(path, std::ios::in | std::ios::binary | std::ios::ate);
+    if (!file.is_open()) {
+        spdlog::error("System: Cannot open file \"{}\" for loading state", path);
+        return false;
+    }
+
+    size_t fileSize = file.tellg();
+    file.seekg(0, std::ios::beg);
+    std::vector<uint8_t> data(fileSize);
+    file.read(reinterpret_cast<char *>(data.data()), fileSize);
+    if (file.fail()) {
+        spdlog::error("System: Failed to read state from \"{}\"", path);
+        return false;
+    }
+    file.close();
+
+    StateBuffer buf;
+    buf.setData(std::move(data));
+
+    uint32_t magic = 0;
+    uint32_t version = 0;
+    buf.read(magic);
+    buf.read(version);
+
+    if (magic != SAVESTATE_MAGIC) {
+        spdlog::error("System: Invalid savestate file (bad magic: 0x{:08X})", magic);
+        return false;
+    }
+    if (version != SAVESTATE_VERSION) {
+        spdlog::error("System: Incompatible savestate version (expected {}, got {})",
+                       SAVESTATE_VERSION, version);
+        return false;
+    }
+
+    m_cpu->deserialize(buf);
+    m_bus->deserialize(buf);
+
+    spdlog::info("System: State loaded from \"{}\"", path);
+    return true;
 }

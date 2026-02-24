@@ -3,6 +3,8 @@
 
 #include <cstdint>
 
+class StateBuffer;
+
 class GPUParamArray
 {
     public:
@@ -29,6 +31,9 @@ class GPUParamArray
         void clear() {
             m_headPtr = 0;
         }
+
+        void serialize(StateBuffer &buf) const;
+        void deserialize(StateBuffer &buf);
 
     private:
         uint32_t m_data[32];
@@ -96,6 +101,9 @@ class GPUCommand
         const GPUParamArray &params() const { return m_params; }
         const GPUCommandFlags &flags() const { return m_flags; }
         int expectedParams() { return m_nbExpectedParams; }
+
+        void serialize(StateBuffer &buf) const;
+        void deserialize(StateBuffer &buf);
 
     private:
         void parseRawCommand(uint32_t cmd);
