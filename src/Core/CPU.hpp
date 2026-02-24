@@ -15,6 +15,8 @@
 #include "Bus.hpp"
 #include "SystemControlCop.hpp"
 
+class StateBuffer;
+
 #define RESET_VECTOR (uint32_t)0xBFC00000
 #define NB_GPR 32
 #define COP0_NB_REG 16
@@ -93,6 +95,9 @@ class CPU {
 
         void step();
         void reset();
+
+        void serialize(StateBuffer &buf) const;
+        void deserialize(StateBuffer &buf);
         void setTtyOutputFlag(bool ttyOutput);
         bool getTtyOutputFlag();
         std::string getTtyOutput();

@@ -6,6 +6,7 @@
 */
 
 #include "GTE.hpp"
+#include "StateBuffer.hpp"
 #include <stdexcept>
 #include <iostream>
 #include <limits>
@@ -26,6 +27,20 @@ GTE::GTE() {
 void GTE::reset() {
     m_ctrlReg.fill(0);
     m_dataReg.fill(0);
+}
+
+void GTE::serialize(StateBuffer &buf) const
+{
+    buf.write(m_ctrlReg.data(), m_ctrlReg.size() * sizeof(int32_t));
+    buf.write(m_dataReg.data(), m_dataReg.size() * sizeof(int32_t));
+    buf.write(m_colorFIFO, sizeof(m_colorFIFO));
+}
+
+void GTE::deserialize(StateBuffer &buf)
+{
+    buf.read(m_ctrlReg.data(), m_ctrlReg.size() * sizeof(int32_t));
+    buf.read(m_dataReg.data(), m_dataReg.size() * sizeof(int32_t));
+    buf.read(m_colorFIFO, sizeof(m_colorFIFO));
 }
 
 /**

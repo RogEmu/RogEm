@@ -1,4 +1,5 @@
 #include "SystemControlCop.hpp"
+#include "StateBuffer.hpp"
 
 #include <cstring>
 
@@ -48,4 +49,14 @@ void SystemControlCop::ctc(uint8_t reg, uint32_t value)
 {
     (void)reg;
     (void)value;
+}
+
+void SystemControlCop::serialize(StateBuffer &buf) const
+{
+    buf.write(m_regs, sizeof(m_regs));
+}
+
+void SystemControlCop::deserialize(StateBuffer &buf)
+{
+    buf.read(m_regs, sizeof(m_regs));
 }

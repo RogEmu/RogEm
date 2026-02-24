@@ -42,17 +42,28 @@ void MainMenuBar::drawFileMenu()
 {
     if (ImGui::BeginMenu("File")) {
         if (ImGui::MenuItem("Load ROM...", "Ctrl+O")) {
-            m_isLoadingBios = false;
+            m_fileDialogMode = FileDialogMode::LoadROM;
             m_showFileDialog = true;
             m_filenameBuffer[0] = '\0';
         }
         if (ImGui::MenuItem("Load BIOS...", "Ctrl+B")) {
-            m_isLoadingBios = true;
+            m_fileDialogMode = FileDialogMode::LoadBIOS;
             m_showFileDialog = true;
             m_filenameBuffer[0] = '\0';
         }
         if (ImGui::MenuItem("Remove Executable", "Ctrl+Shift+R")) {
             m_application->getSystem().setExecutablePath("");
+        }
+        ImGui::Separator();
+        if (ImGui::MenuItem("Save State...", "Ctrl+S")) {
+            m_fileDialogMode = FileDialogMode::SaveState;
+            m_showFileDialog = true;
+            m_filenameBuffer[0] = '\0';
+        }
+        if (ImGui::MenuItem("Load State...", "Ctrl+L")) {
+            m_fileDialogMode = FileDialogMode::LoadState;
+            m_showFileDialog = true;
+            m_filenameBuffer[0] = '\0';
         }
         ImGui::EndMenu();
     }
@@ -133,11 +144,38 @@ void MainMenuBar::drawWindowsMenu()
     }
 }
 
+static const char *getDialogTitle(FileDialogMode mode)
+{
+    switch (mode) {
+        case FileDialogMode::LoadROM: return "Load ROM File";
+        case FileDialogMode::LoadBIOS: return "Load BIOS File";
+        case FileDialogMode::SaveState: return "Save State File";
+        case FileDialogMode::LoadState: return "Load State File";
+    }
+    return "File Dialog";
+}
+
+static bool isValidExtension(const std::string &ext, FileDialogMode mode)
+{
+    switch (mode) {
+        case FileDialogMode::LoadBIOS:
+            return (ext == ".bin" || ext == ".bios" || ext == ".rom");
+        case FileDialogMode::LoadROM:
+            return (ext == ".bin" || ext == ".exe" || ext == ".ps-exe" || ext == ".psx" || ext == ".rom");
+        case FileDialogMode::SaveState:
+        case FileDialogMode::LoadState:
+            return (ext == ".sav" || ext == ".state" || ext == ".savestate");
+    }
+    return false;
+}
+
 void MainMenuBar::drawFileDialog()
 {
     bool shouldNavigate = false;
     std::filesystem::path pathToNavigate;
-    const char* title = m_isLoadingBios ? "Load BIOS File" : "Load ROM File";
+    const char *title = getDialogTitle(m_fileDialogMode);
+    bool isSaveMode = (m_fileDialogMode == FileDialogMode::SaveState);
+    const char *confirmLabel = isSaveMode ? "Save" : "Load";
 
     ImGui::SetNextWindowSize(ImVec2(700, 500), ImGuiCond_FirstUseEver);
     if (ImGui::Begin(title, &m_showFileDialog, ImGuiWindowFlags_NoCollapse)) {
@@ -156,7 +194,7 @@ void MainMenuBar::drawFileDialog()
             std::string filename = entry.path().filename().string();
 
             if (isDirectory) {
-                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 0.0f, 1.0f)); // Directories color. Set as yellow but can be changed
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 0.0f, 1.0f));
                 if (ImGui::Selectable(("[DIR] " + filename).c_str(), false, ImGuiSelectableFlags_AllowDoubleClick)) {
                     if (ImGui::IsMouseDoubleClicked(0)) {
                         pathToNavigate = entry.path();
@@ -167,30 +205,33 @@ void MainMenuBar::drawFileDialog()
             } else {
                 std::string ext = entry.path().extension().string();
                 std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
-                bool validFile = false;
-                if (m_isLoadingBios) {
-                    validFile = (ext == ".bin" || ext == ".bios" || ext == ".rom");
-                } else {
-                    validFile = (ext == ".bin" || ext == ".exe" || ext == ".ps-exe" || ext == ".psx" || ext == ".rom");
-                }
+                bool validFile = isValidExtension(ext, m_fileDialogMode);
                 if (validFile) {
                     if (ImGui::Selectable(("[FILE] " + filename).c_str(), false, ImGuiSelectableFlags_AllowDoubleClick)) {
                         std::string pathStr = fmt::format("{}", entry.path().string());
                         pathStr.copy(m_filenameBuffer, sizeof(m_filenameBuffer) - 1);
                         m_filenameBuffer[std::min(pathStr.size(), sizeof(m_filenameBuffer) - 1)] = '\0';
-                        if (ImGui::IsMouseDoubleClicked(0)) {
-                            m_application->getSystem().reset();
-                            if (m_isLoadingBios) {
-                                m_application->getSystem().loadBios(m_filenameBuffer);
-                            } else {
-                                m_application->getSystem().setExecutablePath(m_filenameBuffer);
+                        if (ImGui::IsMouseDoubleClicked(0) && !isSaveMode) {
+                            switch (m_fileDialogMode) {
+                                case FileDialogMode::LoadBIOS:
+                                    m_application->getSystem().reset();
+                                    m_application->getSystem().loadBios(m_filenameBuffer);
+                                    break;
+                                case FileDialogMode::LoadROM:
+                                    m_application->getSystem().reset();
+                                    m_application->getSystem().setExecutablePath(m_filenameBuffer);
+                                    break;
+                                case FileDialogMode::LoadState:
+                                    m_application->getSystem().loadState(m_filenameBuffer);
+                                    break;
+                                default:
+                                    break;
                             }
-                            ImGui::CloseCurrentPopup();
                             m_showFileDialog = false;
                         }
                     }
                 } else {
-                    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 0.5f, 0.5f, 1.0f)); // Non-matching files color. Set as gray but can be changed
+                    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 0.5f, 0.5f, 1.0f));
                     ImGui::Selectable(("[FILE] " + filename).c_str(), false, ImGuiSelectableFlags_Disabled);
                     ImGui::PopStyleColor();
                 }
@@ -201,16 +242,30 @@ void MainMenuBar::drawFileDialog()
             navigateToDirectory(pathToNavigate);
         }
         ImGui::Separator();
-        ImGui::Text("Selected File:");
+        ImGui::Text("File:");
         ImGui::InputText("##filepath", m_filenameBuffer, sizeof(m_filenameBuffer));
-        if (ImGui::Button("Load", ImVec2(100, 0))) {
+        if (ImGui::Button(confirmLabel, ImVec2(100, 0))) {
             if (m_filenameBuffer[0] != '\0') {
                 std::string filePath(m_filenameBuffer);
-                m_application->getSystem().reset();
-                if (m_isLoadingBios) {
-                    m_application->getSystem().loadBios(m_filenameBuffer);
-                } else {
-                    m_application->getSystem().setExecutablePath(m_filenameBuffer);
+                // If save mode and user typed just a filename (no directory), prepend current path
+                if (isSaveMode && filePath.find('/') == std::string::npos && filePath.find('\\') == std::string::npos) {
+                    filePath = (m_currentPath / filePath).string();
+                }
+                switch (m_fileDialogMode) {
+                    case FileDialogMode::LoadBIOS:
+                        m_application->getSystem().reset();
+                        m_application->getSystem().loadBios(filePath.c_str());
+                        break;
+                    case FileDialogMode::LoadROM:
+                        m_application->getSystem().reset();
+                        m_application->getSystem().setExecutablePath(filePath);
+                        break;
+                    case FileDialogMode::SaveState:
+                        m_application->getSystem().saveState(filePath);
+                        break;
+                    case FileDialogMode::LoadState:
+                        m_application->getSystem().loadState(filePath);
+                        break;
                 }
                 m_showFileDialog = false;
             }

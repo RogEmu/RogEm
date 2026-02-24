@@ -12,10 +12,15 @@
 
 #define COP0_NB_REG 16
 
+class StateBuffer;
+
 class SystemControlCop : public Coprocessor {
     public:
         SystemControlCop();
         ~SystemControlCop();
+
+        void serialize(StateBuffer &buf) const;
+        void deserialize(StateBuffer &buf);
 
         void reset();
         void execute(uint32_t opcode) override;

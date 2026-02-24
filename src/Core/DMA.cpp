@@ -1,4 +1,5 @@
 #include "DMA.hpp"
+#include "StateBuffer.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -25,6 +26,22 @@ void DMA::reset()
 {
     m_dpcr = 0x07654321;
     m_dicr = 0;
+}
+
+void DMA::serialize(StateBuffer &buf) const
+{
+    for (int i = 0; i < 7; i++)
+        m_channels[i].serialize(buf);
+    buf.write(m_dpcr);
+    buf.write(m_dicr);
+}
+
+void DMA::deserialize(StateBuffer &buf)
+{
+    for (int i = 0; i < 7; i++)
+        m_channels[i].deserialize(buf);
+    buf.read(m_dpcr);
+    buf.read(m_dicr);
 }
 
 void DMA::write8(uint8_t value, uint32_t address)

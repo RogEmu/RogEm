@@ -1,4 +1,5 @@
 #include "GPUCommand.hpp"
+#include "StateBuffer.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -149,4 +150,32 @@ void GPUCommand::reset()
     m_type = GPUCommandType::None;
     m_flags = {};
     m_nbExpectedParams = 0;
+}
+
+void GPUParamArray::serialize(StateBuffer &buf) const
+{
+    buf.write(m_data, sizeof(m_data));
+    buf.write(m_headPtr);
+}
+
+void GPUParamArray::deserialize(StateBuffer &buf)
+{
+    buf.read(m_data, sizeof(m_data));
+    buf.read(m_headPtr);
+}
+
+void GPUCommand::serialize(StateBuffer &buf) const
+{
+    buf.write(m_type);
+    buf.write(m_flags);
+    m_params.serialize(buf);
+    buf.write(m_nbExpectedParams);
+}
+
+void GPUCommand::deserialize(StateBuffer &buf)
+{
+    buf.read(m_type);
+    buf.read(m_flags);
+    m_params.deserialize(buf);
+    buf.read(m_nbExpectedParams);
 }

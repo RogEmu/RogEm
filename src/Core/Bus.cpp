@@ -6,6 +6,7 @@
 */
 
 #include "Bus.hpp"
+#include "StateBuffer.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -53,6 +54,60 @@ void Bus::reset()
 {
     for (auto &[_, device] : m_devices) {
         device->reset();
+    }
+}
+
+void Bus::serialize(StateBuffer &buf) const
+{
+    buf.write(m_cacheControl);
+
+    const std::type_index order[] = {
+        std::type_index(typeid(RAM)),
+        std::type_index(typeid(ScratchPad)),
+        std::type_index(typeid(GPU)),
+        std::type_index(typeid(DMA)),
+        std::type_index(typeid(SPU)),
+        std::type_index(typeid(SerialInterface)),
+        std::type_index(typeid(Timers)),
+        std::type_index(typeid(InterruptController)),
+        std::type_index(typeid(MemoryControl1)),
+        std::type_index(typeid(MemoryControl2)),
+        std::type_index(typeid(CacheControl)),
+        std::type_index(typeid(Expansion2)),
+    };
+
+    for (const auto &ti : order) {
+        auto it = m_devices.find(ti);
+        if (it != m_devices.end()) {
+            it->second->serialize(buf);
+        }
+    }
+}
+
+void Bus::deserialize(StateBuffer &buf)
+{
+    buf.read(m_cacheControl);
+
+    const std::type_index order[] = {
+        std::type_index(typeid(RAM)),
+        std::type_index(typeid(ScratchPad)),
+        std::type_index(typeid(GPU)),
+        std::type_index(typeid(DMA)),
+        std::type_index(typeid(SPU)),
+        std::type_index(typeid(SerialInterface)),
+        std::type_index(typeid(Timers)),
+        std::type_index(typeid(InterruptController)),
+        std::type_index(typeid(MemoryControl1)),
+        std::type_index(typeid(MemoryControl2)),
+        std::type_index(typeid(CacheControl)),
+        std::type_index(typeid(Expansion2)),
+    };
+
+    for (const auto &ti : order) {
+        auto it = m_devices.find(ti);
+        if (it != m_devices.end()) {
+            it->second->deserialize(buf);
+        }
     }
 }
 

@@ -1,4 +1,5 @@
 #include "MemoryControl1.hpp"
+#include "StateBuffer.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -12,6 +13,16 @@ MemoryControl1::MemoryControl1(Bus *bus) :
 
 MemoryControl1::~MemoryControl1()
 {
+}
+
+void MemoryControl1::serialize(StateBuffer &buf) const
+{
+    buf.write(m_registers, sizeof(m_registers));
+}
+
+void MemoryControl1::deserialize(StateBuffer &buf)
+{
+    buf.read(m_registers, sizeof(m_registers));
 }
 
 void MemoryControl1::write8(uint8_t /* value */, uint32_t /* address */)

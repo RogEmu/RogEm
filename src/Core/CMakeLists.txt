@@ -31,6 +31,7 @@ set(CORE_SRC_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/GPUCommand.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CacheControl.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Expansion2.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/SIODevice.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/System.cpp
 )
 
