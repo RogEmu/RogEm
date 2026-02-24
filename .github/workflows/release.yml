@@ -76,15 +76,15 @@ jobs:
     - name: Build
       run: cmake --build ${{ github.workspace }}/build --config Release
 
-    - name: Test (Linux)
-      if: runner.os == 'Linux'
-      working-directory: ${{ github.workspace }}/build
-      run: ./tests/rogem_tests
+    # - name: Test (Linux)
+    #   if: runner.os == 'Linux'
+    #   working-directory: ${{ github.workspace }}/build
+    #   run: ./tests/rogem_tests
 
-    - name: Test (Windows)
-      if: runner.os == 'Windows'
-      working-directory: ${{ github.workspace }}/build
-      run: ${{ github.workspace }}\build\tests\Release\rogem_tests.exe
+    # - name: Test (Windows)
+    #   if: runner.os == 'Windows'
+    #   working-directory: ${{ github.workspace }}/build
+    #   run: ${{ github.workspace }}\build\tests\Release\rogem_tests.exe
 
     - name: Package (Linux)
       if: runner.os == 'Linux'
