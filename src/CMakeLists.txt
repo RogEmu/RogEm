@@ -18,6 +18,7 @@ set(SRC_FILES
     GUI/MainMenuBar.cpp
     GUI/BreakpointWindow.cpp
     GUI/LogWindow.cpp
+    GUI/InputMappingWindow.cpp
 )
 
 add_subdirectory(Core)

@@ -33,6 +33,7 @@ set(CORE_SRC_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Expansion2.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/SIODevice.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/System.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/InputManager.cpp
 )
 
 add_library(${CORE_LIB_NAME} STATIC ${CORE_SRC_FILES})

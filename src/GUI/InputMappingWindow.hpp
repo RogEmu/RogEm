@@ -30,7 +30,12 @@ private:
     std::unordered_map<int, PadButton> m_editMapping;
     std::unordered_map<int, PadButton> m_originalMapping;
 
+    std::unordered_map<int, PadButton> m_originalGamepadMapping;
+    std::unordered_map<int, PadButton> m_editGamepadMapping;
+
     std::optional<PadButton> m_waitingForKey;
+
+    std::string getGamepadNameForButton(PadButton button);
 };
 
 #endif /* !INPUTMAPPINGWINDOW_HPP_ */
