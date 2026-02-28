@@ -79,6 +79,15 @@ void MainMenuBar::drawEmulationMenu()
         if (ImGui::MenuItem("Reset", "Ctrl+R")) {
             m_application->getSystem().reset();
         }
+        ImGui::Separator();
+        if (ImGui::MenuItem("Input Mapping")) {
+            auto &windows = m_application->getWindows();
+            for (auto &window : windows) {
+                if (std::string(window->getTitleChar()) == "Input Mapping") {
+                    window->setVisible(true);
+                }
+            }
+        }
         ImGui::EndMenu();
     }
 }

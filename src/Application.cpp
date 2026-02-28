@@ -16,6 +16,7 @@
 #include "GUI/LogWindow.hpp"
 #include "GUI/MemoryWindow.hpp"
 #include "GUI/MainMenuBar.hpp"
+#include "GUI/InputMappingWindow.hpp"
 
 const char *glsl_version = "#version 330";
 
@@ -24,6 +25,8 @@ Application::Application() :
 {
     m_system.init();
     m_system.setDebuggerCallback([this]() { m_debugger.update(); });
+
+    m_inputManager = std::make_unique<InputManager>(&m_system);
 
     initWindows();
 }
@@ -67,21 +70,26 @@ static void appKeyCallback(GLFWwindow* window, int key, int scancode, int action
 {
     (void)scancode;
     (void)mods;
-    System* system = static_cast<System*>(glfwGetWindowUserPointer(window));
-    if (!system) {
+
+    Application* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
+    if (!app)
         return;
+
+    // On ne capture que sur PRESS pour le rebinding
+    if (action == GLFW_PRESS)
+    {
+        if (auto imw = app->getInputMappingWindow())
+        {
+            if (imw->wantsKeyboardCapture())
+            {
+                imw->onGlfwKeyPressed(key);
+                return; // on stoppe ici : pas de gameplay input
+            }
+        }
     }
-    PadButton padButton = mapKeyToPadButton(key);
-    if (padButton == PadButton::PAD_UNKOWN) {
-        return;
-    }
-    static uint16_t buttonsPort = 0xFFFF;
-    if (action == GLFW_PRESS) {
-        buttonsPort &= ~static_cast<uint16_t>(padButton);
-    } else if (action == GLFW_RELEASE) {
-        buttonsPort |= static_cast<uint16_t>(padButton);
-    }
-    system->updatePadInputs(buttonsPort);
+
+    // Gameplay normal
+    app->getInputManager().handleKeyEvent(key, action);
 }
 
 int Application::initGlfw()
@@ -107,7 +115,7 @@ int Application::initGlfw()
         spdlog::error("Failed to initialize GLAD");
         return -1;
     }
-    glfwSetWindowUserPointer(m_window, &m_system);
+    glfwSetWindowUserPointer(m_window, this);
     return 0;
 }
 
@@ -156,6 +164,7 @@ void Application::initWindows()
     m_windows.push_back(std::move(ramMemoryWindow));
 
     m_mainMenuBar = std::make_unique<MainMenuBar>(this);
+    m_windows.emplace_back(std::make_unique<InputMappingWindow>(m_inputManager.get()));
 }
 
 int Application::run()
@@ -234,40 +243,15 @@ void Application::update()
 
 void Application::pollGamepad()
 {
-    uint16_t gamepadButtons = 0xFFFF;
-    if (!glfwJoystickPresent(GLFW_JOYSTICK_1) || !glfwJoystickIsGamepad(GLFW_JOYSTICK_1))
+    if (!glfwJoystickPresent(GLFW_JOYSTICK_1) ||
+        !glfwJoystickIsGamepad(GLFW_JOYSTICK_1))
         return;
+
     GLFWgamepadstate state;
     if (!glfwGetGamepadState(GLFW_JOYSTICK_1, &state))
         return;
 
-    struct { int glfwButton; PadButton padButton; } buttonMap[] = {
-        { GLFW_GAMEPAD_BUTTON_A,            PadButton::PAD_CROSS },
-        { GLFW_GAMEPAD_BUTTON_B,            PadButton::PAD_CIRCLE },
-        { GLFW_GAMEPAD_BUTTON_X,            PadButton::PAD_SQUARE },
-        { GLFW_GAMEPAD_BUTTON_Y,            PadButton::PAD_TRIANGLE },
-        { GLFW_GAMEPAD_BUTTON_LEFT_BUMPER,  PadButton::PAD_L1 },
-        { GLFW_GAMEPAD_BUTTON_RIGHT_BUMPER, PadButton::PAD_R1 },
-        { GLFW_GAMEPAD_BUTTON_BACK,         PadButton::PAD_SELECT },
-        { GLFW_GAMEPAD_BUTTON_START,        PadButton::PAD_START },
-        { GLFW_GAMEPAD_BUTTON_DPAD_UP,      PadButton::PAD_JOYUP },
-        { GLFW_GAMEPAD_BUTTON_DPAD_DOWN,    PadButton::PAD_JOYDOWN },
-        { GLFW_GAMEPAD_BUTTON_DPAD_LEFT,    PadButton::PAD_JOYLEFT },
-        { GLFW_GAMEPAD_BUTTON_DPAD_RIGHT,   PadButton::PAD_JOYRIGHT },
-    };
-
-    for (const auto& mapping : buttonMap) {
-        if (state.buttons[mapping.glfwButton] == GLFW_PRESS) {
-            gamepadButtons &= ~static_cast<uint16_t>(mapping.padButton);
-        }
-    }
-
-    if (state.axes[GLFW_GAMEPAD_AXIS_LEFT_TRIGGER] > -0.5f)
-        gamepadButtons &= ~static_cast<uint16_t>(PadButton::PAD_L2);
-    if (state.axes[GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER] > -0.5f)
-        gamepadButtons &= ~static_cast<uint16_t>(PadButton::PAD_R2);
-
-    m_system.updatePadInputs(gamepadButtons);
+    m_inputManager->handleGamepadState(state);
 }
 
 void Application::render()
@@ -354,4 +338,14 @@ void Application::drawScreen()
         ImGui::Text("IMASK: 0x%08X", irqc->read32(0x1F801074));
     }
     ImGui::End();
+}
+
+InputMappingWindow* Application::getInputMappingWindow()
+{
+    for (auto& w : m_windows)
+    {
+        if (auto imw = dynamic_cast<InputMappingWindow*>(w.get()))
+            return imw;
+    }
+    return nullptr;
 }

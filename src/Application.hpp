@@ -10,6 +10,9 @@
 #include "Debugger/Debugger.hpp"
 #include "GUI/MainMenuBar.hpp"
 #include "imgui/imgui_memory_editor.h"
+#include "Core/InputManager.hpp"
+
+class InputMappingWindow; // forward declare
 
 struct EmulatorConfig
 {
@@ -30,6 +33,9 @@ class Application
         std::list<std::shared_ptr<IWindow>> &getWindows() { return m_windows; }
         System &getSystem() { return m_system; }
         Debugger &getDebugger() { return m_debugger; }
+        InputManager &getInputManager() { return *m_inputManager; }
+
+        InputMappingWindow* getInputMappingWindow();
 
     private:
         int initGlfw();
@@ -56,6 +62,7 @@ class Application
         GLFWwindow* m_window;
         GLuint m_vramTexture;
         bool m_showDisplayArea = true;
+        std::unique_ptr<InputManager> m_inputManager;
 };
 
 #endif /* !APPLICATION_HPP_ */
