@@ -2,6 +2,8 @@ set(TEST_BINARY_NAME rogem_tests)
 
 find_package(GTest CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
+find_package(spdlog CONFIG REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
 
 add_executable(${TEST_BINARY_NAME}
     Bus_tests.cpp
@@ -45,6 +47,8 @@ add_executable(${TEST_BINARY_NAME}
     DigitalPad_tests.cpp
     Timers_tests.cpp
     DMA_transfer_tests.cpp
+    InputManager_tests.cpp
+    ${CMAKE_SOURCE_DIR}/src/InputManager.cpp
 )
 
 target_include_directories(${TEST_BINARY_NAME}
@@ -55,6 +59,8 @@ target_link_libraries(${TEST_BINARY_NAME} PRIVATE
     GTest::gtest
     GTest::gtest_main
     fmt::fmt
+    spdlog::spdlog
+    nlohmann_json::nlohmann_json
     rgmcore
 )
 
