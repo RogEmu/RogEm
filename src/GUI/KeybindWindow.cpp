@@ -70,14 +70,14 @@ KeybindWindow::KeybindWindow(InputManager *inputManager) :
 void KeybindWindow::update()
 {
     if (ImGui::Begin(getTitleChar())) {
-        if (ImGui::BeginTable("keybinds", 3, ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders)) {
+        if (ImGui::BeginTable("keybinds", 2, ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders)) {
             ImGui::TableSetupColumn("Button", ImGuiTableColumnFlags_WidthFixed, 100.0f);
             ImGui::TableSetupColumn("Key", ImGuiTableColumnFlags_WidthStretch);
-            ImGui::TableSetupColumn("##action", ImGuiTableColumnFlags_WidthFixed, 80.0f);
             ImGui::TableHeadersRow();
 
             PadButton listeningButton = m_inputManager->getListeningButton();
             const auto &buttonToKey = m_inputManager->getButtonToKey();
+            bool listening = m_inputManager->isListening();
 
             for (PadButton button : buttonOrder) {
                 ImGui::TableNextRow();
@@ -85,29 +85,19 @@ void KeybindWindow::update()
                 ImGui::TextUnformatted(InputManager::padButtonToString(button).c_str());
 
                 ImGui::TableNextColumn();
-                if (m_inputManager->isListening() && listeningButton == button) {
-                    ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Press a key...");
-                } else {
-                    auto it = buttonToKey.find(button);
-                    if (it != buttonToKey.end()) {
-                        ImGui::TextUnformatted(getKeyName(it->second).c_str());
-                    } else {
-                        ImGui::TextDisabled("Unbound");
-                    }
-                }
-
-                ImGui::TableNextColumn();
                 ImGui::PushID(static_cast<int>(button));
-                if (m_inputManager->isListening() && listeningButton == button) {
-                    if (ImGui::SmallButton("Cancel")) {
-                        m_inputManager->cancelListening();
-                    }
+                if (listening && listeningButton == button) {
+                    ImGui::Button("Press a key...", ImVec2(-1, 0));
                 } else {
-                    bool disabled = m_inputManager->isListening();
+                    bool disabled = listening;
                     if (disabled) {
                         ImGui::BeginDisabled();
                     }
-                    if (ImGui::SmallButton("Rebind")) {
+                    auto it = buttonToKey.find(button);
+                    std::string label = (it != buttonToKey.end())
+                        ? getKeyName(it->second)
+                        : "Unbound";
+                    if (ImGui::Button(label.c_str(), ImVec2(-1, 0))) {
                         m_inputManager->startListening(button);
                     }
                     if (disabled) {
