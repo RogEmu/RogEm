@@ -15,6 +15,7 @@
 #include "GUI/LogWindow.hpp"
 #include "GUI/MemoryWindow.hpp"
 #include "GUI/MainMenuBar.hpp"
+#include "GUI/KeybindWindow.hpp"
 
 const char *glsl_version = "#version 330";
 
@@ -123,6 +124,8 @@ void Application::initWindows()
     ramMemoryWindow->setBaseAddr(0);
     ramMemoryWindow->setTitle("RAM");
     m_windows.push_back(std::move(ramMemoryWindow));
+
+    m_windows.emplace_back(std::make_unique<KeybindWindow>(&m_inputManager));
 
     m_mainMenuBar = std::make_unique<MainMenuBar>(this);
 }

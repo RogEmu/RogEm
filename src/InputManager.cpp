@@ -29,7 +29,7 @@ static const std::unordered_map<int, PadButton> defaultKeys = {
     { GLFW_KEY_F,     PadButton::PAD_SELECT },
 };
 
-static std::string padButtonToString(PadButton button)
+std::string InputManager::padButtonToString(PadButton button)
 {
     switch (button) {
         case PadButton::PAD_SELECT:   return "SELECT";
@@ -96,6 +96,12 @@ void InputManager::initDefaultKeybindings()
 
 void InputManager::onKeyEvent(int key, int action)
 {
+    if (m_listening && action == GLFW_PRESS) {
+        setKeybinding(key, m_listeningButton);
+        m_listening = false;
+        m_listeningButton = PadButton::PAD_UNKOWN;
+        return;
+    }
     auto it = m_keybindings.find(key);
     if (it == m_keybindings.end()) {
         return;
@@ -150,6 +156,33 @@ void InputManager::resetToDefaults()
 const std::unordered_map<int, PadButton>& InputManager::getKeybindings() const
 {
     return m_keybindings;
+}
+
+const std::unordered_map<PadButton, int>& InputManager::getButtonToKey() const
+{
+    return m_buttonToKey;
+}
+
+void InputManager::startListening(PadButton button)
+{
+    m_listening = true;
+    m_listeningButton = button;
+}
+
+void InputManager::cancelListening()
+{
+    m_listening = false;
+    m_listeningButton = PadButton::PAD_UNKOWN;
+}
+
+bool InputManager::isListening() const
+{
+    return m_listening;
+}
+
+PadButton InputManager::getListeningButton() const
+{
+    return m_listeningButton;
 }
 
 bool InputManager::saveToFile(const std::string& filePath) const

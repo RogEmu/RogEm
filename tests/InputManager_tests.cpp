@@ -31,16 +31,16 @@ TEST_F(InputManagerTest, DefaultKeybindingsLoaded) {
 }
 
 TEST_F(InputManagerTest, KeyPressClearsBit) {
-    // GLFW_KEY_Z is mapped to PAD_CROSS (0x4000) by default
-    mgr->onKeyEvent(GLFW_KEY_Z, GLFW_PRESS);
+    // GLFW_KEY_S is mapped to PAD_CROSS (0x4000) by default
+    mgr->onKeyEvent(GLFW_KEY_S, GLFW_PRESS);
     EXPECT_EQ(mgr->getButtonState() & 0x4000, 0);
 }
 
 TEST_F(InputManagerTest, KeyReleaseSetsBit) {
-    mgr->onKeyEvent(GLFW_KEY_Z, GLFW_PRESS);
+    mgr->onKeyEvent(GLFW_KEY_S, GLFW_PRESS);
     EXPECT_EQ(mgr->getButtonState() & 0x4000, 0);
 
-    mgr->onKeyEvent(GLFW_KEY_Z, GLFW_RELEASE);
+    mgr->onKeyEvent(GLFW_KEY_S, GLFW_RELEASE);
     EXPECT_EQ(mgr->getButtonState() & 0x4000, 0x4000);
 }
 
@@ -50,9 +50,9 @@ TEST_F(InputManagerTest, UnmappedKeyDoesNothing) {
 }
 
 TEST_F(InputManagerTest, MultipleSimultaneousPresses) {
-    // Press Z (CROSS=0x4000) and D (TRIANGLE=0x1000)
-    mgr->onKeyEvent(GLFW_KEY_Z, GLFW_PRESS);
-    mgr->onKeyEvent(GLFW_KEY_D, GLFW_PRESS);
+    // Press S (CROSS=0x4000) and W (TRIANGLE=0x1000)
+    mgr->onKeyEvent(GLFW_KEY_S, GLFW_PRESS);
+    mgr->onKeyEvent(GLFW_KEY_W, GLFW_PRESS);
 
     uint16_t state = mgr->getButtonState();
     EXPECT_EQ(state & 0x4000, 0);  // CROSS pressed
@@ -70,9 +70,9 @@ TEST_F(InputManagerTest, SetKeybinding) {
 
 TEST_F(InputManagerTest, RemoveKeybinding) {
     // Remove default Z key binding
-    mgr->removeKeybinding(GLFW_KEY_Z);
+    mgr->removeKeybinding(GLFW_KEY_S);
 
-    mgr->onKeyEvent(GLFW_KEY_Z, GLFW_PRESS);
+    mgr->onKeyEvent(GLFW_KEY_S, GLFW_PRESS);
     EXPECT_EQ(mgr->getButtonState(), 0xFFFF);
 }
 
@@ -80,7 +80,7 @@ TEST_F(InputManagerTest, ClearKeybindings) {
     mgr->clearKeybindings();
     EXPECT_TRUE(mgr->getKeybindings().empty());
 
-    mgr->onKeyEvent(GLFW_KEY_Z, GLFW_PRESS);
+    mgr->onKeyEvent(GLFW_KEY_S, GLFW_PRESS);
     EXPECT_EQ(mgr->getButtonState(), 0xFFFF);
 }
 
@@ -94,7 +94,7 @@ TEST_F(InputManagerTest, ResetToDefaults) {
 }
 
 TEST_F(InputManagerTest, ResetToDefaultsClearsButtonState) {
-    mgr->onKeyEvent(GLFW_KEY_Z, GLFW_PRESS);
+    mgr->onKeyEvent(GLFW_KEY_S, GLFW_PRESS);
     EXPECT_NE(mgr->getButtonState(), 0xFFFF);
 
     mgr->resetToDefaults();
@@ -165,22 +165,22 @@ TEST_F(InputManagerTest, SavedFileContainsAllBindings) {
 }
 
 TEST_F(InputManagerTest, OverwriteExistingKeybinding) {
-    // GLFW_KEY_Z is mapped to CROSS by default; remap it to START
-    mgr->setKeybinding(GLFW_KEY_Z, PadButton::PAD_START);
+    // GLFW_KEY_S is mapped to CROSS by default; remap it to START
+    mgr->setKeybinding(GLFW_KEY_S, PadButton::PAD_START);
 
-    mgr->onKeyEvent(GLFW_KEY_Z, GLFW_PRESS);
+    mgr->onKeyEvent(GLFW_KEY_S, GLFW_PRESS);
     uint16_t state = mgr->getButtonState();
     EXPECT_EQ(state & 0x0008, 0);      // START pressed
     EXPECT_EQ(state & 0x4000, 0x4000); // CROSS still released
 }
 
 TEST_F(InputManagerTest, SetKeybindingRemovesOldKeyForSameButton) {
-    // GLFW_KEY_Z (90) is mapped to PAD_CROSS by default
+    // GLFW_KEY_S (90) is mapped to PAD_CROSS by default
     // Rebind PAD_CROSS to key 999
     mgr->setKeybinding(999, PadButton::PAD_CROSS);
 
     // Old key should no longer be bound
-    mgr->onKeyEvent(GLFW_KEY_Z, GLFW_PRESS);
+    mgr->onKeyEvent(GLFW_KEY_S, GLFW_PRESS);
     EXPECT_EQ(mgr->getButtonState(), 0xFFFF);
 
     // New key should work

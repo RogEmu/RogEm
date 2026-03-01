@@ -28,6 +28,14 @@ class InputManager
         void clearKeybindings();
         void resetToDefaults();
         const std::unordered_map<int, PadButton>& getKeybindings() const;
+        const std::unordered_map<PadButton, int>& getButtonToKey() const;
+
+        void startListening(PadButton button);
+        void cancelListening();
+        bool isListening() const;
+        PadButton getListeningButton() const;
+
+        static std::string padButtonToString(PadButton button);
 
         bool saveToFile(const std::string& filePath) const;
         bool loadFromFile(const std::string& filePath);
@@ -38,6 +46,8 @@ class InputManager
         std::unordered_map<int, PadButton> m_keybindings;
         std::unordered_map<PadButton, int> m_buttonToKey;
         uint16_t m_buttonState;
+        bool m_listening = false;
+        PadButton m_listeningButton = PadButton::PAD_UNKOWN;
 };
 
 #endif /* !INPUTMANAGER_HPP_ */
