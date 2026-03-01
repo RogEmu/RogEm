@@ -8,6 +8,7 @@
 
 #include "Core/System.hpp"
 #include "Debugger/Debugger.hpp"
+#include "InputManager.hpp"
 #include "GUI/MainMenuBar.hpp"
 #include "imgui/imgui_memory_editor.h"
 
@@ -30,6 +31,7 @@ class Application
         std::list<std::shared_ptr<IWindow>> &getWindows() { return m_windows; }
         System &getSystem() { return m_system; }
         Debugger &getDebugger() { return m_debugger; }
+        InputManager &getInputManager() { return m_inputManager; }
 
     private:
         int initGlfw();
@@ -49,6 +51,7 @@ class Application
 
         System m_system;
         Debugger m_debugger;
+        InputManager m_inputManager;
 
         std::unique_ptr<MainMenuBar> m_mainMenuBar;
         std::list<std::shared_ptr<IWindow>> m_windows;

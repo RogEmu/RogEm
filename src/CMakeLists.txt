@@ -6,10 +6,12 @@ find_package(imgui CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(glad CONFIG REQUIRED)
 find_package(capstone CONFIG REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
 
 set(SRC_FILES
     main.cpp
     Application.cpp
+    InputManager.cpp
     Debugger/Debugger.cpp
     Debugger/Disassembler.cpp
     GUI/AssemblyWindow.cpp
@@ -37,4 +39,5 @@ target_link_libraries(${BINARY_NAME} PRIVATE
     spdlog::spdlog
     glad::glad
     capstone::capstone
+    nlohmann_json::nlohmann_json
 )
