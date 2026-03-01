@@ -97,9 +97,13 @@ void InputManager::initDefaultKeybindings()
 void InputManager::onKeyEvent(int key, int action)
 {
     if (m_listening && action == GLFW_PRESS) {
-        setKeybinding(key, m_listeningButton);
-        m_listening = false;
-        m_listeningButton = PadButton::PAD_UNKOWN;
+        if (key == GLFW_KEY_ESCAPE) {
+            cancelListening();
+        } else {
+            setKeybinding(key, m_listeningButton);
+            m_listening = false;
+            m_listeningButton = PadButton::PAD_UNKOWN;
+        }
         return;
     }
     auto it = m_keybindings.find(key);
