@@ -33,6 +33,16 @@ Application::Application() :
     m_system.setBiosLoadedCallback([this]() { this->onBiosLoaded(); });
     // Also play sound when the system is reset
     m_system.setResetCallback([this]() { this->onBiosLoaded(); });
+    m_system.setPauseCallback([this]() {
+        m_soundPaused = !m_soundPaused;
+
+        if (m_soundPaused) {
+            ma_sound_stop(m_startupSound);
+        } else {
+            ma_sound_start(m_startupSound);
+        }
+        spdlog::error("Paused callback called {}", m_soundPaused);
+    });
 
     /* Initialize audio engine (miniaudio) */
     if (ma_engine_init(NULL, &m_audioEngine) == MA_SUCCESS) {

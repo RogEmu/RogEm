@@ -46,6 +46,7 @@ class System
         void setTtyCallback(const std::function<void(const std::string &)> &callback);
         void setBiosLoadedCallback(const std::function<void()> &callback);
         void setResetCallback(const std::function<void()> &callback);
+        void setPauseCallback(const std::function<void()> &callback);
 
     private:
         std::unique_ptr<Bus> m_bus;
@@ -54,6 +55,7 @@ class System
         std::function<void()> m_debuggerCallback;
         std::function<void()> m_biosLoadedCallback;
         std::function<void()> m_resetCallback;
+        std::function<void()> m_pauseCallback;
 
         SystemState m_state;
         std::string m_executablePath;

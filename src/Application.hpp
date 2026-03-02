@@ -61,11 +61,13 @@ class Application
         GLFWwindow* m_window;
         GLuint m_vramTexture;
         bool m_showDisplayArea = true;
+
         ma_engine m_audioEngine;
         bool m_audioInitialized = false;
         bool m_muted = false;
         ma_sound* m_startupSound = nullptr;
         float m_volume = 1.0f;
+        bool m_soundPaused = false;
 };
 
 #endif /* !APPLICATION_HPP_ */

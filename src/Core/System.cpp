@@ -76,12 +76,18 @@ void System::update()
     const int cpuFreq = 33868800;
     const int cyclesPerFrame = cpuFreq / 60;
     int cycles = 0;
+    static auto prevState = m_state;
 
     while (cycles < cyclesPerFrame) {
         if (m_state == SystemState::RUNNING) {
             tick();
         }
+        if (m_state != prevState && m_pauseCallback) {
+            m_pauseCallback();
+        }
         cycles += 2;
+
+        prevState = m_state;
     }
 }
 
@@ -139,6 +145,11 @@ void System::setBiosLoadedCallback(const std::function<void()> &callback)
 void System::setResetCallback(const std::function<void()> &callback)
 {
     m_resetCallback = callback;
+}
+
+void System::setPauseCallback(const std::function<void()> &callback)
+{
+    m_pauseCallback = callback;
 }
 
 void System::setTtyCallback(const std::function<void(const std::string &)> &callback)
