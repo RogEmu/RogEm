@@ -63,6 +63,7 @@ class Application
         ma_engine m_audioEngine;
         bool m_audioInitialized = false;
         bool m_muted = false;
+        ma_sound* m_startupSound = nullptr;
 };
 
 #endif /* !APPLICATION_HPP_ */

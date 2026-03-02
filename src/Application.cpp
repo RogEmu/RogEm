@@ -40,6 +40,11 @@ Application::Application() :
 
 Application::~Application()
 {
+    if (m_startupSound) {
+        ma_sound_uninit(m_startupSound);
+        delete m_startupSound;
+        m_startupSound = nullptr;
+    }
     if (m_audioInitialized) {
         ma_engine_uninit(&m_audioEngine);
     }
@@ -151,7 +156,20 @@ int Application::run()
     initVramTexture();
     /* Play startup sound if audio initialized */
     if (m_audioInitialized) {
-        ma_engine_play_sound(&m_audioEngine, "assets/Ps1_startup_sound.mp3", NULL);
+        // Allocate a ma_sound on the heap and initialize it from file so we can control volume while
+        // keeping playback running.
+        m_startupSound = new ma_sound();
+        ma_result result = ma_sound_init_from_file(&m_audioEngine, "assets/Ps1_startup_sound.mp3", MA_SOUND_FLAG_STREAM, NULL, NULL, m_startupSound);
+        if (result == MA_SUCCESS) {
+            ma_sound_start(m_startupSound);
+            if (m_muted) {
+                ma_sound_set_volume(m_startupSound, 0.0f);
+            }
+        } else {
+            spdlog::error("Failed to initialize startup sound (code {})", (int)result);
+            delete m_startupSound;
+            m_startupSound = nullptr;
+        }
     }
 
     m_isRunning = true;
@@ -286,6 +304,13 @@ void Application::drawScreen()
         ImGui::SameLine();
         if (ImGui::Button(m_muted ? "Unmute" : "Mute")) {
             m_muted = !m_muted;
+            if (m_audioInitialized && m_startupSound) {
+                if (m_muted) {
+                    ma_sound_set_volume(m_startupSound, 0.0f);
+                } else {
+                    ma_sound_set_volume(m_startupSound, 1.0f);
+                }
+            }
         }
         ImVec2 uv0(0.0f, 0.0f);
         ImVec2 uv1(1.0f, 1.0f);
