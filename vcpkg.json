@@ -26,5 +26,8 @@
         "docking-experimental"
       ]
     }
+    ,
+    "miniaudio"
   ]
 }
+

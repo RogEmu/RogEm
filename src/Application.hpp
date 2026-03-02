@@ -5,6 +5,7 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <miniaudio.h>
 
 #include "Core/System.hpp"
 #include "Debugger/Debugger.hpp"
@@ -59,6 +60,8 @@ class Application
         GLFWwindow* m_window;
         GLuint m_vramTexture;
         bool m_showDisplayArea = true;
+        ma_engine m_audioEngine;
+        bool m_audioInitialized = false;
 };
 
 #endif /* !APPLICATION_HPP_ */

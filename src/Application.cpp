@@ -6,6 +6,8 @@
 
 #include <spdlog/spdlog.h>
 #include <argparse/argparse.hpp>
+#define MINIAUDIO_IMPLEMENTATION
+#include <miniaudio.h>
 
 #include "Core/GPU.hpp"
 #include "Core/InterruptController.hpp"
@@ -25,11 +27,22 @@ Application::Application() :
     m_system.init();
     m_system.setDebuggerCallback([this]() { m_debugger.update(); });
 
+    /* Initialize audio engine (miniaudio) */
+    if (ma_engine_init(NULL, &m_audioEngine) == MA_SUCCESS) {
+        m_audioInitialized = true;
+    } else {
+        spdlog::error("Failed to initialize audio engine");
+        m_audioInitialized = false;
+    }
+
     initWindows();
 }
 
 Application::~Application()
 {
+    if (m_audioInitialized) {
+        ma_engine_uninit(&m_audioEngine);
+    }
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
@@ -136,6 +149,10 @@ int Application::run()
         return -1;
     }
     initVramTexture();
+    /* Play startup sound if audio initialized */
+    if (m_audioInitialized) {
+        ma_engine_play_sound(&m_audioEngine, "assets/Ps1_startup_sound.mp3", NULL);
+    }
 
     m_isRunning = true;
     m_system.loadBios(m_config.biosFilePath.c_str());
