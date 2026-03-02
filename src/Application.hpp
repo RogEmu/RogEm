@@ -62,6 +62,7 @@ class Application
         bool m_showDisplayArea = true;
         ma_engine m_audioEngine;
         bool m_audioInitialized = false;
+        bool m_muted = false;
 };
 
 #endif /* !APPLICATION_HPP_ */

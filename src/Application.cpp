@@ -283,6 +283,10 @@ void Application::drawScreen()
         glBindTexture(GL_TEXTURE_2D, m_vramTexture);
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 1024, 512, GL_RGBA, GL_UNSIGNED_SHORT_1_5_5_5_REV, vram);
         ImGui::Checkbox("Display Area", &m_showDisplayArea);
+        ImGui::SameLine();
+        if (ImGui::Button(m_muted ? "Unmute" : "Mute")) {
+            m_muted = !m_muted;
+        }
         ImVec2 uv0(0.0f, 0.0f);
         ImVec2 uv1(1.0f, 1.0f);
         if (m_showDisplayArea) {
