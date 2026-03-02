@@ -65,6 +65,7 @@ class Application
         bool m_audioInitialized = false;
         bool m_muted = false;
         ma_sound* m_startupSound = nullptr;
+        float m_volume = 1.0f;
 };
 
 #endif /* !APPLICATION_HPP_ */

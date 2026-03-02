@@ -132,13 +132,20 @@ int Application::initImgui()
         int v = 0;
         if (sscanf(line, "Mute=%d", &v) == 1) {
             app->m_muted = (v != 0);
+            return;
+        }
+        float fv = 0.0f;
+        if (sscanf(line, "Volume=%f", &fv) == 1) {
+            app->m_volume = fv;
+            return;
         }
     };
     handler.WriteAllFn = [](ImGuiContext* ctx, ImGuiSettingsHandler* h, ImGuiTextBuffer* out_buf) {
         (void)ctx;
         Application* app = static_cast<Application*>(h->UserData);
         out_buf->appendf("[%s][%s]\n", h->TypeName, "Main");
-        out_buf->appendf("Mute=%d\n\n", app->m_muted ? 1 : 0);
+        out_buf->appendf("Mute=%d\n", app->m_muted ? 1 : 0);
+        out_buf->appendf("Volume=%.2f\n\n", app->m_volume);
     };
 
     ImGui::AddSettingsHandler(&handler);
@@ -225,6 +232,7 @@ void Application::onBiosLoaded()
     ma_result result = ma_sound_init_from_file(&m_audioEngine, "assets/Ps1_startup_sound.mp3", MA_SOUND_FLAG_STREAM, NULL, NULL, m_startupSound);
     if (result == MA_SUCCESS) {
         ma_sound_start(m_startupSound);
+        ma_sound_set_volume(m_startupSound, m_volume);
         if (m_muted) {
             ma_sound_set_volume(m_startupSound, 0.0f);
         }
@@ -353,10 +361,18 @@ void Application::drawScreen()
                 if (m_muted) {
                     ma_sound_set_volume(m_startupSound, 0.0f);
                 } else {
-                    ma_sound_set_volume(m_startupSound, 1.0f);
+                    ma_sound_set_volume(m_startupSound, m_volume);
                 }
             }
         }
+        ImGui::SameLine();
+        ImGui::PushItemWidth(160.0f);
+        if (ImGui::SliderFloat("Volume", &m_volume, 0.0f, 1.0f, "%.2f")) {
+            if (m_audioInitialized && m_startupSound && !m_muted) {
+                ma_sound_set_volume(m_startupSound, m_volume);
+            }
+        }
+        ImGui::PopItemWidth();
         ImVec2 uv0(0.0f, 0.0f);
         ImVec2 uv1(1.0f, 1.0f);
         if (m_showDisplayArea) {
