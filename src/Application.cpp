@@ -31,6 +31,8 @@ Application::Application() :
 
     // Play sound when BIOS is loaded
     m_system.setBiosLoadedCallback([this]() { this->onBiosLoaded(); });
+    // Also play sound when the system is reset
+    m_system.setResetCallback([this]() { this->onBiosLoaded(); });
 
     /* Initialize audio engine (miniaudio) */
     if (ma_engine_init(NULL, &m_audioEngine) == MA_SUCCESS) {

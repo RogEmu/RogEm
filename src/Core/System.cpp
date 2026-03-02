@@ -89,6 +89,9 @@ void System::reset()
 {
     m_cpu->reset();
     m_bus->reset();
+    if (m_resetCallback) {
+        m_resetCallback();
+    }
 }
 
 void System::loadExecutable(const char *path)
@@ -131,6 +134,11 @@ void System::setDebuggerCallback(const std::function<void()> &callback)
 void System::setBiosLoadedCallback(const std::function<void()> &callback)
 {
     m_biosLoadedCallback = callback;
+}
+
+void System::setResetCallback(const std::function<void()> &callback)
+{
+    m_resetCallback = callback;
 }
 
 void System::setTtyCallback(const std::function<void(const std::string &)> &callback)
