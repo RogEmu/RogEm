@@ -39,6 +39,7 @@ class Application
         int initImgui();
         void initVramTexture();
         void initWindows();
+        void onBiosLoaded();
 
         void update();
         void render();

@@ -44,12 +44,14 @@ class System
 
         void setDebuggerCallback(const std::function<void()> &callback);
         void setTtyCallback(const std::function<void(const std::string &)> &callback);
+        void setBiosLoadedCallback(const std::function<void()> &callback);
 
     private:
         std::unique_ptr<Bus> m_bus;
         std::unique_ptr<CPU> m_cpu;
         std::function<void(const std::string &)> m_ttyCallback;
         std::function<void()> m_debuggerCallback;
+        std::function<void()> m_biosLoadedCallback;
 
         SystemState m_state;
         std::string m_executablePath;

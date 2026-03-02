@@ -8,6 +8,8 @@
 #include <argparse/argparse.hpp>
 #define MINIAUDIO_IMPLEMENTATION
 #include <miniaudio.h>
+#include <imgui_internal.h>
+#include <cstdio>
 
 #include "Core/GPU.hpp"
 #include "Core/InterruptController.hpp"
@@ -26,6 +28,9 @@ Application::Application() :
 {
     m_system.init();
     m_system.setDebuggerCallback([this]() { m_debugger.update(); });
+
+    // Play sound when BIOS is loaded
+    m_system.setBiosLoadedCallback([this]() { this->onBiosLoaded(); });
 
     /* Initialize audio engine (miniaudio) */
     if (ma_engine_init(NULL, &m_audioEngine) == MA_SUCCESS) {
@@ -110,6 +115,37 @@ int Application::initImgui()
     ImGui::StyleColorsDark();
     ImGui_ImplGlfw_InitForOpenGL(m_window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
+
+    // Register ImGui settings handler so we can persist the mute state into the same imgui.ini file.
+    static ImGuiSettingsHandler handler{};
+    handler.TypeName = "RogEm";
+    handler.TypeHash = ImHashStr("RogEm", 0);
+    handler.UserData = this;
+
+    handler.ReadOpenFn = [](ImGuiContext* ctx, ImGuiSettingsHandler* h, const char* name) -> void* {
+        (void)ctx; (void)name;
+        return h->UserData;
+    };
+    handler.ReadLineFn = [](ImGuiContext* ctx, ImGuiSettingsHandler* h, void* entry, const char* line) {
+        (void)ctx; (void)h;
+        Application* app = static_cast<Application*>(entry);
+        int v = 0;
+        if (sscanf(line, "Mute=%d", &v) == 1) {
+            app->m_muted = (v != 0);
+        }
+    };
+    handler.WriteAllFn = [](ImGuiContext* ctx, ImGuiSettingsHandler* h, ImGuiTextBuffer* out_buf) {
+        (void)ctx;
+        Application* app = static_cast<Application*>(h->UserData);
+        out_buf->appendf("[%s][%s]\n", h->TypeName, "Main");
+        out_buf->appendf("Mute=%d\n\n", app->m_muted ? 1 : 0);
+    };
+
+    ImGui::AddSettingsHandler(&handler);
+    // Load ini settings now so handlers (like our mute flag) are applied before any BIOS load
+    if (ImGui::GetIO().IniFilename) {
+        ImGui::LoadIniSettingsFromDisk(ImGui::GetIO().IniFilename);
+    }
     return 0;
 }
 
@@ -154,23 +190,6 @@ int Application::run()
         return -1;
     }
     initVramTexture();
-    /* Play startup sound if audio initialized */
-    if (m_audioInitialized) {
-        // Allocate a ma_sound on the heap and initialize it from file so we can control volume while
-        // keeping playback running.
-        m_startupSound = new ma_sound();
-        ma_result result = ma_sound_init_from_file(&m_audioEngine, "assets/Ps1_startup_sound.mp3", MA_SOUND_FLAG_STREAM, NULL, NULL, m_startupSound);
-        if (result == MA_SUCCESS) {
-            ma_sound_start(m_startupSound);
-            if (m_muted) {
-                ma_sound_set_volume(m_startupSound, 0.0f);
-            }
-        } else {
-            spdlog::error("Failed to initialize startup sound (code {})", (int)result);
-            delete m_startupSound;
-            m_startupSound = nullptr;
-        }
-    }
 
     m_isRunning = true;
     m_system.loadBios(m_config.biosFilePath.c_str());
@@ -188,6 +207,32 @@ int Application::run()
 void Application::quit()
 {
     m_isRunning = false;
+}
+
+void Application::onBiosLoaded()
+{
+    if (!m_audioInitialized)
+        return;
+
+    // If a previous startup sound exists, uninitialize and free it so we can restart playback
+    if (m_startupSound) {
+        ma_sound_uninit(m_startupSound);
+        delete m_startupSound;
+        m_startupSound = nullptr;
+    }
+
+    m_startupSound = new ma_sound();
+    ma_result result = ma_sound_init_from_file(&m_audioEngine, "assets/Ps1_startup_sound.mp3", MA_SOUND_FLAG_STREAM, NULL, NULL, m_startupSound);
+    if (result == MA_SUCCESS) {
+        ma_sound_start(m_startupSound);
+        if (m_muted) {
+            ma_sound_set_volume(m_startupSound, 0.0f);
+        }
+    } else {
+        spdlog::error("Failed to initialize startup sound (code {})", (int)result);
+        delete m_startupSound;
+        m_startupSound = nullptr;
+    }
 }
 
 int Application::loadConfig(int ac, char **av)

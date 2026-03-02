@@ -118,11 +118,19 @@ void System::loadBios(const char *path)
 {
     BIOS *bios = m_bus->getDevice<BIOS>();
     bios->loadFromFile(path);
+    if (m_biosLoadedCallback) {
+        m_biosLoadedCallback();
+    }
 }
 
 void System::setDebuggerCallback(const std::function<void()> &callback)
 {
     m_debuggerCallback = callback;
+}
+
+void System::setBiosLoadedCallback(const std::function<void()> &callback)
+{
+    m_biosLoadedCallback = callback;
 }
 
 void System::setTtyCallback(const std::function<void(const std::string &)> &callback)
